@@ -1,0 +1,13 @@
+{
+  "iceXt": {
+    "package": "CABGA256",
+    "device": "25k",
+    "pcf": "iceXt.lpf",
+    "speed": "25",
+    "cmd": [
+      "yosys -p \"synth_ecp5 -top %top% -json %json%\" %files%",
+      "nextpnr-ecp5 --%device% --package %package% --speed 6 --json %json% --textcfg %asc% --lpf %pcf% --freq %speed%",
+      "ecppack %asc% %bin%"
+    ]
+  }
+}
