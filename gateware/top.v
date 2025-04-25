@@ -1,126 +1,91 @@
 `default_nettype none
 
 
-// 640x400@70hz
-module vgaGen (
-    input              iClk,    // 25.175Mhz
-    output wire        oHSync,  // horizontal sync
-    output wire        oVSync,  // vertical sync
-    output wire [15:0] oAddr,   // 320x200
-    output wire        oBlank   // blanking period
-);
-
-  localparam xvis = 640;
-  localparam xsyncs = xvis + 16;
-  localparam xsynce = xsyncs + 96;
-  localparam xmax = 800;
-  localparam xpol = 0;  // negative
-
-  localparam yvis = 400;
-  localparam ysyncs = yvis + 12;
-  localparam ysynce = ysyncs + 2;
-  localparam ymax = 449;
-  localparam ypol = 1;  // positive
-
-  reg [9:0] x;
-  reg [9:0] y;
-  reg       xblank;
-  reg       yblank;
-  reg       xsync;
-  reg       ysync;
-
-  assign oHSync = delay[2];
-  assign oVSync = delay[1];
-  assign oBlank = delay[0];
-  assign oAddr  = yaddr + x[9:1];
-
-  wire [ 9:0] x_add_one = x + 10'd1;
-  wire [ 9:0] y_add_one = y + 10'd1;
-
-  reg  [15:0] yaddr = 0;
-
-  // delay sync signals so the address precedes them by one clock.
-  reg  [ 2:0] delay;
-  always @(posedge iClk) begin
-    delay <= {xsync, ysync, xblank | yblank};
-  end
-
-  always @(posedge iClk) begin
-    if (x_add_one == xmax) begin
-      x <= 10'd0;
-      if (y_add_one == ymax) begin
-        y     <= 10'd0;
-        yaddr <= 16'd0;
-      end else begin
-        y     <= y_add_one;
-        yaddr <= yaddr + (y[0] ? (xvis[15:1]) : 16'd0);
-      end
-    end else begin
-      x <= x_add_one;
-    end
-  end
-
-  always @(posedge iClk) begin
-    case (x_add_one)
-      xvis:   xblank <= 1;
-      xsyncs: xsync <= xpol;
-      xsynce: xsync <= !xpol;
-      xmax:   xblank <= 0;
-    endcase
-  end
-
-  always @(posedge iClk) begin
-    case (y_add_one)
-      yvis:   yblank <= 1;
-      ysyncs: ysync <= ypol;
-      ysynce: ysync <= !ypol;
-      ymax:   yblank <= 0;
-    endcase
-  end
-
-endmodule
-
-
 module top(
     input        clk25,
-    output       led_io,
-    output [3:0] vga_r,
-    output [3:0] vga_g,
-    output [3:0] vga_b,
-    output       vga_hs,
-    output       vga_vs
+    input        serial_rx,
+    input        sw_rst,
+    output [7:0] pmod,
+    output       ym_sd,
+    output       ym_load,
+    output       ym_clk
     );
 
-    reg [24:0] count  = 0;
-    reg        toggle = 0;
+  wire rst;
+  reset uReset (
+      .iClk  (clk25),
+      .iReset(0),
+      .oReset(rst)
+  );
 
-    assign led_io = toggle;
+  wire       rxBusy;
+  wire       rxValid;
+  wire [7:0] rxData;
+  uartRx uUartRx(
+    /*input        */.iClk   (clk25),
+    /*input        */.iRx    (serial_rx),
+    /*output [7:0] */.oData  (rxData),
+    /*output reg   */.oValid (rxValid),
+    /*output       */.oBusy  (rxBusy)
+  );
 
-    always @(posedge clk25) begin
-        if (count == 0) begin
-            count  <= 25'd12500000;
-            toggle <= ~toggle;
-        end else begin
-            count <= count - 1;
-        end
+  reg [7:0] value;
+  always @(posedge clk25) begin
+    if (rxValid) begin
+      value <= rxData;
     end
+  end
 
-    wire        vgahs;
-    wire        vgavs;
-    wire [15:0] vgaaddr;
-    wire        vgablank;
-    vgaGen vgaGenU (
-        .iClk  (clk25),
-        .oHSync(vga_hs),
-        .oVSync(vga_vs),
-        .oAddr (vgaaddr),
-        .oBlank(vgablank)
-    );
+  wire [ 6:0] segs;
+  wire        sel;
 
-    assign vga_r  = vgablank ? 4'd0 : vgaaddr[15:12];
-    assign vga_g  = vgablank ? 4'd0 : vgaaddr[11: 8];
-    assign vga_b  = vgablank ? 4'd0 : vgaaddr[ 7: 4];
-    assign vga_hs = vgahs;
-    assign vga_vs = vgavs;
+  sevenSeg seg(.clk(clk25), .value(value), .led(segs), .sel(sel));
+
+  //                 J14, H14,     G14,     F14,     K13,     J13,     H13,     G13
+  //                 sel, A,       D,       G,       C,       B,       E,       F  
+  wire [7:0] leds = {sel, segs[0], segs[3], segs[6], segs[2], segs[1], segs[4], segs[5] };
+
+  assign pmod = leds;
+
+  reg        write;
+  reg [23:0] sreg;
+  always @(posedge clk25) begin
+    write <= 0;
+    if (rxValid) begin
+      sreg <= { sreg[ 16:0 ], rxData[6:0] };
+      write <= rxData[7];
+    end
+  end
+
+  wire adlibClkEn;
+  clkEnGen uClkEnGen (
+      .iClk  (clk25),
+      .oClkEn(adlibClkEn)
+  );
+
+  wire signed [15:0] adlibSnd;
+  wire               adlibSample;
+  jtopl2 uJtopl2 (
+      .rst   (rst),  // active high
+      .clk   (clk25),
+      .cen   (adlibClkEn),
+      .din   (sreg[7:0]),
+      .addr  (sreg[8]),  // 0=addr, 1=data
+      .cs_n  (~write),
+      .wr_n  (~write),
+      .dout  (),
+      .irq_n (),
+      .snd   (adlibSnd),
+      .sample(adlibSample)
+  );
+
+  ym3014 ymDac (
+    .iClk    (clk25),
+    .iClkEn  (adlibClkEn),
+    .iSample (adlibSnd),
+    .oDacClk (ym_clk),
+    .oDacLoad(ym_load),
+    .oDacSd  (ym_sd)
+  );
 
 endmodule
