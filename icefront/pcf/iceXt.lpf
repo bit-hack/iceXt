@@ -12,14 +12,14 @@ FREQUENCY PORT "clk25"       25.0 MHz;
 
 LOCATE COMP    "pit_spk"     SITE "P11";
 IOBUF PORT     "pit_spk"     IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "ym_sd"       SITE "P12";
 IOBUF PORT     "ym_sd"       IO_TYPE=LVCMOS33;
 LOCATE COMP    "ym_load"     SITE "N12";
 IOBUF PORT     "ym_load"     IO_TYPE=LVCMOS33;
 LOCATE COMP    "ym_clk"      SITE "P13";
 IOBUF PORT     "ym_clk"      IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "vga_r[3]"    SITE "N13";
 IOBUF PORT     "vga_r[3]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_r[2]"    SITE "P14";
@@ -28,7 +28,7 @@ LOCATE COMP    "vga_r[1]"    SITE "M12";
 IOBUF PORT     "vga_r[1]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_r[0]"    SITE "M13";
 IOBUF PORT     "vga_r[0]"    IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "vga_g[3]"    SITE "L14";
 IOBUF PORT     "vga_g[3]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_g[2]"    SITE "L13";
@@ -37,7 +37,7 @@ LOCATE COMP    "vga_g[1]"    SITE "K14";
 IOBUF PORT     "vga_g[1]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_g[0]"    SITE "K13";
 IOBUF PORT     "vga_g[0]"    IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "vga_b[3]"    SITE "J14";
 IOBUF PORT     "vga_b[3]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_b[2]"    SITE "J13";
@@ -46,22 +46,22 @@ LOCATE COMP    "vga_b[1]"    SITE "H14";
 IOBUF PORT     "vga_b[1]"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_b[0]"    SITE "H13";
 IOBUF PORT     "vga_b[0]"    IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "vga_vs"      SITE "G14";
 IOBUF PORT     "vga_vs"      IO_TYPE=LVCMOS33;
 LOCATE COMP    "vga_hs"      SITE "G13";
 IOBUF PORT     "vga_hs"      IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "ps2_mclk"    SITE "F14";
 IOBUF PORT     "ps2_mclk"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "ps2_mdat"    SITE "F13";
 IOBUF PORT     "ps2_mdat"    IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "ps2_kclk"    SITE "E14";
 IOBUF PORT     "ps2_kclk"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "ps2_kdat"    SITE "E13";
 IOBUF PORT     "ps2_kdat"    IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "pmod[0]"     SITE "E12";
 IOBUF PORT     "pmod[0]"     IO_TYPE=LVCMOS33;
 LOCATE COMP    "pmod[1]"     SITE "D13";
@@ -78,7 +78,7 @@ LOCATE COMP    "pmod[6]"     SITE "C11";
 IOBUF PORT     "pmod[6]"     IO_TYPE=LVCMOS33;
 LOCATE COMP    "pmod[7]"     SITE "C10";
 IOBUF PORT     "pmod[7]"     IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "sd_do"       SITE "A8";
 IOBUF PORT     "sd_do"       IO_TYPE=LVCMOS33;
 LOCATE COMP    "sd_di"       SITE "A7";
@@ -87,13 +87,13 @@ LOCATE COMP    "sd_clk"      SITE "B8";
 IOBUF PORT     "sd_clk"      IO_TYPE=LVCMOS33;
 LOCATE COMP    "sd_cs"       SITE "B7";
 IOBUF PORT     "sd_cs"       IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "led_io"      SITE "A6";
 IOBUF PORT     "led_io"      IO_TYPE=LVCMOS33;
-                             
+
 LOCATE COMP    "sw_rst"      SITE "P2";
 IOBUF PORT     "sw_rst"      IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "cpu_ah[11]"  SITE "C5";
 IOBUF PORT     "cpu_ah[11]"  IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_ah[10]"  SITE "C6";
@@ -118,7 +118,7 @@ LOCATE COMP    "cpu_ah[1]"   SITE "D4";
 IOBUF PORT     "cpu_ah[1]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_ah[0]"   SITE "E4";
 IOBUF PORT     "cpu_ah[0]"   IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "cpu_ad[7]"   SITE "F4";
 IOBUF PORT     "cpu_ad[7]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_ad[6]"   SITE "K4";
@@ -135,7 +135,7 @@ LOCATE COMP    "cpu_ad[1]"   SITE "T6";
 IOBUF PORT     "cpu_ad[1]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_ad[0]"   SITE "R5";
 IOBUF PORT     "cpu_ad[0]"   IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "cpu_sso"     SITE "C4";
 IOBUF PORT     "cpu_sso"     IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_mn"      SITE "C3";
@@ -168,7 +168,7 @@ LOCATE COMP    "cpu_clk"     SITE "R2";
 IOBUF PORT     "cpu_clk"     IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_reset"   SITE "R1";
 IOBUF PORT     "cpu_reset"   IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "sram_a[0]"   SITE "H2";
 IOBUF PORT     "sram_a[0]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "sram_a[1]"   SITE "G2";
@@ -209,7 +209,7 @@ LOCATE COMP    "sram_a[18]"  SITE "M2";
 IOBUF PORT     "sram_a[18]"  IO_TYPE=LVCMOS33;
 LOCATE COMP    "sram_a[19]"  SITE "M1";
 IOBUF PORT     "sram_a[19]"  IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "sram_d[0]"   SITE "J2";
 IOBUF PORT     "sram_d[0]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "sram_d[1]"   SITE "K1";
@@ -226,7 +226,7 @@ LOCATE COMP    "sram_d[6]"   SITE "A2";
 IOBUF PORT     "sram_d[6]"   IO_TYPE=LVCMOS33;
 LOCATE COMP    "sram_d[7]"   SITE "B3";
 IOBUF PORT     "sram_d[7]"   IO_TYPE=LVCMOS33;
-               
+
 LOCATE COMP    "sram_ce1"    SITE "J1";
 IOBUF PORT     "sram_ce1"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "sram_ce2"    SITE "B4";

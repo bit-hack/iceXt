@@ -53,5 +53,4 @@ module ym3014(
       end
     end
   end
-
 endmodule

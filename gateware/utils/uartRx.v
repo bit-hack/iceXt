@@ -27,12 +27,12 @@ module uartRx(
   reg [11:0] div;
   reg [ 8:0] shift;
 
-  assign oData  = shift[7:0];
-  assign oBusy  = state != 0;
+  assign oData = shift[7:0];
+  assign oBusy = state != 0;
 
   always @(posedge iClk) begin
-    rxp     <= { rxp[2:0], iRx };
-    oValid  <= 0;
+    rxp    <= { rxp[2:0], iRx };
+    oValid <= 0;
 
     case (state)
     0:
@@ -47,9 +47,9 @@ module uartRx(
       end
     default:
       if (div == 0) begin
-        state   <= state + 1;
-        div     <= CLK_DIV;
-        shift   <= { rxp[3], shift[8:1] };
+        state <= state + 1;
+        div   <= CLK_DIV;
+        shift <= { rxp[3], shift[8:1] };
       end else begin
         div <= div - 1;
       end

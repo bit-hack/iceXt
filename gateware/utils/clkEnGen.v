@@ -8,9 +8,6 @@ module clkEnGen #(
     output oClkEn
 );
 
-`define NEW_CLK_GEN
-`ifdef NEW_CLK_GEN
-
   reg [25:0] accum;
   reg en;
   assign oClkEn = en;
@@ -24,20 +21,4 @@ module clkEnGen #(
       en <= 0;
     end
   end
-
-`else
-
-  localparam ACCUM = (512 * CLK_OUT) / CLK_IN;
-
-  reg [8:0] cnt0 = 0;
-  wire [8:0] cnt1 = cnt0 + ACCUM;
-
-  wire oClkEn = (cnt1[8] == 0) && (cnt0[8] == 1);
-
-  always @(posedge iClk) begin
-    cnt0 <= cnt1;
-  end
-
-`endif
-
 endmodule

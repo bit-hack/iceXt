@@ -9,17 +9,17 @@ module vgaGen (
     output wire        oBlank   // blanking period
 );
 
-  localparam xvis = 640;
-  localparam xsyncs = xvis + 16;
+  localparam xvis   = 640;
+  localparam xsyncs = xvis   + 16;
   localparam xsynce = xsyncs + 96;
-  localparam xmax = 800;
-  localparam xpol = 0;  // negative
+  localparam xmax   = 800;
+  localparam xpol   = 0;  // negative
 
-  localparam yvis = 400;
-  localparam ysyncs = yvis + 12;
+  localparam yvis   = 400;
+  localparam ysyncs = yvis   + 12;
   localparam ysynce = ysyncs + 2;
-  localparam ymax = 449;
-  localparam ypol = 1;  // positive
+  localparam ymax   = 449;
+  localparam ypol   = 1;  // positive
 
   reg [9:0] x;
   reg [9:0] y;
@@ -33,13 +33,13 @@ module vgaGen (
   assign oBlank = delay[0];
   assign oAddr  = yaddr + x[9:1];
 
-  wire [ 9:0] x_add_one = x + 10'd1;
-  wire [ 9:0] y_add_one = y + 10'd1;
+  wire [9:0] x_add_one = x + 10'd1;
+  wire [9:0] y_add_one = y + 10'd1;
 
-  reg  [15:0] yaddr = 0;
+  reg [15:0] yaddr = 0;
 
   // delay sync signals so the address precedes them by one clock.
-  reg  [ 2:0] delay;
+  reg [2:0] delay;
   always @(posedge iClk) begin
     delay <= {xsync, ysync, xblank | yblank};
   end
@@ -61,20 +61,19 @@ module vgaGen (
 
   always @(posedge iClk) begin
     case (x_add_one)
-      xvis:   xblank <= 1;
-      xsyncs: xsync <= xpol;
-      xsynce: xsync <= !xpol;
-      xmax:   xblank <= 0;
+    xvis:   xblank <= 1;
+    xsyncs: xsync  <=  xpol;
+    xsynce: xsync  <= !xpol;
+    xmax:   xblank <= 0;
     endcase
   end
 
   always @(posedge iClk) begin
     case (y_add_one)
-      yvis:   yblank <= 1;
-      ysyncs: ysync <= ypol;
-      ysynce: ysync <= !ypol;
-      ymax:   yblank <= 0;
+    yvis:   yblank <= 1;
+    ysyncs: ysync  <=  ypol;
+    ysynce: ysync  <= !ypol;
+    ymax:   yblank <= 0;
     endcase
   end
-
 endmodule

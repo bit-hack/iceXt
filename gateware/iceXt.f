@@ -2,6 +2,7 @@ utils/uartRx.v
 utils/sevenSeg.v
 utils/clkEnGen.v
 utils/reset.v
+video/mda.v
 sound/ym3014.v
 sound/jtopl/hdl/jtopl_acc.v
 sound/jtopl/hdl/jtopl_csr.v
