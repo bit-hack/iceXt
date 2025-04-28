@@ -1,0 +1,6 @@
+`ifdef INCLUDE_CONFIG_VH
+`define INCLUDE_CONFIG_VH
+
+//`define CFG_ADLIB_ENABLE
+
+`endif

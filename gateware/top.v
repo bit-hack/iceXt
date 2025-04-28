@@ -1,5 +1,7 @@
 `default_nettype none
 
+`include "config.vh"
+
 
 module top(
     input        clk25,
@@ -62,7 +64,7 @@ module top(
       write <= rxData[7];
     end
   end
-`endif
+`endif  // CFG_ADLIB_ENABLE
 
   wire adlibClkEn;
   clkEnGen uClkEnGen (
@@ -86,7 +88,7 @@ module top(
     .snd   (adlibSnd),
     .sample(adlibSample)
   );
-`endif
+`endif  // CFG_ADLIB_ENABLE
 
   ym3014 ymDac (
     .iClk    (clk25),

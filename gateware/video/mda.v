@@ -112,42 +112,39 @@ module video_mda(
   reg [7:0] font[16384];
   initial $readmemb("roms/font8x8.hex", font);
 
-  reg [2:0] dly_hs;
-  reg [2:0] dly_vs;
-  reg [2:0] dly_blank;
+  reg       dly_hs;
+  reg       dly_vs;
+  reg       dly_blank;
   reg [2:0] dly_x0;
   reg [2:0] dly_x1;
   reg [2:0] dly_y0;
+  reg [7:0] lu_chr;     // character lookup
+  reg [7:0] lu_line;    // character line decode
   always @(posedge iClk25) begin
-    dly_hs    <= { dly_hs   [1:0], vga_hs    };
-    dly_vs    <= { dly_vs   [1:0], vga_vs    };
-    dly_blank <= { vga_blank[1:0], vga_blank };
+    dly_hs    <= vga_hs;
+    dly_vs    <= vga_vs;
+    dly_blank <= vga_blank;
     dly_x0    <= vga_x;
     dly_x1    <= dly_x0;
     dly_y0    <= vga_y;
+    lu_chr    <= cram[ vga_addr[11:0] ];
+    lu_line   <= font[ { lu_chr, dly_y0 } ];
   end
 
-  reg [7:0] lu_chr;
-  reg [7:0] lu_line;
-  always @(posedge iClk25) begin
-    lu_chr  <= cram[ vga_addr[11:0] ];
-    lu_line <= font[ { lu_chr, dly_y0 } ];
-  end
-
-  wire        vga_hs;
-  wire        vga_vs;
   wire [15:0] vga_addr;
-  wire        vga_blank;
   wire [ 2:0] vga_x;
   wire [ 2:0] vga_y;
+  wire        vga_hs;
+  wire        vga_vs;
+  wire        vga_blank;
   vga_gen u_vga_gen(
-    /*input              */.iClk25(iClk25),
-    /*output wire        */.oHSync(vga_hs),
-    /*output wire        */.oVSync(vga_vs),
-    /*output wire [15:0] */.oAddr (vga_addr),
-    /*output wire [ 2:0] */.oX    (vga_x),
-    /*output wire [ 2:0] */.oY    (vga_y),
-    /*output wire        */.oBlank(vga_blank)
+    .iClk25(iClk25),
+    .oAddr (vga_addr),
+    .oX    (vga_x),
+    .oY    (vga_y),
+    .oHSync(vga_hs),    // note: delayed by 1 cycle
+    .oVSync(vga_vs),    // note: delayed by 1 cycle
+    .oBlank(vga_blank)  // note: delayed by 1 cycle
   );
 
   // check for 0xB0000 to 0xB8000
@@ -156,19 +153,19 @@ module video_mda(
   wire sel = (iAddr[19:15] == 5'b10110);
 
   // vram write port
-  always @(posedge iClk25) begin
+  always @(posedge iClk) begin
     if (sel & iWr) begin
       cram[ iAddr[11:0] ] <= iData;
     end
   end
 
-  wire bit = lu_line[ dly_x1 ];
-  wire [3:0] bit_val = bit ? 4'hf : 4'h0;
+  wire       bit     = lu_line[ dly_x1 ];   // glyph bit
+  wire [3:0] bit_val = bit ? 4'hf : 4'h0;   // bit -> intensity
 
-  assign oVgaR  = dly_blank[0] ? 4'd0 : bit_val;
-  assign oVgaG  = dly_blank[0] ? 4'd0 : bit_val;
-  assign oVgaB  = dly_blank[0] ? 4'd0 : bit_val;
-  assign oVgaHs = dly_hs   [0];
-  assign oVgaVs = dly_vs   [0];
+  assign oVgaR  = dly_blank ? 4'd0 : bit_val;
+  assign oVgaG  = dly_blank ? 4'd0 : bit_val;
+  assign oVgaB  = dly_blank ? 4'd0 : bit_val;
+  assign oVgaHs = dly_hs;
+  assign oVgaVs = dly_vs;
 
 endmodule
