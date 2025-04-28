@@ -1,7 +1,9 @@
+pll/pll.v
 utils/uartRx.v
 utils/sevenSeg.v
 utils/clkEnGen.v
 utils/reset.v
+cpu/cpu_bus.v
 video/mda.v
 sound/ym3014.v
 sound/jtopl/hdl/jtopl_acc.v

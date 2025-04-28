@@ -160,6 +160,8 @@ LOCATE COMP    "cpu_inta"    SITE "T4";
 IOBUF PORT     "cpu_inta"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_nmi"     SITE "R4";
 IOBUF PORT     "cpu_nmi"     IO_TYPE=LVCMOS33;
+LOCATE COMP    "cpu_intr"    SITE "R3";
+IOBUF PORT     "cpu_intr"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_test"    SITE "T3";
 IOBUF PORT     "cpu_test"    IO_TYPE=LVCMOS33;
 LOCATE COMP    "cpu_ready"   SITE "T2";
