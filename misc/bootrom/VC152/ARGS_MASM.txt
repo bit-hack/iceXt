@@ -1,0 +1,29 @@
+        ML [ /options ] filelist [ /link linkoptions ]
+
+/AT Enable tiny model (.COM file)         /omf generate OMF format object file
+/Bl<linker> Use alternate linker          /Sa Maximize source listing
+/c Assemble without linking               /safeseh Assert all exception
+/Cp Preserve case of user identifiers              handlers are declared
+/Cu Map all identifiers to upper case     /Sf Generate first pass listing
+/Cx Preserve case in publics, externs     /Sl<width> Set line width
+/coff generate COFF format object file    /Sn Suppress symbol-table listing
+/D<name>[=text] Define text macro         /Sp<length> Set page length
+/EP Output preprocessed listing to stdout /Ss<string> Set subtitle
+/F <hex> Set stack size (bytes)           /St<string> Set title
+/Fe<file> Name executable                 /Sx List false conditionals
+/Fl[file] Generate listing                /Ta<file> Assemble non-.ASM file
+/Fm[file] Generate map                    /w Same as /W0 /WX
+/Fo<file> Name object file                /WX Treat warnings as errors
+/FPi Generate 80x87 emulator encoding     /W<number> Set warning level
+/Fr[file] Generate limited browser info   /X Ignore INCLUDE environment path
+/FR[file] Generate full browser info      /Zd Add line number debug info
+/G<c|d|z> Use Pascal, C, or Stdcall calls /Zf Make all symbols public
+/H<number> Set max external name length   /Zi Add symbolic debug info
+/I<name> Add include path                 /Zm Enable MASM 5.10 compatibility
+/link <linker options and libraries>      /Zp[n] Set structure alignment
+/nologo Suppress copyright message        /Zs Perform syntax check only
+/errorReport:<option> Report internal assembler errors to Microsoft
+    none - do not send report
+    prompt - prompt to immediately send report
+    queue - at next admin logon, prompt to send report
+    send - send report automatically

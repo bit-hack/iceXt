@@ -1,0 +1,31 @@
+
+Microsoft (R) Segmented Executable Linker  Version 5.60.339 Dec  5 1994
+Copyright (C) Microsoft Corp 1984-1993.  All rights reserved.
+
+Usage:
+
+LINK
+LINK @<response file>
+LINK <objs>,<exefile>,<mapfile>,<libs>,<deffile>
+
+Valid options are:
+  /?                             /ALIGNMENT
+  /BATCH                         /CODEVIEW
+  /CPARMAXALLOC                  /DOSSEG
+  /DSALLOCATE                    /DYNAMIC
+  /EXEPACK                       /FARCALLTRANSLATION
+  /HELP                          /HIGH
+  /INFORMATION                   /LINENUMBERS
+  /MAP                           /NODEFAULTLIBRARYSEARCH
+  /NOEXTDICTIONARY               /NOFARCALLTRANSLATION
+  /NOGROUPASSOCIATION            /NOIGNORECASE
+  /NOLOGO                        /NONULLSDOSSEG
+  /NOPACKCODE                    /NOPACKFUNCTIONS
+  /NOFREEMEM                     /OLDOVERLAY
+  /ONERROR                       /OVERLAYINTERRUPT
+  /PACKCODE                      /PACKDATA
+  /PACKFUNCTIONS                 /PAUSE
+  /PCODE                         /PMTYPE
+  /QUICKLIBRARY                  /SEGMENTS
+  /STACK                         /TINY
+  /WARNFIXUP                   
