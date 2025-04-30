@@ -60,11 +60,11 @@ module top(
   initial $readmemh("program.hex", ram);
 
   always @(posedge pll_clk10) begin
-    if (cpu_mem_wr) begin
-      ram[ cpu_addr[11:0] ] <= cpu_data_out;
-    end
+    //if (cpu_mem_wr) begin
+    //  ram[ cpu_addr[11:0] ] <= cpu_data_out;
+    //end
     if (cpu_mem_rd) begin
-      cpu_data_in <= ram[ cpu_addr[11:0] ];
+      ram_out <= ram[ cpu_addr[11:0] ];
     end
   end
 
@@ -99,31 +99,29 @@ module top(
   //
 
   cpu_bus u_cpu_bus(
-    /*input            */.iClk     (pll_clk10),
+    .iClk     (pll_clk10),
 
     // internal cpu interface
-
-    /*input            */.iCpuRst  (rst),
-    /*input      [ 7:0]*/.iCpuData (cpu_data_in),
-    /*output reg [ 7:0]*/.oCpuData (cpu_data_out),
-    /*output reg [19:0]*/.oCpuAddr (cpu_addr),
-    /*output reg       */.oCpuMemRd(cpu_mem_rd),
-    /*output reg       */.oCpuMemWr(cpu_mem_wr),
-    /*output reg       */.oCpuIoRd (cpu_io_rd),
-    /*output reg       */.oCpuIoWr (cpu_io_wr),
+    .iCpuRst  (rst),
+    .iCpuData (cpu_data_in),
+    .oCpuData (cpu_data_out),
+    .oCpuAddr (cpu_addr),
+    .oCpuMemRd(cpu_mem_rd),
+    .oCpuMemWr(cpu_mem_wr),
+    .oCpuIoRd (cpu_io_rd),
+    .oCpuIoWr (cpu_io_wr),
 
     // external NEC V20 interface
-
-    /*input            */.iV20Ale  (ex_cpu_ale),
-    /*input            */.iV20Sso  (ex_cpu_sso),
-    /*input            */.iV20Dtr  (ex_cpu_dtr),      // 1-wr, 0-rd
-    /*input            */.iV20Iom  (ex_cpu_iom),      // 1-io, 0-mem
-    /*input      [ 7:0]*/.iV20Data (ex_cpu_ad),       // data / low addr 8bits
-    /*input      [11:0]*/.iV20Addr (ex_cpu_ah),       // upper addr 12bits
-    /*output reg [ 7:0]*/.oV20Data (ex_cpu_data_out),
-    /*output reg       */.oV20Clk  (ex_cpu_clk),      // 5Mhz
-    /*output reg       */.oV20Dir  (ex_cpu_data_dir), // 1(fpga->v20), 0(v20->fpga)
-    /*output           */.oV20Reset(ex_cpu_reset)
+    .iV20Ale  (ex_cpu_ale),
+    .iV20Sso  (ex_cpu_sso),
+    .iV20Dtr  (ex_cpu_dtr),      // 1-wr, 0-rd
+    .iV20Iom  (ex_cpu_iom),      // 1-io, 0-mem
+    .iV20Data (ex_cpu_ad),       // data / low addr 8bits
+    .iV20Addr (ex_cpu_ah),       // upper addr 12bits
+    .oV20Data (ex_cpu_data_out),
+    .oV20Clk  (ex_cpu_clk),      // 5Mhz
+    .oV20Dir  (ex_cpu_data_dir), // 1(fpga->v20), 0(v20->fpga)
+    .oV20Reset(ex_cpu_reset)
   );
 
   //

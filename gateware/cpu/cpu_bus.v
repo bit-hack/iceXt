@@ -65,7 +65,6 @@ module cpu_bus(
   reg  [2:0] state      = 0;
   wire [3:0] state_next = state + 4'd1;
   reg  [2:0] kind       = 0;
-  reg  [2:0] T          = 0;
 
   reg [2:0] rstCnt      = 3'h7;
   assign oV20Reset      = |rstCnt;
@@ -83,9 +82,20 @@ module cpu_bus(
     oCpuIoRd  <= 0;
     oCpuIoWr  <= 0;
 
+    //       0  1  2  3  4  5  6  7     STATE
+    //    |T1   |T2   |T3   |T4   |
+    //  __    __    __    __    __   
+    // |  |__|  |__|  |__|  |__|  |__   CLK
+    //       v              v
+    //      ___
+    //  ___|   |_____________________   ALE
+    //     _____       _________
+    //  --<_____>-----<_________>----   AD[7:0]
+    //     _____
+    //  --<_____>--------------------   A[19:8]
+
     case (state)
     0: begin  // T1...(no-sync)
-      T          <= 1;
       oV20Dir    <= 0;
       if (iV20Ale && oV20Clk==0) begin
         state    <= state_next;
@@ -95,40 +105,39 @@ module cpu_bus(
         kind     <= { iV20Iom, iV20Dtr, iV20Sso };
       end
     end
-    1: begin  // T2   (low)
-      T          <= 2;
+    1: begin  // T1.5 (high)
       oCpuMemRd  <= kind == BUS_CYCLE_FETCH |
                     kind == BUS_CYCLE_MEM_READ;
       oCpuIoRd   <= kind == BUS_CYCLE_IO_READ;
       state      <= state_next;
     end
-    2: begin  // T2.5 (high)
+    2: begin  // T2   (low)
+      // this cycle lets iCpuData become ready
+      state      <= state_next;
+    end
+    3: begin  // T2.5 (high)
       oV20Data   <= iCpuData;
       state      <= state_next;
     end
-    3: begin  // T3   (low)
-      T          <= 3;
+    4: begin  // T3   (low)
       oV20Dir    <= kind == BUS_CYCLE_FETCH |
                     kind == BUS_CYCLE_MEM_READ |
                     kind == BUS_CYCLE_IO_READ;
       state      <= state_next;
     end
-    4: begin  // T3.5 (high)
+    5: begin  // T3.5 (high)
       oCpuData   <= iV20Data;
       oCpuMemWr  <= kind == BUS_CYCLE_MEM_WRITE;
       oCpuIoWr   <= kind == BUS_CYCLE_IO_WRITE;
       state      <= state_next;
     end
-    5: begin  // T4   (low)
-      T          <= 4;
+    6: begin  // T4   (low)
+      oV20Dir    <= 0;
       state      <= state_next;
     end
-    6: begin  // T4.5 (high)
-      oV20Dir    <= 0;
+    7: begin  // T4.5 (high)
       state      <= 0;
     end
-    default:
-      state      <= 0;
     endcase
   end
 endmodule
