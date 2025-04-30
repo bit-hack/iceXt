@@ -54,17 +54,17 @@ module top(
   // dummy RAM
   //
 
-  reg [7:0] ram[4096];
+  reg [7:0] ram[8192];
   reg [7:0] ram_out;
 
   initial $readmemh("program.hex", ram);
 
   always @(posedge pll_clk10) begin
-    //if (cpu_mem_wr) begin
-    //  ram[ cpu_addr[11:0] ] <= cpu_data_out;
-    //end
+    if (cpu_mem_wr) begin
+      ram[ cpu_addr[12:0] ] <= cpu_data_out;
+    end
     if (cpu_mem_rd) begin
-      ram_out <= ram[ cpu_addr[11:0] ];
+      ram_out <= ram[ cpu_addr[12:0] ];
     end
   end
 
@@ -76,7 +76,7 @@ module top(
 
   always @(posedge pll_clk10) begin
     if (cpu_io_wr) begin
-      if (cpu_addr[7:0] == 8'h2b) begin
+      if (cpu_addr[7:0] == 8'h2a) begin
         port <= cpu_data_out;
       end
     end

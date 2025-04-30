@@ -24,13 +24,12 @@
 //      GND o-|20        21|-o RESET   <-
 //            '------------'
 
-
 module cpu_bus(
   input             iClk,
 
   // internal cpu interface
 
-  input             iCpuRst,      // 1-reset
+  input             iCpuRst,       // 1-reset
   input      [ 7:0] iCpuData,
   output reg [ 7:0] oCpuData  = 0,
   output reg [19:0] oCpuAddr  = 0,
@@ -66,16 +65,16 @@ module cpu_bus(
   wire [3:0] state_next = state + 4'd1;
   reg  [2:0] kind       = 0;
 
-  reg [2:0] rstCnt      = 3'h7;
-  assign oV20Reset      = |rstCnt;
+  reg [2:0] rstCnt = 3'h7;
+  assign oV20Reset = |rstCnt;
 
   always @(posedge iClk) begin
 
-    oV20Clk   <= ~oV20Clk;
+    oV20Clk <= ~oV20Clk;
 
-    rstCnt    <= iCpuRst ? 3'h7 :
-                 (oV20Clk & |rstCnt) ? (rstCnt - 1) :
-                 rstCnt;
+    rstCnt <= iCpuRst ? 3'h7 :
+              (oV20Clk & |rstCnt) ? (rstCnt - 1) :
+              rstCnt;
 
     oCpuMemRd <= 0;
     oCpuMemWr <= 0;
