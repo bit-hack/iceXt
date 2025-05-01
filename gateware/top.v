@@ -75,9 +75,9 @@ module top(
   initial $readmemh("program.hex", ram);
 
   always @(posedge pll_clk10) begin
-    if (cpu_mem_wr & selBios) begin
-      ram[ cpu_addr[12:0] ] <= cpu_data_out;
-    end
+    //if (cpu_mem_wr & selBios) begin
+    //  ram[ cpu_addr[12:0] ] <= cpu_data_out;
+    //end
     if (cpu_mem_rd) begin
       ram_out <= ram[ cpu_addr[12:0] ];
     end

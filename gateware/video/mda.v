@@ -150,7 +150,9 @@ module video_mda(
   // vram write port
   always @(posedge iClk) begin
     if (iWr) begin
-      cram[ iAddr[11:0] ] <= iData;
+      if (iAddr[0] == 0) begin
+        cram[ iAddr[12:1] ] <= iData;
+      end
     end
   end
 
