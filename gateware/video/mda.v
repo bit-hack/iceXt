@@ -147,14 +147,9 @@ module video_mda(
     .oBlank(vga_blank)  // note: delayed by 1 cycle
   );
 
-  // check for 0xB0000 to 0xB8000
-  // B7   10110zzz
-  // B8 = 10111000
-  wire sel = (iAddr[19:15] == 5'b10110);
-
   // vram write port
   always @(posedge iClk) begin
-    if (sel & iWr) begin
+    if (iWr) begin
       cram[ iAddr[11:0] ] <= iData;
     end
   end

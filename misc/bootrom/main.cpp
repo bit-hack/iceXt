@@ -20,10 +20,10 @@ extern "C" void cmain()
   uint8_t __far * screen = (uint8_t __far *)0xb0000000;  // B000:0000
   
   screen[0] = 'H';
-  screen[2] = 'e';
-  screen[4] = 'l';
-  screen[6] = 'l';
-  screen[8] = 'o';
+  screen[1] = 'e';
+  screen[2] = 'l';
+  screen[3] = 'l';
+  screen[4] = 'o';
 
   //  uint8_t x = 0;
   //  for (;;) {

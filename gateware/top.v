@@ -22,7 +22,14 @@ module top(
     output        ex_cpu_test,
     output        ex_cpu_ready,
     output        ex_cpu_hold,
-    output        ex_cpu_mn
+    output        ex_cpu_mn,
+
+    // vga interface
+    output [3:0] vga_r,
+    output [3:0] vga_g,
+    output [3:0] vga_b,
+    output       vga_vs,
+    output       vga_hs
 );
 
   //
@@ -143,28 +150,6 @@ module top(
   // pmod connector
   //
 
-  //assign pmod = {
-  //  /*6*/ex_cpu_data_dir,
-  //  /*4*/ex_cpu_sso,
-  //  /*2*/ex_cpu_iom,
-  //  /*0*/ex_cpu_clk,
-  //  /*7*/cpu_mem_rd,
-  //  /*5*/cpu_io_wr,
-  //  /*3*/ex_cpu_dtr,
-  //  /*1*/ex_cpu_ale
-  //};
-
-  //assign pmod = {
-  //  /*6*/ex_cpu_ad[6],
-  //  /*4*/ex_cpu_ad[4],
-  //  /*2*/ex_cpu_ad[2],
-  //  /*0*/ex_cpu_ad[0],
-  //  /*7*/ex_cpu_ad[7],
-  //  /*5*/ex_cpu_ad[5],
-  //  /*3*/ex_cpu_ad[3],
-  //  /*1*/ex_cpu_ad[1]
-  //};
-
   assign pmod = {
     /*6*/port[6],
     /*4*/port[4],
@@ -175,5 +160,35 @@ module top(
     /*3*/port[3],
     /*1*/port[1]
   };
+
+  //
+  // address decoder
+  //
+
+  // [00000 ... 9ffff]
+  wire selRam = cpu_addr[19] == 0 |
+                cpu_addr[19:17] == 3'b100;
+
+  // [B0000 ... B7fff]
+  wire selVram = cpu_addr[19:15] == 5'b10110;
+
+  // [FE000 ... FFFFF]
+  wire selBios = cpu_addr[19:13] == 7'b1111111;
+
+  //
+  // vga interface
+  //
+  video_mda u_video_mda(
+    /*input        */.iClk  (pll_clk10),
+    /*input        */.iClk25(pll_clk25),
+    /*input [19:0] */.iAddr (cpu_addr),
+    /*input [ 7:0] */.iData (cpu_data_out),
+    /*input        */.iWr   (cpu_mem_wr & selVram),
+    /*output [3:0] */.oVgaR (vga_r),
+    /*output [3:0] */.oVgaG (vga_g),
+    /*output [3:0] */.oVgaB (vga_b),
+    /*output       */.oVgaHs(vga_hs),
+    /*output       */.oVgaVs(vga_vs)
+  );
 
 endmodule
