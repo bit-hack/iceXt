@@ -24,12 +24,20 @@ module top(
     output        ex_cpu_hold,
     output        ex_cpu_mn,
 
+    // external sram interface
+    output [19:0] sram_a,
+    inout  [ 7:0] sram_d,
+    output        sram_ce1,  // active low
+    output        sram_ce2,  // active high
+    output        sram_oe,   // active low
+    output        sram_we,   // active low
+
     // vga interface
-    output [3:0] vga_r,
-    output [3:0] vga_g,
-    output [3:0] vga_b,
-    output       vga_vs,
-    output       vga_hs
+    output [ 3:0] vga_r,
+    output [ 3:0] vga_g,
+    output [ 3:0] vga_b,
+    output        vga_vs,
+    output        vga_hs
 );
 
   //
@@ -67,7 +75,7 @@ module top(
   initial $readmemh("program.hex", ram);
 
   always @(posedge pll_clk10) begin
-    if (cpu_mem_wr) begin
+    if (cpu_mem_wr & selBios) begin
       ram[ cpu_addr[12:0] ] <= cpu_data_out;
     end
     if (cpu_mem_rd) begin
@@ -93,7 +101,8 @@ module top(
   // internal cpu bus
   //
 
-  wire [ 7:0] cpu_data_in = ram_out;
+  wire [ 7:0] cpu_data_in = selBios ? ram_out :
+                                      sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
@@ -150,15 +159,26 @@ module top(
   // pmod connector
   //
 
+  //assign pmod = {
+  //  /*6*/port[6],
+  //  /*4*/port[4],
+  //  /*2*/port[2],
+  //  /*0*/port[0],
+  //  /*7*/port[7],
+  //  /*5*/port[5],
+  //  /*3*/port[3],
+  //  /*1*/port[1]
+  //};
+
   assign pmod = {
-    /*6*/port[6],
-    /*4*/port[4],
-    /*2*/port[2],
-    /*0*/port[0],
-    /*7*/port[7],
-    /*5*/port[5],
-    /*3*/port[3],
-    /*1*/port[1]
+    /*6*/sram_ce2,
+    /*4*/sram_dly,
+    /*2*/sram_oe,
+    /*0*/pll_clk10,
+    /*7*/selRam,
+    /*5*/sram_ce1,
+    /*3*/sram_we,
+    /*1*/sram_dir
   };
 
   //
@@ -190,5 +210,41 @@ module top(
     /*output       */.oVgaHs(vga_hs),
     /*output       */.oVgaVs(vga_vs)
   );
+
+  //
+  // sram interface
+  //
+
+  reg sram_dir = 0;  // 1(fpga->sram) 0(fpga<-sram)
+  reg sram_oe  = 1;  // active low
+  reg sram_we  = 1;  // active low
+  reg sram_dly = 0;
+
+  always @(posedge pll_clk10) begin
+    if (sram_dly == 0) begin
+      sram_oe  <= 1;
+      sram_we  <= 1;
+      sram_dir <= 0;
+      if (cpu_mem_rd) begin
+        sram_we  <= 1;
+        sram_oe  <= 0;  // output enabled
+        sram_dir <= 0;  // fpga<-sram
+        sram_dly <= 1;
+      end
+      if (cpu_mem_wr) begin
+        sram_we  <= 0;  // write enable
+        sram_oe  <= 1;
+        sram_dir <= 1;  // fpga->sram
+        sram_dly <= 1;
+      end
+    end else begin
+      sram_dly <= 0;
+    end
+  end
+
+  assign sram_a   = cpu_addr;
+  assign sram_d   = sram_dir ? cpu_data_out : 8'bzzzzzzzz;
+  assign sram_ce1 = 0;  // active low
+  assign sram_ce2 = 1;  // active high
 
 endmodule

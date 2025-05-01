@@ -16,6 +16,10 @@ start:
 ;    mov ds,ax               ; Make DS correct
 ;    mov es,ax               ; Make ES correct
 ;    mov ss,ax               ; Make SS correct
+
+    mov ax,02000h
+    mov ss,ax
+
     mov bp,0ff00h
     mov sp,0ff00h           ; Setup a stack
     sti

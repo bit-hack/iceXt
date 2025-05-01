@@ -17,23 +17,33 @@ void port_out(uint8_t data) {
 
 extern "C" void cmain()
 {
+  uint8_t __far * ram    = (uint8_t __far *)0x10000000;  // 1000:0000
   uint8_t __far * screen = (uint8_t __far *)0xb0000000;  // B000:0000
-  
-  screen[0] = 'H';
-  screen[1] = 'e';
-  screen[2] = 'l';
-  screen[3] = 'l';
-  screen[4] = 'o';
 
-  //  uint8_t x = 0;
-  //  for (;;) {
-  //      for (x = 0; x < 32; ++x) {
-  //          port_out(x);
-  //      }
-  //      for (x = 0; x < 32; ++x) {
-  //          port_out(x ^ 31);
-  //      }
-  //  }
-  
-  for (;;);
+  int i = 0;
+  for (;; ++i) {
+
+    ram[0] = 'R';
+    ram[1] = 'A';
+    ram[2] = 'M';
+    ram[3] = 'O';
+    ram[4] = 'K';
+
+    {
+      uint16_t x = 0xffff;
+      while (--x);
+    }
+
+    screen[0] = ram[0];
+    screen[1] = ram[1];
+    screen[2] = ram[2];
+    screen[3] = ram[3];
+    screen[4] = ram[4];
+    screen[5] = '0' + i % 10;
+
+    {
+      uint16_t x = 0xffff;
+      while (--x);
+    }
+  }
 }
