@@ -73,29 +73,29 @@ static uint16_t irq_mask; // IRQs pending
 
 static uint8_t GetMemAbsB(uint32_t addr)
 {
-    return mem_read( addr & 0xFFFFF );
+    return mem_read( addr );
 }
 
 static uint16_t GetMemAbsW(uint32_t addr)
 {
-    return        mem_read( (addr + 0) & 0xFFFFF ) +
-            256 * mem_read( (addr + 1) & 0xFFFFF );
+    return mem_read( (addr + 0) ) +
+          (mem_read( (addr + 1) ) * 256);
 }
 
 static void SetMemAbsB(uint32_t addr, uint8_t val)
 {
-    mem_write( 0xFFFFF & addr, val);
+    mem_write( addr, val);
 }
 
 static void SetMemAbsW(uint32_t addr, uint16_t x)
 {
-    mem_write(addr & 0xFFFFF, x & 0xff);
-    mem_write( (addr + 1) & 0xFFFFF, x >> 8);
+    mem_write(addr + 0, x & 0xff);
+    mem_write(addr + 1, x >> 8);
 }
 
 static uint8_t GetMemB(uint8_t seg, uint16_t off)
 {
-  return mem_read( 0xFFFFF & (sregs[seg] * 16 + off) );
+  return mem_read( sregs[seg] * 16 + off );
 }
 
 static void SetMemB(uint16_t seg, uint16_t off, uint8_t val)
@@ -498,6 +498,9 @@ static void cpu_trap(uint32_t num)
 
 static void handle_irq(void)
 {
+
+    // TODO: just pass directly into the code
+
     if(IF && irq_mask)
     {
         // Get lower set bit (highest priority IRQ)
@@ -2314,7 +2317,7 @@ static void i_halt(void)
     exit(0);
 }
 
-static void debug_instruction(void)
+void cpu_dump(void)
 {
     uint32_t nip = (cpuGetIP() + 0xFFFF) & 0xFFFF; // subtract 1!
 
@@ -2349,8 +2352,7 @@ static void debug_instruction(void)
 
 static void do_instruction(uint8_t code)
 {
-    if(true)
-        debug_instruction();
+    cpu_dump();
     switch(code)
     {
     case 0x00: OP_br8(ADD);

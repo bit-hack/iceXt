@@ -13,9 +13,9 @@ main:
 start:
     cli
     mov ax,cs               ; Setup segment registers
-    mov ds,ax               ; Make DS correct
-    mov es,ax               ; Make ES correct
-    mov ss,ax               ; Make SS correct
+;    mov ds,ax               ; Make DS correct
+;    mov es,ax               ; Make ES correct
+;    mov ss,ax               ; Make SS correct
     mov bp,0ff00h
     mov sp,0ff00h           ; Setup a stack
     sti

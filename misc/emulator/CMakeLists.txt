@@ -6,5 +6,12 @@ add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_executable(iceXtEmu
   src/cpu.c
   src/cpu.h
+  src/font.c
   src/main.c
 )
+
+set(SDL_LIBRARY     "unknown" CACHE FILEPATH "SDL1.2 library path")
+set(SDL_INCLUDE_DIR "unknown" CACHE PATH     "SDL1.2 include directory")
+
+include_directories(iceXtEmu ${SDL_INCLUDE_DIR})
+target_link_libraries(iceXtEmu ${SDL_LIBRARY})

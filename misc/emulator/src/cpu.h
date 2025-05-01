@@ -12,6 +12,7 @@ void    port_write(uint32_t port, uint8_t value);
 uint8_t mem_read  (uint32_t addr);
 void    mem_write (uint32_t addr, uint8_t data);
 
+void cpu_dump(void);
 void cpu_step(void);
 void cpu_init(void);
 
