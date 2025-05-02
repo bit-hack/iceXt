@@ -79,7 +79,7 @@ module top(
   );
 
   //
-  // internal cpu bus
+  // internal CPU bus
   //
 
   wire [ 7:0] cpu_data_in = bios_sel ? bios_out :
@@ -92,7 +92,7 @@ module top(
   wire [19:0] cpu_addr;
 
   //
-  // internal to external cpu bus bridge
+  // internal to external CPU bus bridge
   //
 
   cpu_bus u_cpu_bus(
@@ -122,7 +122,7 @@ module top(
   );
 
   //
-  // external cpu bus
+  // external CPU bus
   //
 
   wire       ex_cpu_data_dir;
@@ -137,7 +137,7 @@ module top(
   assign ex_cpu_ad    = ex_cpu_data_dir ? ex_cpu_data_out : 8'bzzzzzzzz;
 
   //
-  // vga interface
+  // VGA interface
   //
   video_mda u_video_mda(
     .iClk  (pll_clk10),
@@ -153,7 +153,7 @@ module top(
   );
 
   //
-  // sram interface
+  // SRAM interface
   //
 
   wire sram_dir;
