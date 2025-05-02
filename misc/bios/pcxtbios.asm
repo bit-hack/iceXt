@@ -3479,7 +3479,7 @@ proc	int_10_func_6_7	near
 
 @@wait: in	al, dx				; Read CGA status register
 	test	al, 00001000b			;   vertical retrace?
-	jz	@@wait				;   wait until it is
+	;jz	@@wait				;   wait until it is
 	mov	dx, 3D8h			; Then go and
 	mov	al, 25h 			;   turn the display
 	out	dx, al				;   off to avoid snow
