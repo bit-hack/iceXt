@@ -73,18 +73,18 @@ static uint16_t irq_mask; // IRQs pending
 
 static uint8_t GetMemAbsB(uint32_t addr)
 {
-    return mem_read( addr );
+    return mem_read(addr);
 }
 
 static uint16_t GetMemAbsW(uint32_t addr)
 {
-    return mem_read( (addr + 0) ) +
-          (mem_read( (addr + 1) ) * 256);
+    return mem_read(addr + 0) +
+          (mem_read(addr + 1) * 256);
 }
 
 static void SetMemAbsB(uint32_t addr, uint8_t val)
 {
-    mem_write( addr, val);
+    mem_write(addr, val);
 }
 
 static void SetMemAbsW(uint32_t addr, uint16_t x)
@@ -95,7 +95,7 @@ static void SetMemAbsW(uint32_t addr, uint16_t x)
 
 static uint8_t GetMemB(uint8_t seg, uint16_t off)
 {
-  return mem_read( sregs[seg] * 16 + off );
+  return mem_read(sregs[seg] * 16 + off);
 }
 
 static void SetMemB(uint16_t seg, uint16_t off, uint8_t val)
@@ -274,16 +274,13 @@ void cpu_init(void)
 {
     uint32_t i, j, c;
 
-    for(i = 0; i < 4; i++)
-    {
-        wregs[i] = 0;
-        sregs[i] = 0x70;
+    for(i = 0; i < 4; i++) {
+        sregs[i] = 0;
     }
-    for(; i < 8; i++)
-        wregs[i] = 0;
 
-    wregs[SP] = 0;
-    ip = 0x100;
+    for (i = 0; i < 8; i++) {
+        wregs[i] = 0;
+    }
 
     for(i = 0; i < 256; i++)
     {
@@ -297,11 +294,7 @@ void cpu_init(void)
 
     segment_override = NoSeg;
 
-    // set correct reset conditions
     sregs[CS] = 0xffff;
-    sregs[ES] = 0;
-    sregs[SS] = 0;
-    sregs[DS] = 0;
     ip = 0x0;
 }
 
@@ -2352,7 +2345,7 @@ void cpu_dump(void)
 
 static void do_instruction(uint8_t code)
 {
-    cpu_dump();
+//    cpu_dump();
     switch(code)
     {
     case 0x00: OP_br8(ADD);

@@ -15,12 +15,12 @@ uint8_t font[];
 
 
 uint8_t port_read(uint32_t port) {
-  printf("PORT READ: %03x\n", port);
-  return 0xff;
+//  printf("PORT READ: %03x\n", port);
+  return 0x0;
 }
 
 void port_write(uint32_t port, uint8_t value) {
-printf("PORT WRITE: %03x <= %02x\n", port, value);
+//  printf("PORT WRITE: %03x <= %02x\n", port, value);
 }
 
 uint8_t mem_read(uint32_t addr) {
@@ -44,13 +44,8 @@ static bool load_hex(uint8_t *dst, uint32_t addr, const char* path, uint32_t max
 
   while (!feof(fd)) {
 
-    char temp[256] = { 0 };
-    if (!fgets(temp, sizeof(temp) - 1, fd)) {
-      break;
-    }
-
     uint32_t value = 0;
-    if (!sscanf(temp, "%02x", &value)) {
+    if (!fscanf(fd, "%02x ", &value)) {
       break;
     }
 
@@ -131,7 +126,7 @@ int main(int argc, char** args) {
 
   SDL_Init(SDL_INIT_VIDEO);
 
-#if 1
+#if 0
   for (uint32_t i = 0; i < 1024 * 1024; ++i) {
     memory[i] = 0x90;
   }
@@ -146,7 +141,7 @@ int main(int argc, char** args) {
     return 1;
   }
 
-  const uint32_t steps = 100;
+  const uint32_t steps = 10000;
 
   SDL_Surface* screen = SDL_SetVideoMode(640, 400, 32, 0);
   if (!screen) {
