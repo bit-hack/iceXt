@@ -11,8 +11,8 @@
 module pic(
   input        iClk,
   input        iRst,
+  input        iIrq0,     // timer
   input        iIrq1,     // keyboard
-  input        iIrq2,     // timer
   input        iIntAck,   // cpu->pic int ack
   output       oInt,      // cpu<-pic int req
   output       oSel,
@@ -47,7 +47,7 @@ module pic(
       sel <= 1;
     end
 
-    irr <= {iIrq2, iIrq1} |           // latch new requests
+    irr <= {iIrq1, iIrq0} |           // latch new requests
            (iIntAck ? (irr & ~top) :  // clear ack'd requests
                        irr);
 

@@ -184,15 +184,15 @@ module top(
   //
   // PIC interrupt controller
   //
-  
+
   wire       pic_sel;
   wire [7:0] pic_out;
 
   pic u_pic(
     .iClk   (pll_clk10),
     .iRst   (rst),
+    .iIrq0  (0),             // timer
     .iIrq1  (0),             // keyboard
-    .iIrq2  (0),             // timer
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
