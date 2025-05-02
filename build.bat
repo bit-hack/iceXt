@@ -1,3 +1,3 @@
 del iceXt.bin
-python3 icefront/icefront.py -o iceXt.bin -t top iceXt gateware/iceXt.f
+python icefront/icefront.py -o iceXt.bin -t top iceXt gateware/iceXt.f
 set /p DUMMY=Hit ENTER to continue...

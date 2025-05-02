@@ -66,43 +66,25 @@ module top(
   );
 
   //
-  // dummy RAM
+  // BIOS
   //
 
-  reg [7:0] ram[8192];
-  reg [7:0] ram_out;
-
-  initial $readmemh("program.hex", ram);
-
-  always @(posedge pll_clk10) begin
-    //if (cpu_mem_wr & selBios) begin
-    //  ram[ cpu_addr[12:0] ] <= cpu_data_out;
-    //end
-    if (cpu_mem_rd) begin
-      ram_out <= ram[ cpu_addr[12:0] ];
-    end
-  end
-
-  //
-  // port latch
-  //
-
-  reg [7:0] port;
-
-  always @(posedge pll_clk10) begin
-    if (cpu_io_wr) begin
-      if (cpu_addr[7:0] == 8'h2a) begin
-        port <= cpu_data_out;
-      end
-    end
-  end
+  wire       bios_sel;
+  wire [7:0] bios_out;
+  bios u_bios(
+    .iClk (pll_clk10),
+    .iAddr(cpu_addr),
+    .iRd  (cpu_mem_rd),
+    .oSel (bios_sel),
+    .oData(bios_out)
+  );
 
   //
   // internal cpu bus
   //
 
-  wire [ 7:0] cpu_data_in = selBios ? ram_out :
-                                      sram_d;
+  wire [ 7:0] cpu_data_in = bios_sel ? bios_out :
+                                       sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
@@ -156,59 +138,19 @@ module top(
   assign ex_cpu_ad    = ex_cpu_data_dir ? ex_cpu_data_out : 8'bzzzzzzzz;
 
   //
-  // pmod connector
-  //
-
-  //assign pmod = {
-  //  /*6*/port[6],
-  //  /*4*/port[4],
-  //  /*2*/port[2],
-  //  /*0*/port[0],
-  //  /*7*/port[7],
-  //  /*5*/port[5],
-  //  /*3*/port[3],
-  //  /*1*/port[1]
-  //};
-
-  assign pmod = {
-    /*6*/sram_ce2,
-    /*4*/sram_dly,
-    /*2*/sram_oe,
-    /*0*/pll_clk10,
-    /*7*/selRam,
-    /*5*/sram_ce1,
-    /*3*/sram_we,
-    /*1*/sram_dir
-  };
-
-  //
-  // address decoder
-  //
-
-  // [00000 ... 9ffff]
-  wire selRam = cpu_addr[19] == 0 |
-                cpu_addr[19:17] == 3'b100;
-
-  // [B0000 ... B7fff]
-  wire selVram = cpu_addr[19:15] == 5'b10110;
-
-  // [FE000 ... FFFFF]
-  wire selBios = cpu_addr[19:13] == 7'b1111111;
-
-  //
   // vga interface
   //
   video_mda u_video_mda(
-    /*input        */.iClk  (pll_clk10),
-    /*input        */.iClk25(pll_clk25),
-    /*input [19:0] */.iAddr (cpu_addr),
-    /*input [ 7:0] */.iData (cpu_data_out),
-    /*input        */.iWr   (cpu_mem_wr & selVram),
-    /*output [3:0] */.oVgaR (vga_r),
-    /*output [3:0] */.oVgaG (vga_g),
-    /*output [3:0] */.oVgaB (vga_b),
-    /*output       */.oVgaHs(vga_hs),
-    /*output       */.oVgaVs(vga_vs)
+    .iClk  (pll_clk10),
+    .iClk25(pll_clk25),
+    .iAddr (cpu_addr),
+    .iData (cpu_data_out),
+    .iWr   (cpu_mem_wr),
+    .oVgaR (vga_r),
+    .oVgaG (vga_g),
+    .oVgaB (vga_b),
+    .oVgaHs(vga_hs),
+    .oVgaVs(vga_vs)
   );
 
   //
