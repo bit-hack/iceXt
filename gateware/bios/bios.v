@@ -7,6 +7,8 @@
 **/
 `default_nettype none
 
+`include "../config.vh"
+
 
 module bios(
   input        iClk,
@@ -20,7 +22,7 @@ module bios(
   reg [7:0] bios_rom[8192];
   reg [7:0] bios_out = 0;
 
-  initial $readmemh("roms/bios.hex", bios_rom);
+  initial $readmemh("roms/pcxtbios.hex", bios_rom);
 
   always @(posedge iClk) begin
     bios_sel <= 0;

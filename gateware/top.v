@@ -86,11 +86,30 @@ module top(
   );
 
   //
+  // port hack
+  //
+  // the bios scroll routine tries to wait for vertical retrace by accessing
+  // the CGA status register 0x3DA.
+  // the routine reads the wrong bit when checking for vertical retrace.
+
+  reg       ph_sel = 0;
+  reg [7:0] ph_out = 0;
+
+  always @(posedge pll_clk10) begin
+    ph_sel <= 0;
+    ph_out <= 8'hff;
+    if (cpu_io_rd && cpu_addr[11:0] == 12'h3da) begin
+      ph_sel <= 1;
+    end
+  end
+
+  //
   // internal CPU bus
   //
 
   wire [ 7:0] cpu_data_in = bios_sel ? bios_out :
                              pic_sel ?  pic_out :
+                              ph_sel ?   ph_out :
                                          sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
@@ -191,12 +210,24 @@ module top(
   pic u_pic(
     .iClk   (pll_clk10),
     .iRst   (rst),
-    .iIrq0  (0),             // timer
+    .iIrq0  (irq0),             // timer
     .iIrq1  (0),             // keyboard
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
     .oData  (pic_out)
+  );
+
+  //
+  // PIT timer
+  //
+
+  wire irq0;
+
+  pit u_pit(
+    .iClk (pll_clk10),
+    .iRst (rst),
+    .oIrq0(irq0) // ~18.2065hz
   );
 
 endmodule

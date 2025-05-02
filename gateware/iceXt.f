@@ -8,5 +8,6 @@ bios/bios.v
 sram/sram_ctrl.v
 video/mda.v
 chipset/pic.v
+chipset/pit.v
 sound/ym3014.v
 top.v

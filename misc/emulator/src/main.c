@@ -15,12 +15,18 @@ uint8_t font[];
 
 
 uint8_t port_read(uint32_t port) {
-//  printf("PORT READ: %03x\n", port);
-  return 0x0;
+  //printf("PORT READ: %03x\n", port);
+
+  if (port == 0x3DA) {
+    return 0xff;  // weird this is required!
+  }
+
+  return memory[port & 0xffff];
 }
 
 void port_write(uint32_t port, uint8_t value) {
-//  printf("PORT WRITE: %03x <= %02x\n", port, value);
+  //printf("PORT WRITE: %03x <= %02x\n", port, value);
+  //io[port & 0xffff] = value;
 }
 
 uint8_t mem_read(uint32_t addr) {
@@ -69,7 +75,7 @@ static bool load_bin(uint32_t addr, const char* path) {
 
   assert(addr < top);
 
-  FILE* fd = fopen(path, "r");
+  FILE* fd = fopen(path, "rb");
   if (!fd) {
     return false;
   }
@@ -95,13 +101,11 @@ static bool load_bin(uint32_t addr, const char* path) {
 static void render_mda(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
 
-  uint32_t addry = 0xB0000;
-
   uint32_t* dst = screen->pixels;
 
   for (uint32_t y = 0; y < 400; ++y) {
 
-    uint32_t addrx = 0xB0000 + (y / 16) * (80 * 2);
+    uint32_t addrx = 0xB8000 + (y / 16) * (80 * 2);
     uint32_t cy = (y / 2) % 8;
 
     for (uint32_t x = 0; x < 640; ++x) {
@@ -136,12 +140,14 @@ int main(int argc, char** args) {
 
   const char* path = argc >= 2 ? args[1] : "program.hex";
 
-  if (!load_hex(memory, 0xfe000, path, 1024 * 8)) {
+  //if (!load_hex(memory, 0xfe000, path, 1024 * 8)) {
+  if (!load_bin(0xfe000, path)) {
     fprintf(stderr, "Unable to load program!\n");
     return 1;
   }
 
-  const uint32_t steps = 10000;
+  const uint32_t steps = 1000;
+  uint32_t irq0 = 0;
 
   SDL_Surface* screen = SDL_SetVideoMode(640, 400, 32, 0);
   if (!screen) {
@@ -160,6 +166,11 @@ int main(int argc, char** args) {
 
     for (uint32_t i = 0; i < steps; ++i) {
       cpu_step();
+
+      if (irq0++ >= 100000) {
+        cpu_interrupt(0);
+        irq0 = 0;
+      }
     }
 
     render_mda(screen);

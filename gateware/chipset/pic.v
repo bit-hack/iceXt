@@ -22,8 +22,8 @@ module pic(
   // todo: mask
   //       end of interrupt
 
-  reg [1:0] isr;        // in service
-  reg [1:0] irr;        // pending
+  reg [1:0] isr   = 0;  // in service
+  reg [1:0] irr   = 0;  // pending
   reg       sel   = 0;  // pic selected
   reg [7:0] vec   = 0;  // vector code
 
@@ -32,7 +32,7 @@ module pic(
     irr[1] ? 2'b10 :
              2'b00;
 
-  wire [7:0] code =
+  wire [7:0] code =     // lane to code
     isr[0] ? 8'd8 :
     isr[1] ? 8'd9 :
              8'd0;
@@ -42,14 +42,14 @@ module pic(
     sel <= 0;
 
     if (iIntAck) begin
-      isr <= top;
+      // clear before latching new interrupt
+      isr <= isr ? 0 : top;
       vec <= code;
       sel <= 1;
     end
 
-    irr <= {iIrq1, iIrq0} |           // latch new requests
-           (iIntAck ? (irr & ~top) :  // clear ack'd requests
-                       irr);
+    // latch new state and clear ack'd state
+    irr <= {iIrq1, iIrq0} | (irr & ~isr);
 
     // handle resets
     if (iRst) begin

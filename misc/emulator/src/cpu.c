@@ -489,8 +489,13 @@ static void cpu_trap(uint32_t num)
     interrupt(num);
 }
 
-static void handle_irq(void)
+void cpu_interrupt(uint8_t irqn)
 {
+#if 1
+  if (IF) {
+    interrupt(8 + irqn);
+  }
+#else
 
     // TODO: just pass directly into the code
 
@@ -511,6 +516,7 @@ static void handle_irq(void)
 //                interrupt(0x68 + irqn);
         }
     }
+#endif
 }
 
 #define ADD_8()                                                                \
@@ -2609,7 +2615,7 @@ static void do_instruction(uint8_t code)
 
 void cpu_step(void)
 {
-    handle_irq();
+    //handle_irq();
     next_instruction();
 }
 

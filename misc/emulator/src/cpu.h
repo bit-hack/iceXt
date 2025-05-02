@@ -15,6 +15,7 @@ void    mem_write (uint32_t addr, uint8_t data);
 void cpu_dump(void);
 void cpu_step(void);
 void cpu_init(void);
+void cpu_interrupt(uint8_t irqn);
 
 // Trigger hardware interrupts.
 // IRQ-0 to IRQ-7 call INT-08 to INT-0F
