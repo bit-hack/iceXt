@@ -1,4 +1,12 @@
+/*     _          _  ________
+ *    (_)_______ | |/ /_  __/
+ *   / / ___/ _ \|   / / /
+ *  / / /__/  __/   | / /
+ * /_/\___/\___/_/|_|/_/
+ *
+**/
 `default_nettype none
+
 
 //                 8088
 //             _____  _____
@@ -24,6 +32,7 @@
 //      GND o-|20        21|-o RESET   <-
 //            '------------'
 
+
 module cpu_bus(
   input             iClk,
 
@@ -31,12 +40,13 @@ module cpu_bus(
 
   input             iCpuRst,       // 1-reset
   input      [ 7:0] iCpuData,
-  output reg [ 7:0] oCpuData  = 0,
-  output reg [19:0] oCpuAddr  = 0,
-  output reg        oCpuMemRd = 0,
-  output reg        oCpuMemWr = 0,
-  output reg        oCpuIoRd  = 0,
-  output reg        oCpuIoWr  = 0,
+  output reg [ 7:0] oCpuData   = 0,
+  output reg [19:0] oCpuAddr   = 0,
+  output reg        oCpuMemRd  = 0,
+  output reg        oCpuMemWr  = 0,
+  output reg        oCpuIoRd   = 0,
+  output reg        oCpuIoWr   = 0,
+  output reg        oCpuIntAck = 0,
 
   // external NEC V20 interface
 
@@ -76,10 +86,11 @@ module cpu_bus(
               (oV20Clk & |rstCnt) ? (rstCnt - 1) :
               rstCnt;
 
-    oCpuMemRd <= 0;
-    oCpuMemWr <= 0;
-    oCpuIoRd  <= 0;
-    oCpuIoWr  <= 0;
+    oCpuMemRd  <= 0;
+    oCpuMemWr  <= 0;
+    oCpuIoRd   <= 0;
+    oCpuIoWr   <= 0;
+    oCpuIntAck <= 0;
 
     //       0  1  2  3  4  5  6  7     STATE
     //    |T1   |T2   |T3   |T4   |
@@ -108,6 +119,7 @@ module cpu_bus(
       oCpuMemRd  <= kind == BUS_CYCLE_FETCH |
                     kind == BUS_CYCLE_MEM_READ;
       oCpuIoRd   <= kind == BUS_CYCLE_IO_READ;
+      oCpuIntAck <= kind == BUS_CYCLE_INT_ACK;
       state      <= state_next;
     end
     2: begin  // T2   (low)
@@ -119,9 +131,10 @@ module cpu_bus(
       state      <= state_next;
     end
     4: begin  // T3   (low)
-      oV20Dir    <= kind == BUS_CYCLE_FETCH |
+      oV20Dir    <= kind == BUS_CYCLE_FETCH    |
                     kind == BUS_CYCLE_MEM_READ |
-                    kind == BUS_CYCLE_IO_READ;
+                    kind == BUS_CYCLE_IO_READ  |
+                    kind == BUS_CYCLE_INT_ACK;
       state      <= state_next;
     end
     5: begin  // T3.5 (high)

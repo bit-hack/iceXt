@@ -1,10 +1,20 @@
+/*     _          _  ________
+ *    (_)_______ | |/ /_  __/
+ *   / / ___/ _ \|   / / /
+ *  / / /__/  __/   | / /
+ * /_/\___/\___/_/|_|/_/
+ *
+**/
+`default_nettype none
+
+
 // diamond 3.7 accepts this PLL
 // diamond 3.8-3.9 is untested
 // diamond 3.10 or higher is likely to abort with error about unable to use feedback signal
 // cause of this could be from wrong CPHASE/FPHASE parameters
 module pll
 (
-    input clkin, // 25 MHz, 0 deg
+    input  clkin,   // 25 MHz, 0 deg
     output clkout0, // 10 MHz, 0 deg
     output clkout1, // 25 MHz, 0 deg
     output locked

@@ -1,4 +1,12 @@
+/*     _          _  ________
+ *    (_)_______ | |/ /_  __/
+ *   / / ___/ _ \|   / / /
+ *  / / /__/  __/   | / /
+ * /_/\___/\___/_/|_|/_/
+ *
+**/
 `default_nettype none
+
 
 // 4k of RAM at address 0x0B0000
 // the entire 32k from 0B0000h to 0B7FFFh is filled with repeats of this 4k area.
@@ -9,7 +17,6 @@
 // layout <char><attr><char><attr><char><attr>...
 // 8x16 font at 1x2 scale for 640x400.
 
-`default_nettype none
 
 // 640x400@70hz
 module vga_gen(

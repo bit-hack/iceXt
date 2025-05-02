@@ -1,3 +1,10 @@
+/*     _          _  ________
+ *    (_)_______ | |/ /_  __/
+ *   / / ___/ _ \|   / / /
+ *  / / /__/  __/   | / /
+ * /_/\___/\___/_/|_|/_/
+ *
+**/
 `default_nettype none
 
 `include "config.vh"
@@ -83,12 +90,14 @@ module top(
   //
 
   wire [ 7:0] cpu_data_in = bios_sel ? bios_out :
-                                       sram_d;
+                             pic_sel ?  pic_out :
+                                         sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
   wire        cpu_io_rd;
   wire        cpu_io_wr;
+  wire        cpu_int_ack;
   wire [19:0] cpu_addr;
 
   //
@@ -96,29 +105,30 @@ module top(
   //
 
   cpu_bus u_cpu_bus(
-    .iClk     (pll_clk10),
+    .iClk      (pll_clk10),
 
     // internal cpu interface
-    .iCpuRst  (rst),
-    .iCpuData (cpu_data_in),
-    .oCpuData (cpu_data_out),
-    .oCpuAddr (cpu_addr),
-    .oCpuMemRd(cpu_mem_rd),
-    .oCpuMemWr(cpu_mem_wr),
-    .oCpuIoRd (cpu_io_rd),
-    .oCpuIoWr (cpu_io_wr),
+    .iCpuRst   (rst),
+    .iCpuData  (cpu_data_in),
+    .oCpuData  (cpu_data_out),
+    .oCpuAddr  (cpu_addr),
+    .oCpuMemRd (cpu_mem_rd),
+    .oCpuMemWr (cpu_mem_wr),
+    .oCpuIoRd  (cpu_io_rd),
+    .oCpuIoWr  (cpu_io_wr),
+    .oCpuIntAck(cpu_int_ack),
 
     // external NEC V20 interface
-    .iV20Ale  (ex_cpu_ale),
-    .iV20Sso  (ex_cpu_sso),
-    .iV20Dtr  (ex_cpu_dtr),      // 1-wr, 0-rd
-    .iV20Iom  (ex_cpu_iom),      // 1-io, 0-mem
-    .iV20Data (ex_cpu_ad),       // data / low addr 8bits
-    .iV20Addr (ex_cpu_ah),       // upper addr 12bits
-    .oV20Data (ex_cpu_data_out),
-    .oV20Clk  (ex_cpu_clk),      // 5Mhz
-    .oV20Dir  (ex_cpu_data_dir), // 1(fpga->v20), 0(v20->fpga)
-    .oV20Reset(ex_cpu_reset)
+    .iV20Ale   (ex_cpu_ale),
+    .iV20Sso   (ex_cpu_sso),
+    .iV20Dtr   (ex_cpu_dtr),      // 1-wr, 0-rd
+    .iV20Iom   (ex_cpu_iom),      // 1-io, 0-mem
+    .iV20Data  (ex_cpu_ad),       // data / low addr 8bits
+    .iV20Addr  (ex_cpu_ah),       // upper addr 12bits
+    .oV20Data  (ex_cpu_data_out),
+    .oV20Clk   (ex_cpu_clk),      // iClk/2
+    .oV20Dir   (ex_cpu_data_dir), // 1(fpga->v20), 0(v20->fpga)
+    .oV20Reset (ex_cpu_reset)
   );
 
   //
@@ -131,7 +141,6 @@ module top(
   assign ex_cpu_test  = 1;
   assign ex_cpu_ready = 1;
   assign ex_cpu_nmi   = 0;
-  assign ex_cpu_intr  = 0;
   assign ex_cpu_hold  = 0;
   assign ex_cpu_mn    = 1;
   assign ex_cpu_ad    = ex_cpu_data_dir ? ex_cpu_data_out : 8'bzzzzzzzz;
@@ -171,5 +180,23 @@ module top(
 
   assign sram_a = cpu_addr;
   assign sram_d = sram_dir ? cpu_data_out : 8'bzzzzzzzz;
+
+  //
+  // PIC interrupt controller
+  //
+  
+  wire       pic_sel;
+  wire [7:0] pic_out;
+
+  pic u_pic(
+    .iClk   (pll_clk10),
+    .iRst   (rst),
+    .iIrq1  (0),             // keyboard
+    .iIrq2  (0),             // timer
+    .iIntAck(cpu_int_ack),   // cpu->pic int ack
+    .oInt   (ex_cpu_intr),   // cpu<-pic int req
+    .oSel   (pic_sel),
+    .oData  (pic_out)
+  );
 
 endmodule

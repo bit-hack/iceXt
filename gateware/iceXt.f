@@ -7,5 +7,6 @@ cpu/cpu_bus.v
 bios/bios.v
 sram/sram_ctrl.v
 video/mda.v
+chipset/pic.v
 sound/ym3014.v
 top.v
