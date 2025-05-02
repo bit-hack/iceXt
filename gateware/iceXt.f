@@ -5,6 +5,7 @@ utils/clkEnGen.v
 utils/reset.v
 cpu/cpu_bus.v
 bios/bios.v
+sram/sram_ctrl.v
 video/mda.v
 sound/ym3014.v
 top.v

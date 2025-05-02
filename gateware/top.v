@@ -6,7 +6,6 @@
 module top(
     input         clk25,
     input         sw_rst,
-    output [ 7:0] pmod,
 
     // external cpu interface
     input  [11:0] ex_cpu_ah,
@@ -157,36 +156,20 @@ module top(
   // sram interface
   //
 
-  reg sram_dir = 0;  // 1(fpga->sram) 0(fpga<-sram)
-  reg sram_oe  = 1;  // active low
-  reg sram_we  = 1;  // active low
-  reg sram_dly = 0;
+  wire sram_dir;
 
-  always @(posedge pll_clk10) begin
-    if (sram_dly == 0) begin
-      sram_oe  <= 1;
-      sram_we  <= 1;
-      sram_dir <= 0;
-      if (cpu_mem_rd) begin
-        sram_we  <= 1;
-        sram_oe  <= 0;  // output enabled
-        sram_dir <= 0;  // fpga<-sram
-        sram_dly <= 1;
-      end
-      if (cpu_mem_wr) begin
-        sram_we  <= 0;  // write enable
-        sram_oe  <= 1;
-        sram_dir <= 1;  // fpga->sram
-        sram_dly <= 1;
-      end
-    end else begin
-      sram_dly <= 0;
-    end
-  end
+  sram_ctrl u_sram_ctrl(
+    .iClk(pll_clk10),
+    .iRd (cpu_mem_rd),
+    .iWr (cpu_mem_wr),
+    .oDir(sram_dir),  // 1(fpga->sram) 0(fpga<-sram)
+    .oCe1(sram_ce1),
+    .oCe2(sram_ce2),
+    .oOe (sram_oe),
+    .oWe (sram_we)
+  );
 
-  assign sram_a   = cpu_addr;
-  assign sram_d   = sram_dir ? cpu_data_out : 8'bzzzzzzzz;
-  assign sram_ce1 = 0;  // active low
-  assign sram_ce2 = 1;  // active high
+  assign sram_a = cpu_addr;
+  assign sram_d = sram_dir ? cpu_data_out : 8'bzzzzzzzz;
 
 endmodule
