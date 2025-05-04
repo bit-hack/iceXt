@@ -1,4 +1,9 @@
-
+;     _          _  ________
+;    (_)_______ | |/ /_  __/
+;   / / ___/ _ \|   / / /
+;  / / /__/  __/   | / /
+; /_/\___/\___/_/|_|/_/
+;
 .8086
 .model TINY
 
@@ -6,25 +11,51 @@ extrn _cmain:near
 
 .code
 org 0h
+
 main:
-    jmp short start
-    nop
+    DB 055h, 0AAh           ; signature
+    DB 004h                 ; 512 * 4
 
-start:
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+    push si
+    push ds
+    push es
+
+    push ds
+
+    out 0FEh, ax  ; invoke callback
+
+    ; install int 13h handler
+    mov ax, 0
+    mov ds, ax
+    mov ds:[04Eh], cs
+    mov ax, int13_handler
+    mov ds:[04Ch], ax
+
+    pop ds
+
+    pop es
+    pop ds
+    pop si
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+
+    retf
+
+
+int13_handler:
     cli
-    mov ax,cs               ; Setup segment registers
-;    mov ds,ax               ; Make DS correct
-;    mov es,ax               ; Make ES correct
-;    mov ss,ax               ; Make SS correct
 
-    mov ax,02000h
-    mov ss,ax
+    out 0FFh, ax  ; invoke callback
 
-    mov bp,0ff00h
-    mov sp,0ff00h           ; Setup a stack
     sti
-
-    call _cmain
-    ret
+    iret
 
 END main

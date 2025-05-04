@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
-uint32_t cpuGetAddress(uint16_t segment, uint16_t offset);
-uint32_t cpuGetAddrDS(uint16_t offset);
-uint32_t cpuGetAddrES(uint16_t offset);
+enum { AX, CX, DX, BX, SP, BP, SI, DI };
+enum { ES, CS, SS, DS, NoSeg };
+
+uint32_t cpu_get_address(uint16_t segment, uint16_t offset);
 
 uint8_t port_read (uint32_t port);
 void    port_write(uint32_t port, uint8_t value);
@@ -17,21 +18,53 @@ void cpu_step(void);
 void cpu_init(void);
 void cpu_interrupt(uint8_t irqn);
 
-// Trigger hardware interrupts.
-// IRQ-0 to IRQ-7 call INT-08 to INT-0F
-// IRQ-8 to IRQ-F call INT-70 to INT-77
-void cpuTriggerIRQ(uint8_t num);
+uint8_t  cpu_get_AH(void);
+uint8_t  cpu_get_AL(void);
+uint16_t cpu_get_AX(void);
+uint8_t  cpu_get_CH(void);
+uint8_t  cpu_get_CL(void);
+uint16_t cpu_get_CX(void);
+uint8_t  cpu_get_DH(void);
+uint8_t  cpu_get_DL(void);
+uint16_t cpu_get_DX(void);
+uint8_t  cpu_get_BH(void);
+uint8_t  cpu_get_BL(void);
+uint16_t cpu_get_BX(void);
+uint16_t cpu_get_SP(void);
+uint16_t cpu_get_BP(void);
+uint16_t cpu_get_SI(void);
+uint16_t cpu_get_DI(void);
+uint16_t cpu_get_ES(void);
+uint16_t cpu_get_CS(void);
+uint16_t cpu_get_SS(void);
+uint16_t cpu_get_DS(void);
+uint16_t cpu_get_IP(void);
 
-uint32_t cpuGetAX(void);
-uint32_t cpuGetCX(void);
-uint32_t cpuGetDX(void);
-uint32_t cpuGetBX(void);
-uint32_t cpuGetSP(void);
-uint32_t cpuGetBP(void);
-uint32_t cpuGetSI(void);
-uint32_t cpuGetDI(void);
-uint32_t cpuGetES(void);
-uint32_t cpuGetCS(void);
-uint32_t cpuGetSS(void);
-uint32_t cpuGetDS(void);
-uint32_t cpuGetIP(void);
+// Set CPU registers from outside
+void cpu_set_AH(uint8_t  v);
+void cpu_set_AL(uint8_t  v);
+void cpu_set_AX(uint16_t v);
+
+void cpu_set_CH(uint8_t  v);
+void cpu_set_CL(uint8_t  v);
+void cpu_set_CX(uint16_t v);
+
+void cpu_set_DH(uint8_t  v);
+void cpu_set_DL(uint8_t  v);
+void cpu_set_DX(uint16_t v);
+
+void cpu_set_BH(uint8_t  v);
+void cpu_set_BL(uint8_t  v);
+void cpu_set_BX(uint16_t v);
+
+void cpu_set_SP(uint16_t v);
+void cpu_set_BP(uint16_t v);
+void cpu_set_SI(uint16_t v);
+void cpu_set_DI(uint16_t v);
+void cpu_set_ES(uint16_t v);
+void cpu_set_CS(uint16_t v);
+void cpu_set_SS(uint16_t v);
+void cpu_set_DS(uint16_t v);
+void cpu_set_IP(uint16_t v);
+
+void cpu_set_CF(uint8_t  v);

@@ -23,8 +23,6 @@
 // This is used in some software to detect 80186 and higher.
 #define CPU_SHIFT_80186
 
-enum { AX, CX, DX, BX, SP, BP, SI, DI };
-enum { ES, CS, SS, DS, NoSeg };
 
 #define SetZFB(x) (ZF = !(uint8_t)(x))
 #define SetZFW(x) (ZF = !(uint16_t)(x))
@@ -491,32 +489,7 @@ static void cpu_trap(uint32_t num)
 
 void cpu_interrupt(uint8_t irqn)
 {
-#if 1
-  if (IF) {
-    interrupt(8 + irqn);
-  }
-#else
-
-    // TODO: just pass directly into the code
-
-    if(IF && irq_mask)
-    {
-        // Get lower set bit (highest priority IRQ)
-        uint16_t bit = irq_mask & -irq_mask;
-        if(bit)
-        {
-            uint8_t bp[16] = {0, 1, 2, 5, 3, 9, 6, 11, 15, 4, 8, 10, 14, 7, 13, 12};
-            uint8_t irqn = bp[(bit * 0x9af) >> 12];
-//            debug(debug_int, "handle irq, mask=$%04x irq=%d\n", irq_mask, irqn);
-            irq_mask &= ~bit;
-            interrupt(irqn);
-//            if(irqn < 8)
-//                interrupt(8 + irqn);
-//            else
-//                interrupt(0x68 + irqn);
-        }
-    }
-#endif
+  irq_mask |= 1 << irqn;
 }
 
 #define ADD_8()                                                                \
@@ -2318,22 +2291,22 @@ static void i_halt(void)
 
 void cpu_dump(void)
 {
-    uint32_t nip = (cpuGetIP() + 0xFFFF) & 0xFFFF; // subtract 1!
+    uint32_t nip = (cpu_get_IP() + 0xFFFF) & 0xFFFF; // subtract 1!
 
     printf("AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X ",
-          cpuGetAX(),
-          cpuGetBX(),
-          cpuGetCX(),
-          cpuGetDX(),
-          cpuGetSP(),
-          cpuGetBP(),
-          cpuGetSI(),
-          cpuGetDI());
+          cpu_get_AX(),
+          cpu_get_BX(),
+          cpu_get_CX(),
+          cpu_get_DX(),
+          cpu_get_SP(),
+          cpu_get_BP(),
+          cpu_get_SI(),
+          cpu_get_DI());
     printf("DS=%04X ES=%04X SS=%04X CS=%04X ",
-          cpuGetDS(),
-          cpuGetES(),
-          cpuGetSS(),
-          cpuGetCS());
+          cpu_get_DS(),
+          cpu_get_ES(),
+          cpu_get_SS(),
+          cpu_get_CS());
     printf("IP=%04X ",
           nip);
     printf("%c%c%c%c%c%c%c%c ",
@@ -2346,7 +2319,7 @@ void cpu_dump(void)
           PF ? 'P' : '.',
           CF ? 'C' : '.');
     printf("%05X\n",
-          cpuGetAddress(sregs[CS], nip));
+          cpu_get_address(sregs[CS], nip));
 }
 
 static void do_instruction(uint8_t code)
@@ -2615,62 +2588,87 @@ static void do_instruction(uint8_t code)
 
 void cpu_step(void)
 {
-    //handle_irq();
+    // emulate a very simple PIC
+    if (IF && irq_mask)
+    {
+        // Get lower set bit (highest priority IRQ)
+        uint16_t bit = irq_mask & -irq_mask;
+        if (bit)
+        {
+            irq_mask &= ~bit;  // deassert IRQ when serviced
+            switch (bit) {
+            case 0b01:
+                interrupt(8);
+                break;
+            case 0b10:
+                interrupt(9);
+                break;
+            }
+        }
+    }
+
+    // execute instruction
     next_instruction();
 }
 
 // Set CPU registers from outside
-void cpuSetAL(uint32_t v) { wregs[AX] = (wregs[AX] & 0xFF00) | (v & 0xFF); }
-void cpuSetAX(uint32_t v) { wregs[AX] = v; }
-void cpuSetCX(uint32_t v) { wregs[CX] = v; }
-void cpuSetDX(uint32_t v) { wregs[DX] = v; }
-void cpuSetBX(uint32_t v) { wregs[BX] = v; }
-void cpuSetSP(uint32_t v) { wregs[SP] = v; }
-void cpuSetBP(uint32_t v) { wregs[BP] = v; }
-void cpuSetSI(uint32_t v) { wregs[SI] = v; }
-void cpuSetDI(uint32_t v) { wregs[DI] = v; }
-void cpuSetES(uint32_t v) { sregs[ES] = v; }
-void cpuSetCS(uint32_t v) { sregs[CS] = v; }
-void cpuSetSS(uint32_t v) { sregs[SS] = v; }
-void cpuSetDS(uint32_t v) { sregs[DS] = v; }
-void cpuSetIP(uint32_t v) { ip = v; }
+void cpu_set_AH(uint8_t  v) { wregs[AX] = (v << 8)   | (wregs[AX] & 0x00ff); }
+void cpu_set_AL(uint8_t  v) { wregs[AX] = (v & 0xff) | (wregs[AX] & 0xff00); }
+void cpu_set_AX(uint16_t v) { wregs[AX] = v; }
+
+void cpu_set_CH(uint8_t  v) { wregs[CX] = (v << 8)   | (wregs[CX] & 0x00ff); }
+void cpu_set_CL(uint8_t  v) { wregs[CX] = (v & 0xff) | (wregs[CX] & 0xff00); }
+void cpu_set_CX(uint16_t v) { wregs[CX] = v; }
+
+void cpu_set_DH(uint8_t  v) { wregs[DX] = (v << 8)   | (wregs[DX] & 0x00ff); }
+void cpu_set_DL(uint8_t  v) { wregs[DX] = (v & 0xff) | (wregs[DX] & 0xff00); }
+void cpu_set_DX(uint16_t v) { wregs[DX] = v; }
+
+void cpu_set_BH(uint8_t  v) { wregs[BX] = (v << 8)   | (wregs[BX] & 0x00ff); }
+void cpu_set_BL(uint8_t  v) { wregs[BX] = (v & 0xff) | (wregs[BX] & 0xff00); }
+void cpu_set_BX(uint16_t v) { wregs[BX] = v; }
+
+void cpu_set_SP(uint16_t v) { wregs[SP] = v; }
+void cpu_set_BP(uint16_t v) { wregs[BP] = v; }
+void cpu_set_SI(uint16_t v) { wregs[SI] = v; }
+void cpu_set_DI(uint16_t v) { wregs[DI] = v; }
+void cpu_set_ES(uint16_t v) { sregs[ES] = v; }
+void cpu_set_CS(uint16_t v) { sregs[CS] = v; }
+void cpu_set_SS(uint16_t v) { sregs[SS] = v; }
+void cpu_set_DS(uint16_t v) { sregs[DS] = v; }
+void cpu_set_IP(uint16_t v) { ip = v; }
+
+void cpu_set_CF(bool v) { CF = v ? 1 : 0; }
 
 // Get CPU registers from outside
-uint32_t cpuGetAX(void) { return wregs[AX]; }
-uint32_t cpuGetCX(void) { return wregs[CX]; }
-uint32_t cpuGetDX(void) { return wregs[DX]; }
-uint32_t cpuGetBX(void) { return wregs[BX]; }
-uint32_t cpuGetSP(void) { return wregs[SP]; }
-uint32_t cpuGetBP(void) { return wregs[BP]; }
-uint32_t cpuGetSI(void) { return wregs[SI]; }
-uint32_t cpuGetDI(void) { return wregs[DI]; }
-uint32_t cpuGetES(void) { return sregs[ES]; }
-uint32_t cpuGetCS(void) { return sregs[CS]; }
-uint32_t cpuGetSS(void) { return sregs[SS]; }
-uint32_t cpuGetDS(void) { return sregs[DS]; }
-uint32_t cpuGetIP(void) { return ip; }
+uint16_t cpu_get_AX(void) { return wregs[AX]; }
+uint8_t  cpu_get_AH(void) { return wregs[AX] >> 8; }
+uint8_t  cpu_get_AL(void) { return wregs[AX] & 0xff; }
+uint16_t cpu_get_CX(void) { return wregs[CX]; }
+uint8_t  cpu_get_CH(void) { return wregs[CX] >> 8; }
+uint8_t  cpu_get_CL(void) { return wregs[CX] & 0xff; }
+uint16_t cpu_get_DX(void) { return wregs[DX]; }
+uint8_t  cpu_get_DH(void) { return wregs[DX] >> 8; }
+uint8_t  cpu_get_DL(void) { return wregs[DX] & 0xff; }
+uint16_t cpu_get_BX(void) { return wregs[BX]; }
+uint8_t  cpu_get_BH(void) { return wregs[BX] >> 8; }
+uint8_t  cpu_get_BL(void) { return wregs[BX] & 0xff; }
+uint16_t cpu_get_SP(void) { return wregs[SP]; }
+uint16_t cpu_get_BP(void) { return wregs[BP]; }
+uint16_t cpu_get_SI(void) { return wregs[SI]; }
+uint16_t cpu_get_DI(void) { return wregs[DI]; }
+uint16_t cpu_get_ES(void) { return sregs[ES]; }
+uint16_t cpu_get_CS(void) { return sregs[CS]; }
+uint16_t cpu_get_SS(void) { return sregs[SS]; }
+uint16_t cpu_get_DS(void) { return sregs[DS]; }
+uint16_t cpu_get_IP(void) { return ip; }
 
-uint32_t cpuGetAddress(uint16_t segment, uint16_t offset)
+uint32_t cpu_get_address(uint16_t segment, uint16_t offset)
 {
     return 0xFFFFF & (segment * 16 + offset);
 }
 
-uint32_t cpuGetAddrDS(uint16_t offset)
-{
-    return 0xFFFFF & (sregs[DS] * 16 + offset);
-}
-
-uint32_t cpuGetAddrES(uint16_t offset)
-{
-    return 0xFFFFF & (sregs[ES] * 16 + offset);
-}
-
-uint16_t cpuGetStack(uint16_t disp)
+uint16_t cpu_get_stack(uint16_t disp)
 {
     return GetMemW(SS, wregs[SP] + disp);
-}
-
-void cpuTriggerIRQ(uint8_t num)
-{
-    irq_mask |= (1 << num);
 }

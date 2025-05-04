@@ -155,9 +155,9 @@ module video_mda(
   );
 
   // [B0000 ... B7fff]
-  //wire select = iAddr[19:15] == 5'b10110;
+  wire select = iAddr[19:15] == 5'b10110;
   // [B8000 ... Bffff]
-  wire select = iAddr[19:15] == 5'b10111;
+  //wire select = iAddr[19:15] == 5'b10111;
 
   // vram write port
   always @(posedge iClk) begin

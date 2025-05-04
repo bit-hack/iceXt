@@ -3,14 +3,16 @@ import sys
 with open(sys.argv[1], 'rb') as fd:
     data = [ x for x in fd.read() ]
 
-fill  = 0x1ff0 - (len(data))
-data += [ 0x90 ] * fill
+size = len(data)
 
-data += [ 0xea, 0x00, 0x00, 0x00, 0xfe ]
+sum = 0
+for x in data:
+    sum = (sum + x) & 0xff
 
-fill  = 0x2000 - (len(data))
-data += [ 0x90 ] * fill
+fill  = 0x800 - (len(data))
+data += [ 0x0 ] * fill
 
+data[-1] = 0xff & (0x100 - sum)
 
 with open('program.hex', 'w') as fd:
     for x in data:

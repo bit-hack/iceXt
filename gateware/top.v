@@ -43,7 +43,16 @@ module top(
     output [ 3:0] vga_g,
     output [ 3:0] vga_b,
     output        vga_vs,
-    output        vga_hs
+    output        vga_hs,
+
+    // pmod
+    output [ 7:0] pmod,
+
+    // PS/2 interface
+    input ps2_mclk,
+    input ps2_mdat,
+    input ps2_kclk,
+    input ps2_kdat
 );
 
   //
@@ -229,5 +238,38 @@ module top(
     .iRst (rst),
     .oIrq0(irq0) // ~18.2065hz
   );
+
+  //
+  // keyboard
+  //
+
+  wire       irq1;
+  wire [7:0] keyboard_out;
+  wire       keyboard_sel;
+
+  ps2_keyboard u_ps2_keyboard(
+      /*input        */.iClk   (pll_clk10),
+      /*input [19:0] */.iAddr  (cpu_addr),
+      /*input        */.iRd    (cpu_io_rd),
+      /*output       */.oSel   (keyboard_sel),
+      /*output [7:0] */.oData  (keyboard_out),
+      /*output       */.oIrq   (irq1),
+      /*input        */.iPs2Clk(ps2_mclk),
+      /*input        */.iPs2Dat(ps2_mdat)
+  );
+
+  //
+  // PMOD
+  //
+  assign pmod = {
+    /*6*/1'b0,
+    /*4*/1'b0,
+    /*2*/ps2_kclk,
+    /*0*/ps2_mclk,
+    /*7*/1'b0,
+    /*5*/1'b0,
+    /*3*/ps2_kdat,
+    /*1*/ps2_mdat
+  };
 
 endmodule
