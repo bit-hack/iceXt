@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "udis86/udis86.h"
+
 #include "cpu.h"
 
 // Enable/disable 80286 stack emulation, 80286 and higher push the old value of
@@ -22,7 +24,6 @@
 // Enable 80186 shift behaviour - shift count is modulo 32.
 // This is used in some software to detect 80186 and higher.
 #define CPU_SHIFT_80186
-
 
 #define SetZFB(x) (ZF = !(uint8_t)(x))
 #define SetZFW(x) (ZF = !(uint16_t)(x))
@@ -59,7 +60,7 @@ static uint16_t start_ip; // IP at start of instruction, used on interrupts.
 /* All the byte flags will either be 1 or 0 */
 static int8_t CF, PF, ZF, TF, IF, DF;
 
-/* All the word flags may be either none-zero (true) or zero (false) */
+/* All the word flags may be either non-zero (true) or zero (false) */
 static uint32_t AF, OF, SF;
 
 /* Override segment execution */
@@ -68,6 +69,11 @@ static uint8_t segment_override;
 static uint8_t parity_table[256];
 
 static uint16_t irq_mask; // IRQs pending
+
+bool cpu_debug;
+
+static ud_t ud_obj;
+
 
 static uint8_t GetMemAbsB(uint32_t addr)
 {
@@ -270,6 +276,11 @@ static uint16_t FETCH_W(void)
 
 void cpu_init(void)
 {
+    /* initialize */
+    ud_init(&ud_obj);
+    ud_set_mode(&ud_obj, 16);
+    ud_set_syntax(&ud_obj, UD_SYN_INTEL);
+
     uint32_t i, j, c;
 
     for(i = 0; i < 4; i++) {
@@ -2289,26 +2300,93 @@ static void i_halt(void)
     exit(0);
 }
 
-void cpu_dump(void)
-{
-    uint32_t nip = (cpu_get_IP() + 0xFFFF) & 0xFFFF; // subtract 1!
+static void dump_reg_change(bool silent) {
 
-    printf("AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X ",
-          cpu_get_AX(),
-          cpu_get_BX(),
-          cpu_get_CX(),
-          cpu_get_DX(),
-          cpu_get_SP(),
-          cpu_get_BP(),
-          cpu_get_SI(),
-          cpu_get_DI());
-    printf("DS=%04X ES=%04X SS=%04X CS=%04X ",
-          cpu_get_DS(),
-          cpu_get_ES(),
-          cpu_get_SS(),
-          cpu_get_CS());
-    printf("IP=%04X ",
-          nip);
+  static uint16_t p_wregs[8];
+  static uint16_t p_sregs[4];
+
+  static int8_t p_CF, p_PF, p_ZF, p_TF, p_IF, p_DF;
+  static uint32_t p_AF, p_OF, p_SF;
+
+  if (!silent) {
+    if (wregs[AX] != p_wregs[AX]) {
+      printf("  AX %04x => %04x\n", p_wregs[AX], wregs[AX]);
+    }
+    if (wregs[CX] != p_wregs[CX]) {
+      printf("  CX %04x => %04x\n", p_wregs[CX], wregs[CX]);
+    }
+    if (wregs[DX] != p_wregs[DX]) {
+      printf("  DX %04x => %04x\n", p_wregs[DX], wregs[DX]);
+    }
+    if (wregs[BX] != p_wregs[BX]) {
+      printf("  BX %04x => %04x\n", p_wregs[BX], wregs[BX]);
+    }
+    if (wregs[SP] != p_wregs[SP]) {
+      printf("  SP %04x => %04x\n", p_wregs[SP], wregs[SP]);
+    }
+    if (wregs[BP] != p_wregs[BP]) {
+      printf("  BP %04x => %04x\n", p_wregs[BP], wregs[BP]);
+    }
+    if (wregs[SI] != p_wregs[SI]) {
+      printf("  SI %04x => %04x\n", p_wregs[SI], wregs[SI]);
+    }
+    if (wregs[DI] != p_wregs[DI]) {
+      printf("  DI %04x => %04x\n", p_wregs[DI], wregs[DI]);
+    }
+    if (sregs[ES] != p_sregs[ES]) {
+      printf("  ES %04x => %04x\n", p_sregs[ES], sregs[ES]);
+    }
+    if (sregs[CS] != p_sregs[CS]) {
+      printf("  CS %04x => %04x\n", p_sregs[CS], sregs[CS]);
+    }
+    if (sregs[SS] != p_sregs[SS]) {
+      printf("  SS %04x => %04x\n", p_sregs[SS], sregs[SS]);
+    }
+    if (sregs[DS] != p_sregs[DS]) {
+      printf("  DS %04x => %04x\n", p_sregs[DS], sregs[DS]);
+    }
+  }
+
+  for (uint32_t i = 0; i < 8; ++i) {
+    p_wregs[i] = wregs[i];
+  }
+  for (uint32_t i = 0; i < 4; ++i) {
+    p_sregs[i] = sregs[i];
+  }
+  p_CF = CF;
+  p_PF = PF;
+  p_ZF = ZF;
+  p_TF = TF;
+  p_IF = IF;
+  p_DF = DF;
+  p_AF = AF;
+  p_OF = OF;
+  p_SF = SF;
+}
+
+static void dump_all(void) {
+  printf("  AX => %04x\n", wregs[AX]);
+  printf("  CX => %04x\n", wregs[CX]);
+  printf("  DX => %04x\n", wregs[DX]);
+  printf("  BX => %04x\n", wregs[BX]);
+  printf("  SP => %04x\n", wregs[SP]);
+  printf("  BP => %04x\n", wregs[BP]);
+  printf("  SI => %04x\n", wregs[SI]);
+  printf("  DI => %04x\n", wregs[DI]);
+  printf("  ES => %04x\n", sregs[ES]);
+  printf("  CS => %04x\n", sregs[CS]);
+  printf("  SS => %04x\n", sregs[SS]);
+  printf("  DS => %04x\n", sregs[DS]);
+
+  dump_reg_change(true);
+}
+
+static void dump_inst(void)
+{
+    uint32_t nip = start_ip; // (cpu_get_IP() + 0xFFFF) & 0xFFFF; // subtract 1!
+
+    uint32_t laddr = cpu_get_address(sregs[CS], nip);
+
     printf("%c%c%c%c%c%c%c%c ",
           OF ? 'O' : '.',
           DF ? 'D' : '.',
@@ -2318,13 +2396,24 @@ void cpu_dump(void)
           AF ? 'A' : '.',
           PF ? 'P' : '.',
           CF ? 'C' : '.');
-    printf("%05X\n",
-          cpu_get_address(sregs[CS], nip));
+    printf("%04x ", nip);
+    printf("%05x: ", laddr);
+
+    ud_set_input_buffer(&ud_obj, memory + laddr, 128);
+    ud_set_pc(&ud_obj, nip);
+
+    ud_disassemble(&ud_obj);
+
+    const char* asm = ud_insn_asm(&ud_obj);
+    printf("%s\n", asm);
 }
 
 static void do_instruction(uint8_t code)
 {
-//    cpu_dump();
+    if (cpu_debug) {
+      dump_reg_change(false);
+      dump_inst();
+    }
     switch(code)
     {
     case 0x00: OP_br8(ADD);
@@ -2638,7 +2727,7 @@ void cpu_set_SS(uint16_t v) { sregs[SS] = v; }
 void cpu_set_DS(uint16_t v) { sregs[DS] = v; }
 void cpu_set_IP(uint16_t v) { ip = v; }
 
-void cpu_set_CF(bool v) { CF = v ? 1 : 0; }
+void cpu_set_CF(uint8_t v) { CF = v ? 1 : 0; }
 
 // Get CPU registers from outside
 uint16_t cpu_get_AX(void) { return wregs[AX]; }

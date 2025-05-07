@@ -8,10 +8,11 @@
 #include <SDL.h>
 
 #include "cpu.h"
+#include "disk.h"
 
 
-static uint8_t memory[1024 * 1024];
-static uint8_t io    [1024 * 64];
+uint8_t memory[1024 * 1024];
+uint8_t io    [1024 * 64];
 uint8_t font[];
 
 
@@ -20,56 +21,6 @@ uint8_t keyScanCode(int in);
 
 FILE* disk = NULL;
 
-
-void handler_int13h_pre() {
-  disk = fopen("D:\\iceXt\\misc\\dos-boot.img", "rb");
-}
-
-void handler_int13h() {
-  const uint8_t func = cpu_get_AH();
-
-  const uint32_t CYLINDERS = 80;
-  const uint32_t SECTORS = 18;
-  const uint32_t HEADS = 2;
-
-  printf("int 13h -> AH:%02x\n", func);
-
-  switch (func) {
-  case 0x2:   // read sectors from drive
-    {
-      const uint8_t count    = cpu_get_AL();
-      const uint8_t cylinder = cpu_get_CH();  // 80
-      const uint8_t sector   = cpu_get_CL();  // 18
-      const uint8_t head     = cpu_get_DH();  // 2
-      const uint8_t drive    = cpu_get_DL();
-
-      const uint32_t dest = cpu_get_address(cpu_get_ES(), cpu_get_BX());
-
-      const uint32_t lba = (cylinder * HEADS + head) * SECTORS + (sector - 1);
-      fseek(disk, lba * 512, SEEK_SET);
-
-      fread(&memory[dest], 1, 512 * count, disk);
-
-      cpu_set_AL(count);
-    }
-    break;
-  case 0x8:   // read drive parameters
-    {
-      const uint8_t drive = cpu_get_DL();
-      if (drive != 0x00) {
-        cpu_set_AH(0xAA);
-        cpu_set_CF(1);
-        return;
-      }
-
-      // todo
-    }
-    break;
-  }
-
-  cpu_set_AH(0);
-  cpu_set_CF(0);  // success
-}
 
 uint8_t port_read(uint32_t port) {
   //printf("PORT READ: %03x\n", port);
@@ -83,11 +34,11 @@ uint8_t port_read(uint32_t port) {
 
 void port_write(uint32_t port, uint8_t value) {
 
-  if (port == 0xfe) {
-    handler_int13h_pre();
-  }
   if (port == 0xff) {
-    handler_int13h();
+    disk_int13();
+  }
+  if (port == 0xdf) {
+    disk_read_sector();
   }
 
   //printf("PORT WRITE: %03x <= %02x\n", port, value);
@@ -203,25 +154,27 @@ int main(int argc, char** args) {
 
   cpu_init();
 
-  const char* path = argc >= 2 ? args[1] : "program.hex";
+  const char* biosPath = argc >= 2 ? args[1] : "program.hex";
+  const char* romPath  = argc >= 3 ? args[2] : "D:\\iceXt\\misc\\bootrom\\program.hex";
+  const char* diskPath = argc >= 4 ? args[3] : "D:\\iceXt\\misc\\dos-boot.img";
 
   //if (!load_hex(memory, 0xfe000, path, 1024 * 8)) {
-  if (!load_bin(0xfe000, path)) {
-    fprintf(stderr, "Unable to load program!\n");
+  if (!load_bin(0xfe000, biosPath)) {
+    fprintf(stderr, "Unable to load BIOS!\n");
     return 1;
   }
 
-  //if (!load_bin(0xc8000, "D:\\iceXt\\roms\\ibasic.C800.bin")) {
-  //  fprintf(stderr, "Unable to load program!\n");
-  //  return 1;
-  //}
-
-  if (!load_hex(memory, 0xc8000, "D:\\iceXt\\misc\\bootrom\\program.hex", 1024 * 4)) {
-    fprintf(stderr, "Unable to load program!\n");
+  if (!load_hex(memory, 0xc8000, romPath, 1024 * 4)) {
+    fprintf(stderr, "Unable to load ROM!\n");
     return 1;
   }
 
-  const uint32_t steps = 1000;
+  if (!disk_load(diskPath)) {
+    fprintf(stderr, "Unable to load disk!\n");
+    return 1;
+  }
+
+  const uint32_t steps = 10000;
   uint32_t irq0 = 0;
 
   SDL_Surface* screen = SDL_SetVideoMode(640, 400, 32, 0);
@@ -246,8 +199,12 @@ int main(int argc, char** args) {
         cpu_interrupt(1);
       }
     }
+  
+    cpu_debug = true;
 
     for (uint32_t i = 0; i < steps; ++i) {
+
+      cpu_debug = (cpu_get_CS() == 0xc800);
       cpu_step();
 
       if (irq0++ >= 100000) {

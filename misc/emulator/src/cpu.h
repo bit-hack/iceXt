@@ -2,9 +2,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 enum { AX, CX, DX, BX, SP, BP, SI, DI };
 enum { ES, CS, SS, DS, NoSeg };
+
+extern uint8_t memory[1024 * 1024];
+extern uint8_t io[1024 * 64];
+extern bool cpu_debug;
 
 uint32_t cpu_get_address(uint16_t segment, uint16_t offset);
 
@@ -13,7 +18,6 @@ void    port_write(uint32_t port, uint8_t value);
 uint8_t mem_read  (uint32_t addr);
 void    mem_write (uint32_t addr, uint8_t data);
 
-void cpu_dump(void);
 void cpu_step(void);
 void cpu_init(void);
 void cpu_interrupt(uint8_t irqn);
