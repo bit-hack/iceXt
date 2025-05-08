@@ -23,25 +23,33 @@ FILE* disk = NULL;
 
 
 uint8_t port_read(uint32_t port) {
-  //printf("PORT READ: %03x\n", port);
+//  printf("PORT READ: %03x\n", port);
 
   if (port == 0x3DA) {
     return 0xff;  // weird this is required!
+  }
+
+  if (port == 0xb8) {
+    return disk_spi_read();
   }
 
   return io[port & 0xffff];
 }
 
 void port_write(uint32_t port, uint8_t value) {
+//  printf("PORT WRITE: %03x <= %02x\n", port, value);
 
-  if (port == 0xff) {
+  if (port == 0xb8) {
+    disk_spi_write(value);
+  }
+  if (port == 0xb9) {
+    disk_spi_ctrl(value);
+  }
+  if (port == 0xba) {
+    // legacy
     disk_int13();
   }
-  if (port == 0xdf) {
-    disk_read_sector();
-  }
 
-  //printf("PORT WRITE: %03x <= %02x\n", port, value);
   io[port & 0xffff] = value;
 }
 
@@ -154,9 +162,9 @@ int main(int argc, char** args) {
 
   cpu_init();
 
-  const char* biosPath = argc >= 2 ? args[1] : "program.hex";
-  const char* romPath  = argc >= 3 ? args[2] : "D:\\iceXt\\misc\\bootrom\\program.hex";
-  const char* diskPath = argc >= 4 ? args[3] : "D:\\iceXt\\misc\\dos-boot.img";
+  const char* biosPath = argc >= 2 ? args[1] : "C:\\riscv\\iceXt\\misc\\BIOS\\pcxtbios.bin";
+  const char* romPath  = argc >= 3 ? args[2] : "C:\\riscv\\iceXt\\misc\\diskrom\\bin\\diskrom.hex";
+  const char* diskPath = argc >= 4 ? args[3] : "C:\\riscv\\iceXt\\misc\\dos-boot.img";
 
   //if (!load_hex(memory, 0xfe000, path, 1024 * 8)) {
   if (!load_bin(0xfe000, biosPath)) {
@@ -200,11 +208,11 @@ int main(int argc, char** args) {
       }
     }
   
-    cpu_debug = true;
+    cpu_debug = false;
 
     for (uint32_t i = 0; i < steps; ++i) {
 
-      cpu_debug = (cpu_get_CS() == 0xc800);
+      //cpu_debug = (cpu_get_CS() == 0xc800);
       cpu_step();
 
       if (irq0++ >= 100000) {
