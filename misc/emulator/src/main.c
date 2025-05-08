@@ -36,6 +36,16 @@ uint8_t port_read(uint32_t port) {
   return io[port & 0xffff];
 }
 
+void dump_sector() {
+  uint8_t* src = memory + 0x7c00;
+  for (uint32_t i = 0; i < 512; ++i) {
+    if (i && (!(i & 0xf))) {
+      printf("\n");
+    }
+    printf("%02x ", src[i]);
+  }
+}
+
 void port_write(uint32_t port, uint8_t value) {
 //  printf("PORT WRITE: %03x <= %02x\n", port, value);
 
@@ -48,6 +58,11 @@ void port_write(uint32_t port, uint8_t value) {
   if (port == 0xba) {
     // legacy
     disk_int13();
+    //dump_sector();
+  }
+  if (port == 0xbc) {
+    //cpu_dump_state();
+    //dump_sector();
   }
 
   io[port & 0xffff] = value;
@@ -212,7 +227,6 @@ int main(int argc, char** args) {
 
     for (uint32_t i = 0; i < steps; ++i) {
 
-      cpu_debug = (cpu_get_CS() == 0xc800);
       cpu_step();
 
       if (irq0++ >= 100000) {

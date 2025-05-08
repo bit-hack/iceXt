@@ -21,560 +21,658 @@
     21                                  %define ERR_INVALID_CMD 0x01
     22                                  
     23                                  %macro SD_SEND 1
-    24                                    mov al, %1
-    25                                    call sd_send
-    26                                  %endmacro
-    27                                  
-    28                                  %macro SD_SEND_CMD 6
-    29                                    SD_SEND (0x40|%1)
-    30                                    SD_SEND %2
-    31                                    SD_SEND %3
-    32                                    SD_SEND %4
-    33                                    SD_SEND %5
-    34                                    SD_SEND (0x01|%6)
-    35                                  %endmacro
-    36                                  
-    37                                  %macro SD_DUMMY_BYTE 0
-    38                                    mov al, 0xff
-    39                                    call sd_send
-    40                                  %endmacro
-    41                                  
-    42                                  %macro SD_RECV 0
-    43                                    call sd_recv
+    24                                    push ax
+    25                                    mov al, %1
+    26                                    call sd_send
+    27                                    pop ax
+    28                                  %endmacro
+    29                                  
+    30                                  %macro SD_SEND_CMD 6
+    31                                    SD_SEND (0x40|%1)
+    32                                    SD_SEND %2
+    33                                    SD_SEND %3
+    34                                    SD_SEND %4
+    35                                    SD_SEND %5
+    36                                    SD_SEND (0x01|%6)
+    37                                  %endmacro
+    38                                  
+    39                                  %macro SD_DUMMY_BYTE 0
+    40                                    push ax
+    41                                    mov al, 0xff
+    42                                    call sd_send
+    43                                    pop ax
     44                                  %endmacro
     45                                  
-    46                                  %macro SD_CS 1
-    47                                    mov al, %1
-    48                                    call sd_set_cs
-    49                                  %endmacro
-    50                                  
-    51                                  ;------------------------------------------------------------------------------
-    52                                  signature:
-    53 00000000 55AA                      db 0x55, 0xAA
-    54 00000002 04                        db 0x4
-    55                                  
-    56                                  ;------------------------------------------------------------------------------
-    57                                  rom_entry:
-    58 00000003 50                        push ax
-    59 00000004 53                        push bx
-    60 00000005 51                        push cx
-    61 00000006 52                        push dx
-    62 00000007 57                        push di
-    63 00000008 56                        push si
-    64 00000009 1E                        push ds
-    65 0000000A E83A00                    call sd_init
-    66 0000000D 84C0                      test al, al
-    67 0000000F 7403                      jz .rom_entry_fail
-    68 00000011 E80800                    call install_int13
-    69                                  .rom_entry_fail:
-    70 00000014 1F                        pop ds
-    71 00000015 5E                        pop si
-    72 00000016 5F                        pop di
-    73 00000017 5A                        pop dx
-    74 00000018 59                        pop cx
-    75 00000019 5B                        pop bx
-    76 0000001A 58                        pop ax
-    77 0000001B CB                        retf
-    78                                  
-    79                                  ;------------------------------------------------------------------------------
-    80                                  install_int13:
-    81 0000001C B80000                    mov ax, 0
-    82 0000001F 8ED8                      mov ds, ax
-    83 00000021 3E8C0E4E00                mov ds:[0x4e], cs
-    84 00000026 B8[2102]                  mov ax, int13
-    85 00000029 3EA34C00                  mov ds:[0x4c], ax
-    86 0000002D C3                        ret
-    87                                  
-    88                                  ;------------------------------------------------------------------------------
-    89                                  debug:
-    90 0000002E E6B0                      out PORT_DEBUG, al
-    91 00000030 C3                        ret
-    92                                  
-    93                                  ;------------------------------------------------------------------------------
-    94                                  sd_send:
-    95 00000031 E6B8                      out PORT_SPI_DATA, al
-    96 00000033 51                        push cx
-    97 00000034 B91400                    mov cx, SD_SEND_DELAY
-    98                                  .delay:
-    99 00000037 90                        nop
-   100 00000038 E2FD                      loop .delay
-   101 0000003A 59                        pop cx
-   102 0000003B C3                        ret
-   103                                  
-   104                                  ;------------------------------------------------------------------------------
-   105                                  sd_recv:
-   106 0000003C B0FF                      mov al, 0xff
-   107 0000003E E8F0FF                    call sd_send
-   108 00000041 E4B8                      in al, PORT_SPI_DATA
-   109 00000043 C3                        ret
-   110                                  
-   111                                  ;------------------------------------------------------------------------------
-   112                                  sd_set_cs:
-   113 00000044 E6B9                      out PORT_SPI_CTRL, al
-   114 00000046 C3                        ret
-   115                                  
-   116                                  ;------------------------------------------------------------------------------
-   117                                  sd_init:
-   118                                  
-   119                                    ;
-   120                                    ; deassert SD card
-   121                                    ;
-   122                                    SD_CS 1
-    47 00000047 B001                <1>  mov al, %1
-    48 00000049 E8F8FF              <1>  call sd_set_cs
-   123                                  
-   124                                    ;
-   125                                    ; send dummy clocks
-   126                                    ;
-   127 0000004C B90A00                    mov cx, SD_DUMMY_CLOCKS
-   128                                  .dummy_clocks:
-   129                                    SD_DUMMY_BYTE
-    38 0000004F B0FF                <1>  mov al, 0xff
-    39 00000051 E8DDFF              <1>  call sd_send
-   130 00000054 E2F9                      loop .dummy_clocks
-   131                                  
+    46                                  %macro SD_RECV 0
+    47                                    call sd_recv
+    48                                  %endmacro
+    49                                  
+    50                                  %macro SD_CS 1
+    51                                    push ax
+    52                                    mov al, %1
+    53                                    call sd_set_cs
+    54                                    pop ax
+    55                                  %endmacro
+    56                                  
+    57                                  ;------------------------------------------------------------------------------
+    58                                  signature:
+    59 00000000 55AA                      db 0x55, 0xAA
+    60 00000002 04                        db 0x4
+    61                                  
+    62                                  ;------------------------------------------------------------------------------
+    63                                  rom_entry:
+    64 00000003 50                        push ax
+    65 00000004 53                        push bx
+    66 00000005 51                        push cx
+    67 00000006 52                        push dx
+    68 00000007 57                        push di
+    69 00000008 56                        push si
+    70 00000009 1E                        push ds
+    71 0000000A E83A00                    call sd_init
+    72 0000000D 84C0                      test al, al
+    73 0000000F 7403                      jz .rom_entry_fail
+    74 00000011 E80800                    call install_int13
+    75                                  .rom_entry_fail:
+    76 00000014 1F                        pop ds
+    77 00000015 5E                        pop si
+    78 00000016 5F                        pop di
+    79 00000017 5A                        pop dx
+    80 00000018 59                        pop cx
+    81 00000019 5B                        pop bx
+    82 0000001A 58                        pop ax
+    83 0000001B CB                        retf
+    84                                  
+    85                                  ;------------------------------------------------------------------------------
+    86                                  install_int13:
+    87 0000001C B80000                    mov ax, 0
+    88 0000001F 8ED8                      mov ds, ax
+    89 00000021 3E8C0E4E00                mov ds:[0x4e], cs
+    90 00000026 B8[8002]                  mov ax, int13
+    91 00000029 3EA34C00                  mov ds:[0x4c], ax
+    92 0000002D C3                        ret
+    93                                  
+    94                                  ;------------------------------------------------------------------------------
+    95                                  debug:
+    96 0000002E E6B0                      out PORT_DEBUG, al
+    97 00000030 C3                        ret
+    98                                  
+    99                                  ;------------------------------------------------------------------------------
+   100                                  sd_send:
+   101 00000031 E6B8                      out PORT_SPI_DATA, al
+   102 00000033 51                        push cx
+   103 00000034 B91400                    mov cx, SD_SEND_DELAY
+   104                                  .delay:
+   105 00000037 90                        nop
+   106 00000038 E2FD                      loop .delay
+   107 0000003A 59                        pop cx
+   108 0000003B C3                        ret
+   109                                  
+   110                                  ;------------------------------------------------------------------------------
+   111                                  sd_recv:
+   112 0000003C B0FF                      mov al, 0xff
+   113 0000003E E8F0FF                    call sd_send
+   114 00000041 E4B8                      in al, PORT_SPI_DATA
+   115 00000043 C3                        ret
+   116                                  
+   117                                  ;------------------------------------------------------------------------------
+   118                                  sd_set_cs:
+   119 00000044 E6B9                      out PORT_SPI_CTRL, al
+   120 00000046 C3                        ret
+   121                                  
+   122                                  ;------------------------------------------------------------------------------
+   123                                  sd_init:
+   124                                  
+   125                                    ;
+   126                                    ; deassert SD card
+   127                                    ;
+   128                                    SD_CS 1
+    51 00000047 50                  <1>  push ax
+    52 00000048 B001                <1>  mov al, %1
+    53 0000004A E8F7FF              <1>  call sd_set_cs
+    54 0000004D 58                  <1>  pop ax
+   129                                  
+   130                                    ;
+   131                                    ; send dummy clocks
    132                                    ;
-   133                                    ; assert SD card
-   134                                    ;
-   135                                    SD_CS 0
-    47 00000056 B000                <1>  mov al, %1
-    48 00000058 E8E9FF              <1>  call sd_set_cs
-   136                                  
-   137                                    ;
-   138                                    ; send CMD0 (go idle)
-   139                                    ;
-   140                                  .step_1:
-   141                                    SD_SEND_CMD 0, 0, 0, 0, 0, 0x95
-    29                              <1>  SD_SEND (0x40|%1)
-    24 0000005B B040                <2>  mov al, %1
-    25 0000005D E8D1FF              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 00000060 B000                <2>  mov al, %1
-    25 00000062 E8CCFF              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 00000065 B000                <2>  mov al, %1
-    25 00000067 E8C7FF              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 0000006A B000                <2>  mov al, %1
-    25 0000006C E8C2FF              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 0000006F B000                <2>  mov al, %1
-    25 00000071 E8BDFF              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 00000074 B095                <2>  mov al, %1
-    25 00000076 E8B8FF              <2>  call sd_send
+   133 0000004E B90A00                    mov cx, SD_DUMMY_CLOCKS
+   134                                  .dummy_clocks:
+   135                                    SD_DUMMY_BYTE
+    40 00000051 50                  <1>  push ax
+    41 00000052 B0FF                <1>  mov al, 0xff
+    42 00000054 E8DAFF              <1>  call sd_send
+    43 00000057 58                  <1>  pop ax
+   136 00000058 E2F7                      loop .dummy_clocks
+   137                                  
+   138                                    ;
+   139                                    ; assert SD card
+   140                                    ;
+   141                                    SD_CS 0
+    51 0000005A 50                  <1>  push ax
+    52 0000005B B000                <1>  mov al, %1
+    53 0000005D E8E4FF              <1>  call sd_set_cs
+    54 00000060 58                  <1>  pop ax
    142                                  
-   143 00000079 B90800                    mov cx, 8
-   144                                  .step_1_response:
-   145                                    SD_RECV
-    43 0000007C E8BDFF              <1>  call sd_recv
-   146 0000007F 3C01                      cmp al, 0x01
-   147 00000081 7405                      je .step_1_done
-   148 00000083 E2F7                      loop .step_1_response
-   149 00000085 E92301                    jmp .sd_init_fail
-   150                                  .step_1_done:
-   151                                  
-   152                                    SD_DUMMY_BYTE
-    38 00000088 B0FF                <1>  mov al, 0xff
-    39 0000008A E8A4FF              <1>  call sd_send
-   153                                    SD_DUMMY_BYTE
-    38 0000008D B0FF                <1>  mov al, 0xff
-    39 0000008F E89FFF              <1>  call sd_send
-   154                                  
-   155                                    ;
-   156                                    ; send CMD8
-   157                                    ;
-   158                                  .step_2:
-   159                                    SD_SEND_CMD 8, 0, 0, 1, 0xaa, 0x86
-    29                              <1>  SD_SEND (0x40|%1)
-    24 00000092 B048                <2>  mov al, %1
-    25 00000094 E89AFF              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 00000097 B000                <2>  mov al, %1
-    25 00000099 E895FF              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 0000009C B000                <2>  mov al, %1
-    25 0000009E E890FF              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 000000A1 B001                <2>  mov al, %1
-    25 000000A3 E88BFF              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 000000A6 B0AA                <2>  mov al, %1
-    25 000000A8 E886FF              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 000000AB B087                <2>  mov al, %1
-    25 000000AD E881FF              <2>  call sd_send
+   143                                    ;
+   144                                    ; send CMD0 (go idle)
+   145                                    ;
+   146                                  .step_1:
+   147                                    SD_SEND_CMD 0, 0, 0, 0, 0, 0x95
+    31                              <1>  SD_SEND (0x40|%1)
+    24 00000061 50                  <2>  push ax
+    25 00000062 B040                <2>  mov al, %1
+    26 00000064 E8CAFF              <2>  call sd_send
+    27 00000067 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 00000068 50                  <2>  push ax
+    25 00000069 B000                <2>  mov al, %1
+    26 0000006B E8C3FF              <2>  call sd_send
+    27 0000006E 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 0000006F 50                  <2>  push ax
+    25 00000070 B000                <2>  mov al, %1
+    26 00000072 E8BCFF              <2>  call sd_send
+    27 00000075 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 00000076 50                  <2>  push ax
+    25 00000077 B000                <2>  mov al, %1
+    26 00000079 E8B5FF              <2>  call sd_send
+    27 0000007C 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 0000007D 50                  <2>  push ax
+    25 0000007E B000                <2>  mov al, %1
+    26 00000080 E8AEFF              <2>  call sd_send
+    27 00000083 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 00000084 50                  <2>  push ax
+    25 00000085 B095                <2>  mov al, %1
+    26 00000087 E8A7FF              <2>  call sd_send
+    27 0000008A 58                  <2>  pop ax
+   148                                  
+   149 0000008B B90800                    mov cx, 8
+   150                                  .step_1_response:
+   151                                    SD_RECV
+    47 0000008E E8ABFF              <1>  call sd_recv
+   152 00000091 3C01                      cmp al, 0x01
+   153 00000093 7405                      je .step_1_done
+   154 00000095 E2F7                      loop .step_1_response
+   155 00000097 E96401                    jmp .sd_init_fail
+   156                                  .step_1_done:
+   157                                  
+   158                                    SD_DUMMY_BYTE
+    40 0000009A 50                  <1>  push ax
+    41 0000009B B0FF                <1>  mov al, 0xff
+    42 0000009D E891FF              <1>  call sd_send
+    43 000000A0 58                  <1>  pop ax
+   159                                    SD_DUMMY_BYTE
+    40 000000A1 50                  <1>  push ax
+    41 000000A2 B0FF                <1>  mov al, 0xff
+    42 000000A4 E88AFF              <1>  call sd_send
+    43 000000A7 58                  <1>  pop ax
    160                                  
-   161 000000B0 B90800                    mov cx, 8
-   162                                  .step_2_response:
-   163                                    SD_RECV
-    43 000000B3 E886FF              <1>  call sd_recv
-   164 000000B6 3C01                      cmp al, 0x01
-   165 000000B8 7405                      je .step_2_done
-   166 000000BA E2F7                      loop .step_2_response
-   167 000000BC E9EC00                    jmp .sd_init_fail
-   168                                  .step_2_done:
+   161                                    ;
+   162                                    ; send CMD8
+   163                                    ;
+   164                                  .step_2:
+   165                                    SD_SEND_CMD 8, 0, 0, 1, 0xaa, 0x86
+    31                              <1>  SD_SEND (0x40|%1)
+    24 000000A8 50                  <2>  push ax
+    25 000000A9 B048                <2>  mov al, %1
+    26 000000AB E883FF              <2>  call sd_send
+    27 000000AE 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 000000AF 50                  <2>  push ax
+    25 000000B0 B000                <2>  mov al, %1
+    26 000000B2 E87CFF              <2>  call sd_send
+    27 000000B5 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 000000B6 50                  <2>  push ax
+    25 000000B7 B000                <2>  mov al, %1
+    26 000000B9 E875FF              <2>  call sd_send
+    27 000000BC 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 000000BD 50                  <2>  push ax
+    25 000000BE B001                <2>  mov al, %1
+    26 000000C0 E86EFF              <2>  call sd_send
+    27 000000C3 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 000000C4 50                  <2>  push ax
+    25 000000C5 B0AA                <2>  mov al, %1
+    26 000000C7 E867FF              <2>  call sd_send
+    27 000000CA 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 000000CB 50                  <2>  push ax
+    25 000000CC B087                <2>  mov al, %1
+    26 000000CE E860FF              <2>  call sd_send
+    27 000000D1 58                  <2>  pop ax
+   166                                  
+   167 000000D2 B90800                    mov cx, 8
+   168                                  .step_2_response:
    169                                    SD_RECV
-    43 000000BF E87AFF              <1>  call sd_recv
-   170                                    SD_RECV
-    43 000000C2 E877FF              <1>  call sd_recv
-   171                                    SD_RECV
-    43 000000C5 E874FF              <1>  call sd_recv
-   172                                    SD_RECV
-    43 000000C8 E871FF              <1>  call sd_recv
-   173 000000CB 3CAA                      cmp al, 0xaa
-   174 000000CD 7403E9D900                jnz .sd_init_fail
-   175                                  
-   176                                    ;
-   177                                    ; send CMD58
-   178                                    ;
-   179                                  .step_3:
-   180                                    SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
-    29                              <1>  SD_SEND (0x40|%1)
-    24 000000D2 B07A                <2>  mov al, %1
-    25 000000D4 E85AFF              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 000000D7 B000                <2>  mov al, %1
-    25 000000D9 E855FF              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 000000DC B000                <2>  mov al, %1
-    25 000000DE E850FF              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 000000E1 B000                <2>  mov al, %1
-    25 000000E3 E84BFF              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 000000E6 B000                <2>  mov al, %1
-    25 000000E8 E846FF              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 000000EB B0CD                <2>  mov al, %1
-    25 000000ED E841FF              <2>  call sd_send
+    47 000000D5 E864FF              <1>  call sd_recv
+   170 000000D8 3C01                      cmp al, 0x01
+   171 000000DA 7405                      je .step_2_done
+   172 000000DC E2F7                      loop .step_2_response
+   173 000000DE E91D01                    jmp .sd_init_fail
+   174                                  .step_2_done:
+   175                                    SD_RECV
+    47 000000E1 E858FF              <1>  call sd_recv
+   176                                    SD_RECV
+    47 000000E4 E855FF              <1>  call sd_recv
+   177                                    SD_RECV
+    47 000000E7 E852FF              <1>  call sd_recv
+   178                                    SD_RECV
+    47 000000EA E84FFF              <1>  call sd_recv
+   179 000000ED 3CAA                      cmp al, 0xaa
+   180 000000EF 7403E90A01                jnz .sd_init_fail
    181                                  
-   182 000000F0 B90800                    mov cx, 8
-   183                                  .step_3_response:
-   184                                    SD_RECV
-    43 000000F3 E846FF              <1>  call sd_recv
-   185 000000F6 3C01                      cmp al, 0x01
-   186 000000F8 7405                      je .step_3_done
-   187 000000FA E2F7                      loop .step_3_response
-   188 000000FC E9AC00                    jmp .sd_init_fail
-   189                                  .step_3_done:
+   182                                    ;
+   183                                    ; send CMD58
+   184                                    ;
+   185                                  .step_3:
+   186                                    SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
+    31                              <1>  SD_SEND (0x40|%1)
+    24 000000F4 50                  <2>  push ax
+    25 000000F5 B07A                <2>  mov al, %1
+    26 000000F7 E837FF              <2>  call sd_send
+    27 000000FA 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 000000FB 50                  <2>  push ax
+    25 000000FC B000                <2>  mov al, %1
+    26 000000FE E830FF              <2>  call sd_send
+    27 00000101 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 00000102 50                  <2>  push ax
+    25 00000103 B000                <2>  mov al, %1
+    26 00000105 E829FF              <2>  call sd_send
+    27 00000108 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 00000109 50                  <2>  push ax
+    25 0000010A B000                <2>  mov al, %1
+    26 0000010C E822FF              <2>  call sd_send
+    27 0000010F 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 00000110 50                  <2>  push ax
+    25 00000111 B000                <2>  mov al, %1
+    26 00000113 E81BFF              <2>  call sd_send
+    27 00000116 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 00000117 50                  <2>  push ax
+    25 00000118 B0CD                <2>  mov al, %1
+    26 0000011A E814FF              <2>  call sd_send
+    27 0000011D 58                  <2>  pop ax
+   187                                  
+   188 0000011E B90800                    mov cx, 8
+   189                                  .step_3_response:
    190                                    SD_RECV
-    43 000000FF E83AFF              <1>  call sd_recv
-   191                                    SD_RECV
-    43 00000102 E837FF              <1>  call sd_recv
-   192                                    SD_RECV
-    43 00000105 E834FF              <1>  call sd_recv
-   193                                    SD_RECV
-    43 00000108 E831FF              <1>  call sd_recv
-   194                                  
-   195                                    ;
-   196                                    ; send CMD55
-   197                                    ;
-   198 0000010B B9FFFF                    mov cx, 0xffff
-   199                                  .step_4:
-   200                                    SD_SEND_CMD 55, 0, 0, 0, 0, 0xcc
-    29                              <1>  SD_SEND (0x40|%1)
-    24 0000010E B077                <2>  mov al, %1
-    25 00000110 E81EFF              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 00000113 B000                <2>  mov al, %1
-    25 00000115 E819FF              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 00000118 B000                <2>  mov al, %1
-    25 0000011A E814FF              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 0000011D B000                <2>  mov al, %1
-    25 0000011F E80FFF              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 00000122 B000                <2>  mov al, %1
-    25 00000124 E80AFF              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 00000127 B0CD                <2>  mov al, %1
-    25 00000129 E805FF              <2>  call sd_send
-   201 0000012C 89CA                      mov dx, cx
-   202 0000012E B90800                    mov cx, 8
-   203                                  .step_4_response:
-   204                                    SD_RECV
-    43 00000131 E808FF              <1>  call sd_recv
-   205 00000134 A8FE                      test al, 0xfe
-   206 00000136 7404                      jz .step_4_done
-   207 00000138 E2F7                      loop .step_4_response
-   208 0000013A EB6F                      jmp .sd_init_fail
-   209                                  .step_4_done:
-   210                                  
-   211                                    ;
-   212                                    ; send ACMD41
-   213                                    ;
-   214                                  .step_5:
-   215                                    SD_SEND_CMD 41, 0x40, 0, 0, 0, 0xcc
-    29                              <1>  SD_SEND (0x40|%1)
-    24 0000013C B069                <2>  mov al, %1
-    25 0000013E E8F0FE              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 00000141 B040                <2>  mov al, %1
-    25 00000143 E8EBFE              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 00000146 B000                <2>  mov al, %1
-    25 00000148 E8E6FE              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 0000014B B000                <2>  mov al, %1
-    25 0000014D E8E1FE              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 00000150 B000                <2>  mov al, %1
-    25 00000152 E8DCFE              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 00000155 B0CD                <2>  mov al, %1
-    25 00000157 E8D7FE              <2>  call sd_send
-   216 0000015A B90800                    mov cx, 8
-   217                                  .step_5_response:
-   218                                    SD_RECV
-    43 0000015D E8DCFE              <1>  call sd_recv
-   219 00000160 A8FE                      test al, 0xfe
-   220 00000162 7404                      jz .step_5_done
-   221 00000164 E2F7                      loop .step_5_response
-   222 00000166 EB43                      jmp .sd_init_fail 
-   223                                  .step_5_done:
-   224                                  
-   225                                    ; if R1 response is not IDLE, issue ACMD41 again
-   226 00000168 84C0                      test al, al
-   227 0000016A 7404                      jz .step_6  
-   228 0000016C 89D1                      mov cx, dx
-   229 0000016E E29E                      loop .step_4
+    47 00000121 E818FF              <1>  call sd_recv
+   191 00000124 3C01                      cmp al, 0x01
+   192 00000126 7405                      je .step_3_done
+   193 00000128 E2F7                      loop .step_3_response
+   194 0000012A E9D100                    jmp .sd_init_fail
+   195                                  .step_3_done:
+   196                                    SD_RECV
+    47 0000012D E80CFF              <1>  call sd_recv
+   197                                    SD_RECV
+    47 00000130 E809FF              <1>  call sd_recv
+   198                                    SD_RECV
+    47 00000133 E806FF              <1>  call sd_recv
+   199                                    SD_RECV
+    47 00000136 E803FF              <1>  call sd_recv
+   200                                  
+   201                                    ;
+   202                                    ; send CMD55
+   203                                    ;
+   204 00000139 B9FFFF                    mov cx, 0xffff
+   205                                  .step_4:
+   206                                    SD_SEND_CMD 55, 0, 0, 0, 0, 0xcc
+    31                              <1>  SD_SEND (0x40|%1)
+    24 0000013C 50                  <2>  push ax
+    25 0000013D B077                <2>  mov al, %1
+    26 0000013F E8EFFE              <2>  call sd_send
+    27 00000142 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 00000143 50                  <2>  push ax
+    25 00000144 B000                <2>  mov al, %1
+    26 00000146 E8E8FE              <2>  call sd_send
+    27 00000149 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 0000014A 50                  <2>  push ax
+    25 0000014B B000                <2>  mov al, %1
+    26 0000014D E8E1FE              <2>  call sd_send
+    27 00000150 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 00000151 50                  <2>  push ax
+    25 00000152 B000                <2>  mov al, %1
+    26 00000154 E8DAFE              <2>  call sd_send
+    27 00000157 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 00000158 50                  <2>  push ax
+    25 00000159 B000                <2>  mov al, %1
+    26 0000015B E8D3FE              <2>  call sd_send
+    27 0000015E 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 0000015F 50                  <2>  push ax
+    25 00000160 B0CD                <2>  mov al, %1
+    26 00000162 E8CCFE              <2>  call sd_send
+    27 00000165 58                  <2>  pop ax
+   207 00000166 89CA                      mov dx, cx
+   208 00000168 B90800                    mov cx, 8
+   209                                  .step_4_response:
+   210                                    SD_RECV
+    47 0000016B E8CEFE              <1>  call sd_recv
+   211 0000016E A8FE                      test al, 0xfe
+   212 00000170 7405                      jz .step_4_done
+   213 00000172 E2F7                      loop .step_4_response
+   214 00000174 E98700                    jmp .sd_init_fail
+   215                                  .step_4_done:
+   216                                  
+   217                                    ;
+   218                                    ; send ACMD41
+   219                                    ;
+   220                                  .step_5:
+   221                                    SD_SEND_CMD 41, 0x40, 0, 0, 0, 0xcc
+    31                              <1>  SD_SEND (0x40|%1)
+    24 00000177 50                  <2>  push ax
+    25 00000178 B069                <2>  mov al, %1
+    26 0000017A E8B4FE              <2>  call sd_send
+    27 0000017D 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 0000017E 50                  <2>  push ax
+    25 0000017F B040                <2>  mov al, %1
+    26 00000181 E8ADFE              <2>  call sd_send
+    27 00000184 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 00000185 50                  <2>  push ax
+    25 00000186 B000                <2>  mov al, %1
+    26 00000188 E8A6FE              <2>  call sd_send
+    27 0000018B 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 0000018C 50                  <2>  push ax
+    25 0000018D B000                <2>  mov al, %1
+    26 0000018F E89FFE              <2>  call sd_send
+    27 00000192 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 00000193 50                  <2>  push ax
+    25 00000194 B000                <2>  mov al, %1
+    26 00000196 E898FE              <2>  call sd_send
+    27 00000199 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 0000019A 50                  <2>  push ax
+    25 0000019B B0CD                <2>  mov al, %1
+    26 0000019D E891FE              <2>  call sd_send
+    27 000001A0 58                  <2>  pop ax
+   222 000001A1 B90800                    mov cx, 8
+   223                                  .step_5_response:
+   224                                    SD_RECV
+    47 000001A4 E895FE              <1>  call sd_recv
+   225 000001A7 A8FE                      test al, 0xfe
+   226 000001A9 7404                      jz .step_5_done
+   227 000001AB E2F7                      loop .step_5_response
+   228 000001AD EB4F                      jmp .sd_init_fail 
+   229                                  .step_5_done:
    230                                  
-   231                                    ;
-   232                                    ; send CMD58
-   233                                    ;
-   234                                  .step_6:
-   235                                    SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
-    29                              <1>  SD_SEND (0x40|%1)
-    24 00000170 B07A                <2>  mov al, %1
-    25 00000172 E8BCFE              <2>  call sd_send
-    30                              <1>  SD_SEND %2
-    24 00000175 B000                <2>  mov al, %1
-    25 00000177 E8B7FE              <2>  call sd_send
-    31                              <1>  SD_SEND %3
-    24 0000017A B000                <2>  mov al, %1
-    25 0000017C E8B2FE              <2>  call sd_send
-    32                              <1>  SD_SEND %4
-    24 0000017F B000                <2>  mov al, %1
-    25 00000181 E8ADFE              <2>  call sd_send
-    33                              <1>  SD_SEND %5
-    24 00000184 B000                <2>  mov al, %1
-    25 00000186 E8A8FE              <2>  call sd_send
-    34                              <1>  SD_SEND (0x01|%6)
-    24 00000189 B0CD                <2>  mov al, %1
-    25 0000018B E8A3FE              <2>  call sd_send
+   231                                    ; if R1 response is not IDLE, issue ACMD41 again
+   232 000001AF 84C0                      test al, al
+   233 000001B1 7404                      jz .step_6  
+   234 000001B3 89D1                      mov cx, dx
+   235 000001B5 E285                      loop .step_4
    236                                  
-   237 0000018E B90800                    mov cx, 8
-   238                                  .step_6_response:
-   239                                    SD_RECV
-    43 00000191 E8A8FE              <1>  call sd_recv
-   240 00000194 84C0                      test al, al
-   241 00000196 7404                      jz .step_6_done
-   242 00000198 E2F7                      loop .step_6_response
-   243 0000019A EB0F                      jmp .sd_init_fail
-   244                                  .step_6_done:
-   245                                    SD_RECV   ; if &0xc0 then is SDHC
-    43 0000019C E89DFE              <1>  call sd_recv
-   246                                    SD_RECV
-    43 0000019F E89AFE              <1>  call sd_recv
-   247                                    SD_RECV
-    43 000001A2 E897FE              <1>  call sd_recv
-   248                                    SD_RECV
-    43 000001A5 E894FE              <1>  call sd_recv
-   249                                  
-   250                                  .sd_init_success:
-   251 000001A8 B001                      mov al, 1
-   252 000001AA C3                        ret
-   253                                  
-   254                                  .sd_init_fail:
-   255 000001AB B000                      mov al, 0
-   256 000001AD C3                        ret
-   257                                  
-   258                                  ;------------------------------------------------------------------------------
-   259                                  ; ax    = sector
-   260                                  ; es:bx = dest
-   261                                  sd_read_sector:
-   262                                  
-   263                                    ;
-   264                                    ; send CMD17
-   265                                    ;
-   266                                    SD_SEND (0x40|17)
-    24 000001AE B051                <1>  mov al, %1
-    25 000001B0 E87EFE              <1>  call sd_send
-   267                                    SD_SEND 0
-    24 000001B3 B000                <1>  mov al, %1
-    25 000001B5 E879FE              <1>  call sd_send
-   268                                    SD_SEND 0
-    24 000001B8 B000                <1>  mov al, %1
-    25 000001BA E874FE              <1>  call sd_send
-   269                                    SD_SEND ah
-    24 000001BD 88E0                <1>  mov al, %1
-    25 000001BF E86FFE              <1>  call sd_send
-   270                                    SD_SEND al
-    24 000001C2 88C0                <1>  mov al, %1
-    25 000001C4 E86AFE              <1>  call sd_send
-   271                                    SD_SEND (0x01|0xcc)
-    24 000001C7 B0CD                <1>  mov al, %1
-    25 000001C9 E865FE              <1>  call sd_send
-   272                                  
-   273 000001CC 51                        push cx
-   274 000001CD B90800                    mov cx, 8
-   275                                  .cmd_17_response:
-   276                                    SD_RECV
-    43 000001D0 E869FE              <1>  call sd_recv
-   277 000001D3 84C0                      test al, al
-   278 000001D5 7404                      jz .cmd_17_done
-   279 000001D7 E2F7                      loop .cmd_17_response
-   280 000001D9 EB1E                      jmp .fail
-   281                                  .cmd_17_done:
-   282                                  
-   283                                    ; wait for start of block byte
-   284 000001DB B9FF00                    mov cx, 0xff
-   285                                  .wait_start:
-   286                                    SD_RECV
-    43 000001DE E85BFE              <1>  call sd_recv
-   287 000001E1 3CFE                      cmp al, 0xfe
-   288 000001E3 7407                      je .recv_sector
-   289 000001E5 E2F7                      loop .wait_start
-   290 000001E7 EB10                      jmp .fail
-   291                                  
-   292                                    ; read a 512byte block
-   293 000001E9 B90002                    mov cx, 0x200
-   294                                  .recv_sector:
-   295                                    SD_RECV
-    43 000001EC E84DFE              <1>  call sd_recv
-   296 000001EF 268807                    mov es:[bx], al
-   297 000001F2 43                        inc bx
-   298 000001F3 E2F7                      loop .recv_sector
-   299                                  
-   300                                  .success:
-   301 000001F5 59                        pop cx
-   302 000001F6 B001                      mov al, 1
-   303 000001F8 C3                        ret
-   304                                  
-   305                                  .fail:
-   306 000001F9 59                        pop cx
-   307 000001FA B000                      mov al, 0
-   308 000001FC C3                        ret
-   309                                  
-   310                                  ;------------------------------------------------------------------------------
-   311                                  ;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
-   312                                  ;   ch    - cylinder  (80)
-   313                                  ;   cl    - sector    (18)
-   314                                  ;   dh    - head      (2)
-   315                                  chs_to_lba:
-   316 000001FD 53                        push bx
-   317 000001FE 52                        push dx
-   318 000001FF 51                        push cx
-   319 00000200 31C0                      xor ax, ax
-   320 00000202 88E8                      mov al, ch
-   321 00000204 01C0                      add ax, ax    ; ax = cylinder * 2
-   322 00000206 30ED                      xor ch, ch    ; ch is no longer needed
-   323 00000208 88F2                      mov dl, dh
-   324 0000020A 30F6                      xor dh, dh    ; move dh into dx
-   325 0000020C 01D0                      add ax, dx    ; ax += head
-   326 0000020E D1E0                      shl ax, 1
-   327 00000210 89C3                      mov bx, ax
-   328 00000212 D1E0                      shl ax, 1
-   329 00000214 D1E0                      shl ax, 1
-   330 00000216 D1E0                      shl ax, 1
-   331 00000218 01D8                      add ax, bx    ; ax *= 18
-   332 0000021A 49                        dec cx
-   333 0000021B 01C8                      add ax, cx    ; ax += (sector - 1)
-   334 0000021D 59                        pop cx
-   335 0000021E 5A                        pop dx
-   336 0000021F 5B                        pop bx
-   337 00000220 C3                        ret
-   338                                  
-   339                                  ;------------------------------------------------------------------------------
-   340                                  int13:
-   341 00000221 FA                        cli
-   342                                    ;out 0xba, ax
-   343                                    ;sti
-   344                                    ;iret
-   345                                    
-   346 00000222 50                        push ax
-   347 00000223 51                        push cx
-   348 00000224 52                        push dx
-   349 00000225 53                        push bx
-   350                                  
-   351                                    ; dispatch to specific handler
-   352 00000226 80FC02                    cmp ah, 0x02
-   353 00000229 7414                      je int13_02
-   354 0000022B 80FC00                    cmp ah, 0x00
-   355 0000022E 740A                      je int13_00
-   356 00000230 80FC08                    cmp ah, 0x08
-   357 00000233 742E                      je int13_08
-   358                                  
-   359 00000235 B400                      mov ah, ERR_SUCCESS
-   360 00000237 F8                        clc             ; CF = 0
-   361 00000238 EB36                      jmp int13_exit
-   362                                  
-   363                                  ;------------------------------------------------------------------------------
-   364                                  int13_00:
-   365 0000023A B400                      mov ah, ERR_SUCCESS
-   366 0000023C F8                        clc             ; CF = 0
-   367 0000023D EB31                      jmp int13_exit
-   368                                  
-   369                                  ;------------------------------------------------------------------------------
-   370                                  ; Read Sectors From Drive
-   371                                  ;   al    - sectors to read
-   372                                  ;   ch    - cylinder
-   373                                  ;   cl    - sector
-   374                                  ;   dh    - head
-   375                                  ;   dl    - drive
-   376                                  ;   es:bx - buffer
-   377                                  int13_02:
-   378                                  
-   379                                    ;test al, al            ; test for zero loop count
-   380                                    ;
-   381                                    
-   382 0000023F 80FA00                    cmp dl, 0x00            ; check this is our floppy
-   383 00000242 7405                      je .int13_02_start
-   384                                  
-   385 00000244 B4AA                      mov ah, ERR_NOT_READY
-   386 00000246 F9                        stc             ; CF = 1
-   387 00000247 EB27                      jmp int13_exit
-   388                                  
-   389                                  .int13_02_start:
-   390 00000249 50                        push ax
-   391 0000024A E8B0FF                    call chs_to_lba
-   392 0000024D 59                        pop cx
-   393 0000024E 30ED                      xor ch, ch
-   394 00000250 51                        push cx
-   395                                  
-   396                                  .int13_02_read_sector:
-   397                                    ;call sd_read_sector
-   398 00000251 84C0                      test al, al
-   399 00000253 7408                      jz .int13_02_fail
-   400 00000255 E2FA                      loop .int13_02_read_sector
+   237                                    ;
+   238                                    ; send CMD58
+   239                                    ;
+   240                                  .step_6:
+   241                                    SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
+    31                              <1>  SD_SEND (0x40|%1)
+    24 000001B7 50                  <2>  push ax
+    25 000001B8 B07A                <2>  mov al, %1
+    26 000001BA E874FE              <2>  call sd_send
+    27 000001BD 58                  <2>  pop ax
+    32                              <1>  SD_SEND %2
+    24 000001BE 50                  <2>  push ax
+    25 000001BF B000                <2>  mov al, %1
+    26 000001C1 E86DFE              <2>  call sd_send
+    27 000001C4 58                  <2>  pop ax
+    33                              <1>  SD_SEND %3
+    24 000001C5 50                  <2>  push ax
+    25 000001C6 B000                <2>  mov al, %1
+    26 000001C8 E866FE              <2>  call sd_send
+    27 000001CB 58                  <2>  pop ax
+    34                              <1>  SD_SEND %4
+    24 000001CC 50                  <2>  push ax
+    25 000001CD B000                <2>  mov al, %1
+    26 000001CF E85FFE              <2>  call sd_send
+    27 000001D2 58                  <2>  pop ax
+    35                              <1>  SD_SEND %5
+    24 000001D3 50                  <2>  push ax
+    25 000001D4 B000                <2>  mov al, %1
+    26 000001D6 E858FE              <2>  call sd_send
+    27 000001D9 58                  <2>  pop ax
+    36                              <1>  SD_SEND (0x01|%6)
+    24 000001DA 50                  <2>  push ax
+    25 000001DB B0CD                <2>  mov al, %1
+    26 000001DD E851FE              <2>  call sd_send
+    27 000001E0 58                  <2>  pop ax
+   242                                  
+   243 000001E1 B90800                    mov cx, 8
+   244                                  .step_6_response:
+   245                                    SD_RECV
+    47 000001E4 E855FE              <1>  call sd_recv
+   246 000001E7 84C0                      test al, al
+   247 000001E9 7404                      jz .step_6_done
+   248 000001EB E2F7                      loop .step_6_response
+   249 000001ED EB0F                      jmp .sd_init_fail
+   250                                  .step_6_done:
+   251                                    SD_RECV   ; if &0xc0 then is SDHC
+    47 000001EF E84AFE              <1>  call sd_recv
+   252                                    SD_RECV
+    47 000001F2 E847FE              <1>  call sd_recv
+   253                                    SD_RECV
+    47 000001F5 E844FE              <1>  call sd_recv
+   254                                    SD_RECV
+    47 000001F8 E841FE              <1>  call sd_recv
+   255                                  
+   256                                  .sd_init_success:
+   257 000001FB B001                      mov al, 1
+   258 000001FD C3                        ret
+   259                                  
+   260                                  .sd_init_fail:
+   261 000001FE B000                      mov al, 0
+   262 00000200 C3                        ret
+   263                                  
+   264                                  ;------------------------------------------------------------------------------
+   265                                  ; ax    = sector
+   266                                  ; es:bx = dest
+   267                                  sd_read_sector:
+   268                                  
+   269                                    ;
+   270                                    ; send CMD17
+   271                                    ;
+   272                                    SD_SEND (0x40|17)
+    24 00000201 50                  <1>  push ax
+    25 00000202 B051                <1>  mov al, %1
+    26 00000204 E82AFE              <1>  call sd_send
+    27 00000207 58                  <1>  pop ax
+   273                                    SD_SEND 0
+    24 00000208 50                  <1>  push ax
+    25 00000209 B000                <1>  mov al, %1
+    26 0000020B E823FE              <1>  call sd_send
+    27 0000020E 58                  <1>  pop ax
+   274                                    SD_SEND 0
+    24 0000020F 50                  <1>  push ax
+    25 00000210 B000                <1>  mov al, %1
+    26 00000212 E81CFE              <1>  call sd_send
+    27 00000215 58                  <1>  pop ax
+   275                                    SD_SEND ah
+    24 00000216 50                  <1>  push ax
+    25 00000217 88E0                <1>  mov al, %1
+    26 00000219 E815FE              <1>  call sd_send
+    27 0000021C 58                  <1>  pop ax
+   276                                    SD_SEND al
+    24 0000021D 50                  <1>  push ax
+    25 0000021E 88C0                <1>  mov al, %1
+    26 00000220 E80EFE              <1>  call sd_send
+    27 00000223 58                  <1>  pop ax
+   277                                    SD_SEND (0x01|0xcc)
+    24 00000224 50                  <1>  push ax
+    25 00000225 B0CD                <1>  mov al, %1
+    26 00000227 E807FE              <1>  call sd_send
+    27 0000022A 58                  <1>  pop ax
+   278                                  
+   279 0000022B 51                        push cx
+   280 0000022C B90800                    mov cx, 8
+   281                                  .cmd_17_response:
+   282                                    SD_RECV
+    47 0000022F E80AFE              <1>  call sd_recv
+   283 00000232 84C0                      test al, al
+   284 00000234 7404                      jz .cmd_17_done
+   285 00000236 E2F7                      loop .cmd_17_response
+   286 00000238 EB1E                      jmp .fail
+   287                                  .cmd_17_done:
+   288                                  
+   289                                    ; wait for start of block byte
+   290 0000023A B9FF00                    mov cx, 0xff
+   291                                  .wait_start:
+   292                                    SD_RECV
+    47 0000023D E8FCFD              <1>  call sd_recv
+   293 00000240 3CFE                      cmp al, 0xfe
+   294 00000242 7404                      je .recv_start
+   295 00000244 E2F7                      loop .wait_start
+   296 00000246 EB10                      jmp .fail
+   297                                  .recv_start:
+   298                                  
+   299                                    ; read a 512byte block
+   300 00000248 B90002                    mov cx, 512
+   301                                  .recv_sector:
+   302                                    SD_RECV
+    47 0000024B E8EEFD              <1>  call sd_recv
+   303 0000024E 268807                    mov es:[bx], al
+   304 00000251 43                        inc bx
+   305 00000252 E2F7                      loop .recv_sector
+   306                                  
+   307                                  .success:
+   308 00000254 59                        pop cx
+   309 00000255 B001                      mov al, 1
+   310 00000257 C3                        ret
+   311                                  
+   312                                  .fail:
+   313 00000258 59                        pop cx
+   314 00000259 B000                      mov al, 0
+   315 0000025B C3                        ret
+   316                                  
+   317                                  ;------------------------------------------------------------------------------
+   318                                  ;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+   319                                  ;   ch    - cylinder  (80)
+   320                                  ;   cl    - sector    (18)
+   321                                  ;   dh    - head      (2)
+   322                                  chs_to_lba:
+   323 0000025C 53                        push bx
+   324 0000025D 52                        push dx
+   325 0000025E 51                        push cx
+   326 0000025F 31C0                      xor ax, ax
+   327 00000261 88E8                      mov al, ch
+   328 00000263 01C0                      add ax, ax    ; acum = cylinder * 2
+   329 00000265 30ED                      xor ch, ch    ; ch is no longer needed
+   330 00000267 88F2                      mov dl, dh
+   331 00000269 30F6                      xor dh, dh    ; dx  = head
+   332 0000026B 01D0                      add ax, dx    ; accum += head
+   333 0000026D D1E0                      shl ax, 1
+   334 0000026F 89C3                      mov bx, ax    ; bx = accum * 2
+   335 00000271 D1E0                      shl ax, 1
+   336 00000273 D1E0                      shl ax, 1
+   337 00000275 D1E0                      shl ax, 1
+   338 00000277 01D8                      add ax, bx    ; accum *= 18
+   339 00000279 49                        dec cx
+   340 0000027A 01C8                      add ax, cx    ; accum += (sector - 1)
+   341 0000027C 59                        pop cx
+   342 0000027D 5A                        pop dx
+   343 0000027E 5B                        pop bx
+   344 0000027F C3                        ret
+   345                                  
+   346                                  ;------------------------------------------------------------------------------
+   347                                  int13:
+   348 00000280 FA                        cli
+   349 00000281 E7BA                      out 0xba, ax
+   350                                    ;sti
+   351                                    ;iret
+   352                                  
+   353 00000283 52                        push dx
+   354 00000284 51                        push cx
+   355 00000285 53                        push bx
+   356 00000286 50                        push ax
+   357                                  
+   358                                    ; dispatch to specific handler
+   359 00000287 80FC02                    cmp ah, 0x02
+   360 0000028A 7414                      je int13_02
+   361 0000028C 80FC00                    cmp ah, 0x00
+   362 0000028F 740A                      je int13_00
+   363 00000291 80FC08                    cmp ah, 0x08
+   364 00000294 7427                      je int13_08
+   365                                  
+   366 00000296 B400                      mov ah, ERR_SUCCESS
+   367 00000298 F8                        clc             ; CF = 0
+   368 00000299 EB33                      jmp int13_exit
+   369                                  
+   370                                  ;------------------------------------------------------------------------------
+   371                                  int13_00:
+   372 0000029B B400                      mov ah, ERR_SUCCESS
+   373 0000029D F8                        clc             ; CF = 0
+   374 0000029E EB2E                      jmp int13_exit
+   375                                  
+   376                                  ;------------------------------------------------------------------------------
+   377                                  ; Read Sectors From Drive
+   378                                  ;   al    - sectors to read
+   379                                  ;   ch    - cylinder
+   380                                  ;   cl    - sector
+   381                                  ;   dh    - head
+   382                                  ;   dl    - drive
+   383                                  ;   es:bx - buffer
+   384                                  int13_02:
+   385 000002A0 50                        push ax
+   386 000002A1 E8B8FF                    call chs_to_lba
+   387 000002A4 59                        pop cx
+   388 000002A5 30ED                      xor ch, ch
+   389 000002A7 51                        push cx
+   390                                  
+   391                                  .int13_02_read_sector:
+   392 000002A8 E856FF                    call sd_read_sector
+   393 000002AB 84C0                      test al, al
+   394 000002AD 7408                      jz .int13_02_fail
+   395 000002AF E2F7                      loop .int13_02_read_sector
+   396                                  
+   397 000002B1 58                        pop ax                  ; al = sectors read
+   398 000002B2 B400                      mov ah, ERR_SUCCESS
+   399 000002B4 F8                        clc                     ; CF = 0
+   400 000002B5 EB17                      jmp int13_exit
    401                                  
-   402 00000257 58                        pop ax                  ; al = sectors read
-   403 00000258 B400                      mov ah, ERR_SUCCESS
-   404 0000025A F8                        clc                     ; CF = 0
-   405 0000025B EB13                      jmp int13_exit
-   406                                  
-   407                                  .int13_02_fail:
-   408 0000025D 59                        pop cx                  ; cx was left on the stack so pop it
-   409 0000025E B4AA                      mov ah, ERR_NOT_READY
-   410 00000260 F9                        stc
-   411 00000261 EB0D                      jmp int13_exit
-   412                                  
-   413                                  ;------------------------------------------------------------------------------
-   414                                  int13_08:
-   415 00000263 B80000                    mov ax, 0
-   416 00000266 B201                      mov dl, 1
-   417 00000268 BB0000                    mov bx, 0
-   418 0000026B B400                      mov ah, ERR_SUCCESS
-   419 0000026D F8                        clc             ; CF = 0
-   420 0000026E EB00                      jmp int13_exit
+   402                                  .int13_02_fail:
+   403 000002B7 59                        pop cx                  ; cx was left on the stack so pop it
+   404 000002B8 B4AA                      mov ah, ERR_NOT_READY
+   405 000002BA F9                        stc
+   406 000002BB EB11                      jmp int13_exit
+   407                                  
+   408                                  ;------------------------------------------------------------------------------
+   409                                  int13_08:
+   410 000002BD 58                        pop ax
+   411 000002BE 5B                        pop bx
+   412 000002BF 59                        pop cx
+   413 000002C0 5A                        pop dx
+   414 000002C1 B80000                    mov ax, 0
+   415 000002C4 B201                      mov dl, 1
+   416 000002C6 BB0000                    mov bx, 0
+   417 000002C9 B400                      mov ah, ERR_SUCCESS
+   418 000002CB F8                        clc             ; CF = 0
+   419 000002CC FB                        sti
+   420 000002CD CF                        iret
    421                                  
    422                                  ;------------------------------------------------------------------------------
    423                                  int13_exit:
-   424 00000270 5B                        pop bx
-   425 00000271 5A                        pop dx
-   426 00000272 59                        pop cx
-   427 00000273 58                        pop ax
-   428 00000274 FB                        sti
-   429 00000275 CF                        iret
+   424 000002CE 5B                        pop bx  ; useless ax value
+   425                                    ;mov bh, ah
+   426                                    ;pop ax
+   427                                    ;mov ah, bh
+   428 000002CF 5B                        pop bx
+   429 000002D0 59                        pop cx
+   430 000002D1 5A                        pop dx
+   431 000002D2 FB                        sti
+   432 000002D3 E7BC                      out 0xbc, ax
+   433 000002D5 CF                        iret

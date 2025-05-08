@@ -2300,6 +2300,31 @@ static void i_halt(void)
     exit(0);
 }
 
+void cpu_dump_state() {
+  printf("  AX %04x\n", wregs[AX]);
+  printf("  CX %04x\n", wregs[CX]);
+  printf("  DX %04x\n", wregs[DX]);
+  printf("  BX %04x\n", wregs[BX]);
+  printf("  SP %04x\n", wregs[SP]);
+  printf("  BP %04x\n", wregs[BP]);
+  printf("  SI %04x\n", wregs[SI]);
+  printf("  DI %04x\n", wregs[DI]);
+  printf("  ES %04x\n", sregs[ES]);
+  printf("  CS %04x\n", sregs[CS]);
+  printf("  SS %04x\n", sregs[SS]);
+  printf("  DS %04x\n", sregs[DS]);
+  printf("  IP %04x\n", cpu_get_IP());
+  printf("     %c%c%c%c%c%c%c%c\n",
+    OF ? 'O' : '.',
+    DF ? 'D' : '.',
+    IF ? 'I' : '.',
+    SF ? 'S' : '.',
+    ZF ? 'Z' : '.',
+    AF ? 'A' : '.',
+    PF ? 'P' : '.',
+    CF ? 'C' : '.');
+}
+
 static void dump_reg_change(bool silent) {
 
   static uint16_t p_wregs[8];

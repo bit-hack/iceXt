@@ -72,3 +72,5 @@ void cpu_set_DS(uint16_t v);
 void cpu_set_IP(uint16_t v);
 
 void cpu_set_CF(uint8_t  v);
+
+void cpu_dump_state();

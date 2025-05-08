@@ -88,6 +88,7 @@ void disk_spi_write(uint8_t tx) {
     //            ..--..--..--..--
     shift_out = 0xffff00fffffffffelu;
     sector    = shift_in >> 16;
+    printf("sector: %x\n", sector);
     shift_in = ~0llu;
     fseek(disk, 512 * sector, SEEK_SET);
     read_count = 512;
@@ -118,7 +119,11 @@ void disk_int13_02(void) {
   const uint32_t bx   = cpu_get_BX();
   const uint32_t dest = cpu_get_address(es, bx);
 
+  // 0, 13h, 21h, 22h
+
   const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+
+  printf("sector: %x\n", lba);
 
   fseek(disk, lba * 512, SEEK_SET);
   fread(&memory[dest], 1, 512 * count, disk);
@@ -142,6 +147,9 @@ void disk_int13(void) {
 
   printf("int 13h -> AH:%02x\n", func);
 
+  //cpu_dump_state();
+  //return;
+
   switch (func) {
   case 0x0:
     disk_int13_00();
@@ -156,4 +164,5 @@ void disk_int13(void) {
 
   cpu_set_AH(0);
   cpu_set_CF(0);  // success
+//  cpu_dump_state();
 }

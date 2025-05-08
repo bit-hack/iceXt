@@ -21,8 +21,10 @@ org 0
 %define ERR_INVALID_CMD 0x01
 
 %macro SD_SEND 1
+  push ax
   mov al, %1
   call sd_send
+  pop ax
 %endmacro
 
 %macro SD_SEND_CMD 6
@@ -35,8 +37,10 @@ org 0
 %endmacro
 
 %macro SD_DUMMY_BYTE 0
+  push ax
   mov al, 0xff
   call sd_send
+  pop ax
 %endmacro
 
 %macro SD_RECV 0
@@ -44,8 +48,10 @@ org 0
 %endmacro
 
 %macro SD_CS 1
+  push ax
   mov al, %1
   call sd_set_cs
+  pop ax
 %endmacro
 
 ;------------------------------------------------------------------------------
@@ -285,12 +291,13 @@ sd_read_sector:
 .wait_start:
   SD_RECV
   cmp al, 0xfe
-  je .recv_sector
+  je .recv_start
   loop .wait_start
   jmp .fail
+.recv_start:
 
   ; read a 512byte block
-  mov cx, 0x200
+  mov cx, 512
 .recv_sector:
   SD_RECV
   mov es:[bx], al
@@ -318,19 +325,19 @@ chs_to_lba:
   push cx
   xor ax, ax
   mov al, ch
-  add ax, ax    ; ax = cylinder * 2
+  add ax, ax    ; acum = cylinder * 2
   xor ch, ch    ; ch is no longer needed
   mov dl, dh
-  xor dh, dh    ; move dh into dx
-  add ax, dx    ; ax += head
+  xor dh, dh    ; dx  = head
+  add ax, dx    ; accum += head
   shl ax, 1
-  mov bx, ax
+  mov bx, ax    ; bx = accum * 2
   shl ax, 1
   shl ax, 1
   shl ax, 1
-  add ax, bx    ; ax *= 18
+  add ax, bx    ; accum *= 18
   dec cx
-  add ax, cx    ; ax += (sector - 1)
+  add ax, cx    ; accum += (sector - 1)
   pop cx
   pop dx
   pop bx
@@ -339,14 +346,14 @@ chs_to_lba:
 ;------------------------------------------------------------------------------
 int13:
   cli
-  ;out 0xba, ax
-  ;sti
-  ;iret
-  
-  push ax
-  push cx
+  out 0xba, ax
+  sti
+  iret
+
   push dx
+  push cx
   push bx
+  push ax
 
   ; dispatch to specific handler
   cmp ah, 0x02
@@ -375,18 +382,6 @@ int13_00:
 ;   dl    - drive
 ;   es:bx - buffer
 int13_02:
-
-  ;test al, al            ; test for zero loop count
-  ;
-  
-  cmp dl, 0x00            ; check this is our floppy
-  je .int13_02_start
-
-  mov ah, ERR_NOT_READY
-  stc             ; CF = 1
-  jmp int13_exit
-
-.int13_02_start:
   push ax
   call chs_to_lba
   pop cx
@@ -412,18 +407,33 @@ int13_02:
 
 ;------------------------------------------------------------------------------
 int13_08:
+  pop ax
+  pop bx
+  pop cx
+  pop dx
   mov ax, 0
   mov dl, 1
   mov bx, 0
   mov ah, ERR_SUCCESS
   clc             ; CF = 0
-  jmp int13_exit
+  sti
+  iret
 
 ;------------------------------------------------------------------------------
 int13_exit:
-  pop bx
-  pop dx
-  pop cx
+
+  ; fix return code as some functions need to return values
+  ;
+  ; 02 need to return in AL
+  ; AH has status code
+  ; can we move the value to the stack before it gets popd?
+
+  mov bh, ah
   pop ax
+  mov ah, bh
+  pop bx
+  pop cx
+  pop dx
   sti
+  out 0xbc, ax
   iret
