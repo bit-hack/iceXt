@@ -1,8 +1,10 @@
 pll/pll.v
 utils/uartRx.v
+utils/uartTx.v
 utils/sevenSeg.v
 utils/clkEnGen.v
 utils/reset.v
+utils/spiMaster.v
 cpu/cpu_bus.v
 bios/bios.v
 sram/sram_ctrl.v
@@ -11,4 +13,4 @@ chipset/pic.v
 chipset/pit.v
 sound/ym3014.v
 ps2/keyboard.v
-top.v
+top_loopback.v

@@ -6,44 +6,42 @@ typedef char            bool;
 #define true            0x1
 #define false           0x0
 
-void port_out(uint8_t data) {
-    uint8_t d = data;
-    __asm
-    {
-        mov al, d
-        out 0x2a, al
-    }
+#define FD_HEADS     2
+#define FD_SECTORS   18
+#define FD_CYLINDERS 80
+
+
+static void read_sector(uint16_t lba, uint8_t __far *dest) {
+    __asm {
+        out 0dfh, ax
+    };
 }
 
-extern "C" void cmain()
+extern "C" void __cdecl sd_init()
 {
-  uint8_t __far * ram    = (uint8_t __far *)0x10000000;  // 1000:0000
-  uint8_t __far * screen = (uint8_t __far *)0xb0000000;  // B000:0000
+}
 
-  int i = 0;
-  for (;; ++i) {
+extern "C" uint8_t __cdecl sd_read(
+    uint16_t ax,
+    uint16_t cx,
+    uint16_t dx,
+    uint8_t __far * dest
+    ) {
 
-    ram[0] = 'R';
-    ram[1] = 'A';
-    ram[2] = 'M';
-    ram[3] = 'O';
-    ram[4] = 'K';
+  uint8_t to_read = ax & 0xff;
+  const uint8_t cyl  = (cx >> 8);
+  const uint8_t sec  = (cx & 0xff) - 1;
+  const uint8_t head = dx >> 8;
 
-    {
-      uint16_t x = 0xffff;
-      while (--x);
-    }
+  uint16_t lba = (cyl * FD_HEADS + head) * FD_SECTORS + sec;
 
-    screen[0] = ram[0];
-    screen[1] = ram[1];
-    screen[2] = ram[2];
-    screen[3] = ram[3];
-    screen[4] = ram[4];
-    screen[5] = '0' + i % 10;
+  //while (to_read--) {
+  //
+  //  //read_sector(lba, dest);
+  //
+  //  dest += 512;
+  //  ++lba;
+  //}
 
-    {
-      uint16_t x = 0xffff;
-      while (--x);
-    }
-  }
+  return 0;
 }

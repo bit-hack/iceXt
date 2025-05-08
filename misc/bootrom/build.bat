@@ -1,4 +1,4 @@
-.\VC152\CL.EXE /AT /G2 /Gs /Gx /c /Zl *.cpp
+.\VC152\CL.EXE /AT /G0 /Gs /Gx /c /Zl /Faoutput\out.asm *.cpp
 .\VC152\ML.EXE /AT /c *.asm 
 .\VC152\LINK.EXE /TINY /NODEFAULTLIBRARYSEARCH entry.obj main.obj, out.com,,,,
 

@@ -25,7 +25,7 @@ module uartRx(
   output       oBusy
 );
 
-  parameter CLK_FREQ     = 25000000;
+  parameter CLK_FREQ     = 10000000;
   parameter BAUD         =   115200;
   parameter CLK_DIV      = CLK_FREQ / BAUD;
   parameter CLK_DIV_HALF = CLK_DIV / 2;
