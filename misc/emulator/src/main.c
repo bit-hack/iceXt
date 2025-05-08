@@ -212,7 +212,7 @@ int main(int argc, char** args) {
 
     for (uint32_t i = 0; i < steps; ++i) {
 
-      //cpu_debug = (cpu_get_CS() == 0xc800);
+      cpu_debug = (cpu_get_CS() == 0xc800);
       cpu_step();
 
       if (irq0++ >= 100000) {

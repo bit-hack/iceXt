@@ -339,9 +339,9 @@ chs_to_lba:
 ;------------------------------------------------------------------------------
 int13:
   cli
-  out 0xba, ax
-  sti
-  iret
+  ;out 0xba, ax
+  ;sti
+  ;iret
   
   push ax
   push cx
@@ -406,19 +406,13 @@ int13_02:
 
 .int13_02_fail:
   pop cx                  ; cx was left on the stack so pop it
-  mov al, ERR_NOT_READY
+  mov ah, ERR_NOT_READY
   stc
   jmp int13_exit
 
 ;------------------------------------------------------------------------------
 int13_08:
-  cmp dl, 0
-  je ._is_floppy
-  mov ah, ERR_NOT_READY
-  stc             ; CF = 1
-  jmp int13_exit
-
-._is_floppy:
+  mov ax, 0
   mov dl, 1
   mov bx, 0
   mov ah, ERR_SUCCESS

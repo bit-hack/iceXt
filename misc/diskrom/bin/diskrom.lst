@@ -490,32 +490,32 @@
    339                                  ;------------------------------------------------------------------------------
    340                                  int13:
    341 00000221 FA                        cli
-   342 00000222 E7BA                      out 0xba, ax
-   343 00000224 FB                        sti
-   344 00000225 CF                        iret
+   342                                    ;out 0xba, ax
+   343                                    ;sti
+   344                                    ;iret
    345                                    
-   346 00000226 50                        push ax
-   347 00000227 51                        push cx
-   348 00000228 52                        push dx
-   349 00000229 53                        push bx
+   346 00000222 50                        push ax
+   347 00000223 51                        push cx
+   348 00000224 52                        push dx
+   349 00000225 53                        push bx
    350                                  
    351                                    ; dispatch to specific handler
-   352 0000022A 80FC02                    cmp ah, 0x02
-   353 0000022D 7414                      je int13_02
-   354 0000022F 80FC00                    cmp ah, 0x00
-   355 00000232 740A                      je int13_00
-   356 00000234 80FC08                    cmp ah, 0x08
-   357 00000237 7431                      je int13_08
+   352 00000226 80FC02                    cmp ah, 0x02
+   353 00000229 7414                      je int13_02
+   354 0000022B 80FC00                    cmp ah, 0x00
+   355 0000022E 740A                      je int13_00
+   356 00000230 80FC08                    cmp ah, 0x08
+   357 00000233 742E                      je int13_08
    358                                  
-   359 00000239 B400                      mov ah, ERR_SUCCESS
-   360 0000023B F8                        clc             ; CF = 0
-   361 0000023C EB40                      jmp int13_exit
+   359 00000235 B400                      mov ah, ERR_SUCCESS
+   360 00000237 F8                        clc             ; CF = 0
+   361 00000238 EB36                      jmp int13_exit
    362                                  
    363                                  ;------------------------------------------------------------------------------
    364                                  int13_00:
-   365 0000023E B400                      mov ah, ERR_SUCCESS
-   366 00000240 F8                        clc             ; CF = 0
-   367 00000241 EB3B                      jmp int13_exit
+   365 0000023A B400                      mov ah, ERR_SUCCESS
+   366 0000023C F8                        clc             ; CF = 0
+   367 0000023D EB31                      jmp int13_exit
    368                                  
    369                                  ;------------------------------------------------------------------------------
    370                                  ; Read Sectors From Drive
@@ -530,57 +530,51 @@
    379                                    ;test al, al            ; test for zero loop count
    380                                    ;
    381                                    
-   382 00000243 80FA00                    cmp dl, 0x00            ; check this is our floppy
-   383 00000246 7405                      je .int13_02_start
+   382 0000023F 80FA00                    cmp dl, 0x00            ; check this is our floppy
+   383 00000242 7405                      je .int13_02_start
    384                                  
-   385 00000248 B4AA                      mov ah, ERR_NOT_READY
-   386 0000024A F9                        stc             ; CF = 1
-   387 0000024B EB31                      jmp int13_exit
+   385 00000244 B4AA                      mov ah, ERR_NOT_READY
+   386 00000246 F9                        stc             ; CF = 1
+   387 00000247 EB27                      jmp int13_exit
    388                                  
    389                                  .int13_02_start:
-   390 0000024D 50                        push ax
-   391 0000024E E8ACFF                    call chs_to_lba
-   392 00000251 59                        pop cx
-   393 00000252 30ED                      xor ch, ch
-   394 00000254 51                        push cx
+   390 00000249 50                        push ax
+   391 0000024A E8B0FF                    call chs_to_lba
+   392 0000024D 59                        pop cx
+   393 0000024E 30ED                      xor ch, ch
+   394 00000250 51                        push cx
    395                                  
    396                                  .int13_02_read_sector:
-   397 00000255 E856FF                    call sd_read_sector
-   398 00000258 84C0                      test al, al
-   399 0000025A 7408                      jz .int13_02_fail
-   400 0000025C E2F7                      loop .int13_02_read_sector
+   397                                    ;call sd_read_sector
+   398 00000251 84C0                      test al, al
+   399 00000253 7408                      jz .int13_02_fail
+   400 00000255 E2FA                      loop .int13_02_read_sector
    401                                  
-   402 0000025E 58                        pop ax                  ; al = sectors read
-   403 0000025F B400                      mov ah, ERR_SUCCESS
-   404 00000261 F8                        clc                     ; CF = 0
-   405 00000262 EB1A                      jmp int13_exit
+   402 00000257 58                        pop ax                  ; al = sectors read
+   403 00000258 B400                      mov ah, ERR_SUCCESS
+   404 0000025A F8                        clc                     ; CF = 0
+   405 0000025B EB13                      jmp int13_exit
    406                                  
    407                                  .int13_02_fail:
-   408 00000264 59                        pop cx                  ; cx was left on the stack so pop it
-   409 00000265 B0AA                      mov al, ERR_NOT_READY
-   410 00000267 F9                        stc
-   411 00000268 EB14                      jmp int13_exit
+   408 0000025D 59                        pop cx                  ; cx was left on the stack so pop it
+   409 0000025E B4AA                      mov ah, ERR_NOT_READY
+   410 00000260 F9                        stc
+   411 00000261 EB0D                      jmp int13_exit
    412                                  
    413                                  ;------------------------------------------------------------------------------
    414                                  int13_08:
-   415 0000026A 80FA00                    cmp dl, 0
-   416 0000026D 7405                      je ._is_floppy
-   417 0000026F B4AA                      mov ah, ERR_NOT_READY
-   418 00000271 F9                        stc             ; CF = 1
-   419 00000272 EB0A                      jmp int13_exit
-   420                                  
-   421                                  ._is_floppy:
-   422 00000274 B201                      mov dl, 1
-   423 00000276 BB0000                    mov bx, 0
-   424 00000279 B400                      mov ah, ERR_SUCCESS
-   425 0000027B F8                        clc             ; CF = 0
-   426 0000027C EB00                      jmp int13_exit
-   427                                  
-   428                                  ;------------------------------------------------------------------------------
-   429                                  int13_exit:
-   430 0000027E 5B                        pop bx
-   431 0000027F 5A                        pop dx
-   432 00000280 59                        pop cx
-   433 00000281 58                        pop ax
-   434 00000282 FB                        sti
-   435 00000283 CF                        iret
+   415 00000263 B80000                    mov ax, 0
+   416 00000266 B201                      mov dl, 1
+   417 00000268 BB0000                    mov bx, 0
+   418 0000026B B400                      mov ah, ERR_SUCCESS
+   419 0000026D F8                        clc             ; CF = 0
+   420 0000026E EB00                      jmp int13_exit
+   421                                  
+   422                                  ;------------------------------------------------------------------------------
+   423                                  int13_exit:
+   424 00000270 5B                        pop bx
+   425 00000271 5A                        pop dx
+   426 00000272 59                        pop cx
+   427 00000273 58                        pop ax
+   428 00000274 FB                        sti
+   429 00000275 CF                        iret
