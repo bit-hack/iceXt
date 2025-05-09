@@ -346,9 +346,6 @@ chs_to_lba:
 ;------------------------------------------------------------------------------
 int13:
   cli
-  out 0xba, ax
-  sti
-  iret
 
   push dx
   push cx
@@ -362,6 +359,8 @@ int13:
   je int13_00
   cmp ah, 0x08
   je int13_08
+  cmp ah, 0x15
+  je int13_15
 
   mov ah, ERR_SUCCESS
   clc             ; CF = 0
@@ -389,9 +388,12 @@ int13_02:
   push cx
 
 .int13_02_read_sector:
+  push ax                 ; preserve sector number
   call sd_read_sector
   test al, al
   jz .int13_02_fail
+  pop ax                  ; restore sector number
+  inc ax                  ; advance to the next sector
   loop .int13_02_read_sector
 
   pop ax                  ; al = sectors read
@@ -420,6 +422,17 @@ int13_08:
   iret
 
 ;------------------------------------------------------------------------------
+int13_15:
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  mov ah, 1       ; diskette no change detection present
+  clc             ; CF = 0
+  sti
+  iret
+
+;------------------------------------------------------------------------------
 int13_exit:
 
   ; fix return code as some functions need to return values
@@ -435,5 +448,4 @@ int13_exit:
   pop cx
   pop dx
   sti
-  out 0xbc, ax
   iret

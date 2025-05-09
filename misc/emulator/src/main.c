@@ -57,8 +57,7 @@ void port_write(uint32_t port, uint8_t value) {
   }
   if (port == 0xba) {
     // legacy
-    disk_int13();
-    //dump_sector();
+    //disk_int13();
   }
   if (port == 0xbc) {
     //cpu_dump_state();

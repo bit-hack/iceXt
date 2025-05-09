@@ -49,34 +49,34 @@ void disk_spi_write(uint8_t tx) {
   const uint8_t cmd = (shift_in >> 48);
   switch (cmd) {
   case (0x40 | 0):  // CMD0
-    printf("CMD0\n");
+    //printf("CMD0\n");
     //            ..--..--..--..--
     sd_idle = 1;
     shift_out = 0xffff01fffffffffflu;
     shift_in = ~0llu;
     break;
   case (0x40 | 8):  // CMD8
-    printf("CMD8\n");
+    //printf("CMD8\n");
     //            ..--..--..--..--
     shift_out = 0xffff01000000aafflu;
     shift_in = ~0llu;
     break;
   case (0x40 | 58): // CMD58
-    printf("CMD58\n");
+    //printf("CMD58\n");
     //                      ..--..--..--..--
     shift_out = sd_idle ? 0xffff0100000000fflu :
                           0xffff0000000000fflu;
     shift_in = ~0llu;
     break;
   case (0x40 | 55): // CMD55
-    printf("CMD55\n");
+    //printf("CMD55\n");
     //                      ..--..--..--..--
     shift_out = sd_idle ? 0xffff01fffffffffflu :
                           0xffff00fffffffffflu;
     shift_in = ~0llu;
     break;
   case (0x40 | 41): // ACMD41
-    printf("ACMD41\n");
+    //printf("ACMD41\n");
     //                      ..--..--..--..--
     shift_out = sd_idle ? 0xffff01fffffffffflu :
                           0xffff00fffffffffflu;
@@ -84,11 +84,10 @@ void disk_spi_write(uint8_t tx) {
     sd_idle = 0;
     break;
   case (0x40 | 17): // CMD17
-    printf("CMD17\n");
+    //printf("CMD17\n");
     //            ..--..--..--..--
     shift_out = 0xffff00fffffffffelu;
     sector    = shift_in >> 16;
-    printf("sector: %x\n", sector);
     shift_in = ~0llu;
     fseek(disk, 512 * sector, SEEK_SET);
     read_count = 512;
@@ -141,14 +140,13 @@ void disk_int13_08(void) {
   //cpu_set_DI(0x0FC7);
 }
 
+void disk_int13_15(void) {
+
+}
+
 void disk_int13(void) {
 
   const uint8_t func = cpu_get_AH();
-
-  printf("int 13h -> AH:%02x\n", func);
-
-  //cpu_dump_state();
-  //return;
 
   switch (func) {
   case 0x0:
@@ -160,9 +158,11 @@ void disk_int13(void) {
   case 0x8:
     disk_int13_08();
     break;
+  case 0x15:
+    disk_int13_15();
+    break;
   }
 
   cpu_set_AH(0);
   cpu_set_CF(0);  // success
-//  cpu_dump_state();
 }

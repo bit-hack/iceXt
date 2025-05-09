@@ -591,88 +591,106 @@
    346                                  ;------------------------------------------------------------------------------
    347                                  int13:
    348 00000280 FA                        cli
-   349 00000281 E7BA                      out 0xba, ax
-   350                                    ;sti
-   351                                    ;iret
-   352                                  
-   353 00000283 52                        push dx
-   354 00000284 51                        push cx
-   355 00000285 53                        push bx
-   356 00000286 50                        push ax
-   357                                  
-   358                                    ; dispatch to specific handler
-   359 00000287 80FC02                    cmp ah, 0x02
-   360 0000028A 7414                      je int13_02
-   361 0000028C 80FC00                    cmp ah, 0x00
-   362 0000028F 740A                      je int13_00
-   363 00000291 80FC08                    cmp ah, 0x08
-   364 00000294 7427                      je int13_08
-   365                                  
-   366 00000296 B400                      mov ah, ERR_SUCCESS
-   367 00000298 F8                        clc             ; CF = 0
-   368 00000299 EB33                      jmp int13_exit
-   369                                  
-   370                                  ;------------------------------------------------------------------------------
-   371                                  int13_00:
-   372 0000029B B400                      mov ah, ERR_SUCCESS
-   373 0000029D F8                        clc             ; CF = 0
-   374 0000029E EB2E                      jmp int13_exit
-   375                                  
-   376                                  ;------------------------------------------------------------------------------
-   377                                  ; Read Sectors From Drive
-   378                                  ;   al    - sectors to read
-   379                                  ;   ch    - cylinder
-   380                                  ;   cl    - sector
-   381                                  ;   dh    - head
-   382                                  ;   dl    - drive
-   383                                  ;   es:bx - buffer
-   384                                  int13_02:
-   385 000002A0 50                        push ax
-   386 000002A1 E8B8FF                    call chs_to_lba
-   387 000002A4 59                        pop cx
-   388 000002A5 30ED                      xor ch, ch
-   389 000002A7 51                        push cx
-   390                                  
-   391                                  .int13_02_read_sector:
-   392 000002A8 E856FF                    call sd_read_sector
-   393 000002AB 84C0                      test al, al
-   394 000002AD 7408                      jz .int13_02_fail
-   395 000002AF E2F7                      loop .int13_02_read_sector
-   396                                  
-   397 000002B1 58                        pop ax                  ; al = sectors read
-   398 000002B2 B400                      mov ah, ERR_SUCCESS
-   399 000002B4 F8                        clc                     ; CF = 0
-   400 000002B5 EB17                      jmp int13_exit
-   401                                  
-   402                                  .int13_02_fail:
-   403 000002B7 59                        pop cx                  ; cx was left on the stack so pop it
-   404 000002B8 B4AA                      mov ah, ERR_NOT_READY
-   405 000002BA F9                        stc
-   406 000002BB EB11                      jmp int13_exit
-   407                                  
-   408                                  ;------------------------------------------------------------------------------
-   409                                  int13_08:
-   410 000002BD 58                        pop ax
-   411 000002BE 5B                        pop bx
-   412 000002BF 59                        pop cx
-   413 000002C0 5A                        pop dx
-   414 000002C1 B80000                    mov ax, 0
-   415 000002C4 B201                      mov dl, 1
-   416 000002C6 BB0000                    mov bx, 0
-   417 000002C9 B400                      mov ah, ERR_SUCCESS
-   418 000002CB F8                        clc             ; CF = 0
-   419 000002CC FB                        sti
-   420 000002CD CF                        iret
-   421                                  
-   422                                  ;------------------------------------------------------------------------------
-   423                                  int13_exit:
-   424 000002CE 5B                        pop bx  ; useless ax value
-   425                                    ;mov bh, ah
-   426                                    ;pop ax
-   427                                    ;mov ah, bh
-   428 000002CF 5B                        pop bx
-   429 000002D0 59                        pop cx
-   430 000002D1 5A                        pop dx
-   431 000002D2 FB                        sti
-   432 000002D3 E7BC                      out 0xbc, ax
-   433 000002D5 CF                        iret
+   349                                  
+   350 00000281 52                        push dx
+   351 00000282 51                        push cx
+   352 00000283 53                        push bx
+   353 00000284 50                        push ax
+   354                                  
+   355                                    ; dispatch to specific handler
+   356 00000285 80FC02                    cmp ah, 0x02
+   357 00000288 7419                      je int13_02
+   358 0000028A 80FC00                    cmp ah, 0x00
+   359 0000028D 740F                      je int13_00
+   360 0000028F 80FC08                    cmp ah, 0x08
+   361 00000292 742F                      je int13_08
+   362 00000294 80FC15                    cmp ah, 0x15
+   363 00000297 743B                      je int13_15
+   364                                  
+   365 00000299 B400                      mov ah, ERR_SUCCESS
+   366 0000029B F8                        clc             ; CF = 0
+   367 0000029C EB3F                      jmp int13_exit
+   368                                  
+   369                                  ;------------------------------------------------------------------------------
+   370                                  int13_00:
+   371 0000029E B400                      mov ah, ERR_SUCCESS
+   372 000002A0 F8                        clc             ; CF = 0
+   373 000002A1 EB3A                      jmp int13_exit
+   374                                  
+   375                                  ;------------------------------------------------------------------------------
+   376                                  ; Read Sectors From Drive
+   377                                  ;   al    - sectors to read
+   378                                  ;   ch    - cylinder
+   379                                  ;   cl    - sector
+   380                                  ;   dh    - head
+   381                                  ;   dl    - drive
+   382                                  ;   es:bx - buffer
+   383                                  int13_02:
+   384 000002A3 50                        push ax
+   385 000002A4 E8B5FF                    call chs_to_lba
+   386 000002A7 59                        pop cx
+   387 000002A8 30ED                      xor ch, ch
+   388 000002AA 51                        push cx
+   389                                  
+   390                                  .int13_02_read_sector:
+   391 000002AB 50                        push ax                 ; preserve sector number
+   392 000002AC E852FF                    call sd_read_sector
+   393 000002AF 84C0                      test al, al
+   394 000002B1 740A                      jz .int13_02_fail
+   395 000002B3 58                        pop ax                  ; restore sector number
+   396 000002B4 40                        inc ax                  ; advance to the next sector
+   397 000002B5 E2F4                      loop .int13_02_read_sector
+   398                                  
+   399 000002B7 58                        pop ax                  ; al = sectors read
+   400 000002B8 B400                      mov ah, ERR_SUCCESS
+   401 000002BA F8                        clc                     ; CF = 0
+   402 000002BB EB20                      jmp int13_exit
+   403                                  
+   404                                  .int13_02_fail:
+   405 000002BD 59                        pop cx                  ; cx was left on the stack so pop it
+   406 000002BE B4AA                      mov ah, ERR_NOT_READY
+   407 000002C0 F9                        stc
+   408 000002C1 EB1A                      jmp int13_exit
+   409                                  
+   410                                  ;------------------------------------------------------------------------------
+   411                                  int13_08:
+   412 000002C3 58                        pop ax
+   413 000002C4 5B                        pop bx
+   414 000002C5 59                        pop cx
+   415 000002C6 5A                        pop dx
+   416 000002C7 B80000                    mov ax, 0
+   417 000002CA B201                      mov dl, 1
+   418 000002CC BB0000                    mov bx, 0
+   419 000002CF B400                      mov ah, ERR_SUCCESS
+   420 000002D1 F8                        clc             ; CF = 0
+   421 000002D2 FB                        sti
+   422 000002D3 CF                        iret
+   423                                  
+   424                                  ;------------------------------------------------------------------------------
+   425                                  int13_15:
+   426 000002D4 58                        pop ax
+   427 000002D5 5B                        pop bx
+   428 000002D6 59                        pop cx
+   429 000002D7 5A                        pop dx
+   430 000002D8 B401                      mov ah, 1       ; diskette no change detection present
+   431 000002DA F8                        clc             ; CF = 0
+   432 000002DB FB                        sti
+   433 000002DC CF                        iret
+   434                                  
+   435                                  ;------------------------------------------------------------------------------
+   436                                  int13_exit:
+   437                                  
+   438                                    ; fix return code as some functions need to return values
+   439                                    ;
+   440                                    ; 02 need to return in AL
+   441                                    ; AH has status code
+   442                                    ; can we move the value to the stack before it gets popd?
+   443                                  
+   444 000002DD 88E7                      mov bh, ah
+   445 000002DF 58                        pop ax
+   446 000002E0 88FC                      mov ah, bh
+   447 000002E2 5B                        pop bx
+   448 000002E3 59                        pop cx
+   449 000002E4 5A                        pop dx
+   450 000002E5 FB                        sti
+   451 000002E6 CF                        iret
