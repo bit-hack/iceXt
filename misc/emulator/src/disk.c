@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "disk.h"
 #include "cpu.h"
+#include "serial.h"
 
 
 static FILE* disk;
@@ -17,12 +19,70 @@ static uint32_t sector;
 static uint32_t read_count = 0;
 static bool reading = false;
 
+static serial_t* serial;
+static uint8_t _spi_cs;
+
+static uint8_t rx_buf;
+
+
+static uint8_t xfer(uint8_t tx, uint8_t cs) {
+
+  int ntx, nrx;
+
+  uint8_t n0 = 0x00 | (tx >> 7) | (cs ? 0x02 : 0);
+  uint8_t n1 = 0x80 | (tx & 0x7f);
+
+  ntx = serial_send(serial, &n0, 1);
+  assert(ntx == 1);
+
+  ntx = serial_send(serial, &n1, 1);
+  assert(ntx == 1);
+
+  uint8_t rx = 0;
+  nrx = serial_read(serial, &rx, 1);
+  assert(nrx == 1);
+
+  rx_buf = rx;
+
+  return rx;
+}
+
+static void spi_send(uint8_t tx) {
+  xfer(tx, _spi_cs);
+}
+
+static uint8_t spi_recv(void) {
+  return rx_buf;
+}
 
 bool disk_load(const char* path) {
   disk = fopen(path, "rb");
-  return NULL != disk;
+  if (!disk) {
+    return false;
+  }
+
+  serial = serial_open(14, 115200);
+  if (!serial) {
+    return false;
+  }
+
+  return true;
 }
 
+#if 1
+void disk_spi_ctrl(uint8_t tx) {
+  _spi_cs = tx & 1;
+}
+
+void disk_spi_write(uint8_t tx) {
+  spi_send(tx);
+}
+
+uint8_t disk_spi_read() {
+  return spi_recv();
+}
+
+#else
 void disk_spi_ctrl(uint8_t tx) {
   spi_cs = tx & 1;
 }
@@ -98,6 +158,7 @@ void disk_spi_write(uint8_t tx) {
 uint8_t disk_spi_read() {
   return (shift_out >> 56) & 0xff;
 }
+#endif
 
 void disk_int13_00(void) {
 }

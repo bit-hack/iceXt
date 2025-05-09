@@ -19,8 +19,13 @@ module top(
     input         sd_do,
     output        sd_di,
     output        sd_clk,
-    output        sd_cs
+    output        sd_cs,
+    output        led_io,
+    output        pit_spk
 );
+
+   assign led_io  = ~sd_clk;
+   assign pit_spk = ~sd_clk;
 
   //
   // clock pll

@@ -15,6 +15,7 @@ org 0
 
 %define SD_DUMMY_CLOCKS 10
 %define SD_SEND_DELAY   20
+%define SD_RESP_WAIT    16
 
 %define ERR_SUCCESS     0x00
 %define ERR_NOT_READY   0xaa
@@ -54,6 +55,13 @@ org 0
   pop ax
 %endmacro
 
+%macro DEBUG 1
+  push ax
+  mov ax, %1
+  out PORT_DEBUG, ax
+  pop ax
+%endmacro
+
 ;------------------------------------------------------------------------------
 signature:
   db 0x55, 0xAA
@@ -89,11 +97,6 @@ install_int13:
   mov ds:[0x4e], cs
   mov ax, int13
   mov ds:[0x4c], ax
-  ret
-
-;------------------------------------------------------------------------------
-debug:
-  out PORT_DEBUG, al
   ret
 
 ;------------------------------------------------------------------------------
@@ -146,7 +149,7 @@ sd_init:
 .step_1:
   SD_SEND_CMD 0, 0, 0, 0, 0, 0x95
 
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_1_response:
   SD_RECV
   cmp al, 0x01
@@ -164,7 +167,7 @@ sd_init:
 .step_2:
   SD_SEND_CMD 8, 0, 0, 1, 0xaa, 0x86
 
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_2_response:
   SD_RECV
   cmp al, 0x01
@@ -177,7 +180,7 @@ sd_init:
   SD_RECV
   SD_RECV
   cmp al, 0xaa
-  jnz .sd_init_fail
+  jne .sd_init_fail
 
   ;
   ; send CMD58
@@ -185,7 +188,7 @@ sd_init:
 .step_3:
   SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
 
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_3_response:
   SD_RECV
   cmp al, 0x01
@@ -205,7 +208,7 @@ sd_init:
 .step_4:
   SD_SEND_CMD 55, 0, 0, 0, 0, 0xcc
   mov dx, cx
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_4_response:
   SD_RECV
   test al, 0xfe
@@ -219,7 +222,7 @@ sd_init:
   ;
 .step_5:
   SD_SEND_CMD 41, 0x40, 0, 0, 0, 0xcc
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_5_response:
   SD_RECV
   test al, 0xfe
@@ -240,7 +243,7 @@ sd_init:
 .step_6:
   SD_SEND_CMD 58, 0, 0, 0, 0, 0xcc
 
-  mov cx, 8
+  mov cx, SD_RESP_WAIT
 .step_6_response:
   SD_RECV
   test al, al

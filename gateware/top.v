@@ -52,7 +52,16 @@ module top(
     input ps2_mclk,
     input ps2_mdat,
     input ps2_kclk,
-    input ps2_kdat
+    input ps2_kdat,
+
+    // SD card
+    input  sd_do,
+    output sd_di,
+    output sd_clk,
+    output sd_cs,
+    
+    // misc
+    output led_io
 );
 
   //
@@ -116,10 +125,13 @@ module top(
   // internal CPU bus
   //
 
-  wire [ 7:0] cpu_data_in = bios_sel ? bios_out :
-                             pic_sel ?  pic_out :
-                              ph_sel ?   ph_out :
-                                         sram_d;
+  wire [ 7:0] cpu_data_in = bios_sel ?     bios_out :
+                            disk_sel ?     disk_out :
+                             pic_sel ?      pic_out :
+                              ph_sel ?       ph_out :
+                              sd_sel ?  sd_latch_rx :
+                        keyboard_sel ? keyboard_out :
+                                            sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
@@ -219,8 +231,8 @@ module top(
   pic u_pic(
     .iClk   (pll_clk10),
     .iRst   (rst),
-    .iIrq0  (irq0),             // timer
-    .iIrq1  (0),             // keyboard
+    .iIrq0  (irq0),          // timer
+    .iIrq1  (irq1),          // keyboard
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
@@ -262,14 +274,87 @@ module top(
   // PMOD
   //
   assign pmod = {
-    /*6*/1'b0,
-    /*4*/1'b0,
-    /*2*/ps2_kclk,
-    /*0*/ps2_mclk,
-    /*7*/1'b0,
-    /*5*/1'b0,
-    /*3*/ps2_kdat,
-    /*1*/ps2_mdat
+    /*6*/keyboard_out[6],
+    /*4*/keyboard_out[4],
+    /*2*/keyboard_out[2],
+    /*0*/keyboard_out[0],
+    /*7*/keyboard_out[7],
+    /*5*/keyboard_out[5],
+    /*3*/keyboard_out[3],
+    /*1*/keyboard_out[1]
   };
+
+  //
+  // SD Card
+  //
+
+  assign led_io  = ~sd_busy;
+  
+  wire [7:0] sd_rx;
+  wire       sd_valid;
+  wire       sd_busy;
+  reg        sd_send = 0;
+  reg        sd_sel  = 0;
+  reg        spi_cs  = 1;
+  
+  assign sd_cs = spi_cs;
+  
+  reg [7:0] sd_latch_rx = 0;
+  reg [7:0] sd_latch_tx = 0;
+  
+  spiMaster uSpiMaster(
+    /*input        */.iClk   (pll_clk10),
+    /*input  [3:0] */.iClkDiv(4'd15),
+    /*input        */.iSend  (sd_send),
+    /*input  [7:0] */.iData  (sd_latch_tx),
+    /*output [7:0] */.oData  (sd_rx),
+    /*output reg   */.oAvail (sd_valid),
+    /*output reg   */.oTaken (),
+    /*output       */.oBusy  (sd_busy),
+    /*output       */.oMosi  (sd_di),
+    /*input        */.iMiso  (sd_do),
+    /*output reg   */.oSck   (sd_clk)
+  );
+  
+  always @(posedge pll_clk10) begin
+    sd_send <= 0;
+    sd_sel  <= 0;
+    if (sd_valid) begin
+      sd_latch_rx <= sd_rx;
+    end
+    if (cpu_io_wr) begin
+      if (cpu_addr[11:0] == 12'h0b9) begin
+        spi_cs <= cpu_data_out[0];
+      end
+      if (cpu_addr[11:0] == 12'h0b8) begin
+        sd_send     <= 1;
+        sd_latch_tx <= cpu_data_out;
+      end
+    end
+    if (cpu_io_rd) begin
+      if (cpu_addr[11:0] == 12'h0b8) begin
+        sd_sel <= 1;
+      end
+    end
+  end
+
+  //
+  // Disk ROM
+  //
+  
+  reg [7:0] disk_rom[ 2048 ];
+  reg       disk_sel = 0;
+  reg [7:0] disk_out = 0;
+  
+  initial $readmemh("roms/diskrom.hex", disk_rom);
+
+  always @(posedge pll_clk10) begin
+    disk_sel <= 0;
+    if (cpu_mem_rd) begin
+      // [C8000 ... C87FF]              ....----.
+      disk_sel <= cpu_addr[19:11] == 9'b110010000;
+      disk_out <= disk_rom[ cpu_addr[10:0] ];
+    end
+  end
 
 endmodule

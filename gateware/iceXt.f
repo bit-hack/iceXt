@@ -13,4 +13,4 @@ chipset/pic.v
 chipset/pit.v
 sound/ym3014.v
 ps2/keyboard.v
-top_loopback.v
+top.v

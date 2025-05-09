@@ -63,6 +63,9 @@ void port_write(uint32_t port, uint8_t value) {
     //cpu_dump_state();
     //dump_sector();
   }
+  if (port == 0xb0) {
+    printf("DEBUG:%u\n", value);
+  }
 
   io[port & 0xffff] = value;
 }
