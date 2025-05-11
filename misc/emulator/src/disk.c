@@ -61,15 +61,17 @@ bool disk_load(const char* path) {
     return false;
   }
 
+#if 0
   serial = serial_open(14, 115200);
   if (!serial) {
     return false;
   }
+#endif
 
   return true;
 }
 
-#if 1
+#if 0
 void disk_spi_ctrl(uint8_t tx) {
   _spi_cs = tx & 1;
 }

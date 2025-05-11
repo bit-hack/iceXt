@@ -56,7 +56,7 @@
 MAX_MEMORY	= 640		; Maximum conventional memory allowed in KB (with EGA/VGA)
 ;MAX_MEMORY	= 704		; (with Mono/Hercules)
 ;MAX_MEMORY	= 736		; (with CGA)
-ASSUME_TWO_FLOPPIES = 1 ; Set the status word to have two discs, if we don't have a switch to say so.
+ASSUME_TWO_FLOPPIES = 0 ; Set the status word to have two discs, if we don't have a switch to say so.
 
 ;FAST_MEM_CHECK	= 1		; Define to use faster but less thorough memory check
 ;NO_MEM_CHECK	= 1		; Define to clear memory only
@@ -3232,6 +3232,8 @@ endp	int_10_dispatch
 ; Interrupt 10h - Function 0: Set mode
 ;---------------------------------------------------------------------------------------------------
 proc	int_10_func_0	near
+
+    out 0FEh, ax     ; hook video mode change
 
 	mov	al, [ds:10h]			; Set mode of CRT
 	mov	dx, 3B4h			;   mono port

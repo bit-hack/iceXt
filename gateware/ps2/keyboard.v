@@ -30,6 +30,8 @@ module scancode_converter(
     output           oAvail,
     output reg [7:0] oCode);
 
+    // converts from scancode set2 to set1
+
     reg avail = 0;
     assign oAvail = avail;
 
@@ -133,19 +135,52 @@ module scancode_converter(
 endmodule
 
 module ps2_keyboard(
-    input        iClk,
+    input            iClk,
 
     // CPU interface
-    input [19:0] iAddr,   // cpu port addr
-    input        iRd,     // port 60h read
-    output       oSel,
-    output [7:0] oData,
-    output       oIrq,
+    input     [19:0] iAddr,   // cpu port addr
+    input            iRd,     // port 60h read
+    input            iWr,
+    input      [7:0] iData,
+    output reg       oSel,
+    output reg [7:0] oData,
+    output           oIrq,
+
+    // PIT wires
+    output           oSpkGate,
+    output           oSpkEnable,
 
     // external PS2 interface
-    input        iPs2Clk,
-    input        iPs2Dat
+    input            iPs2Clk,
+    input            iPs2Dat
 );
+
+  //
+  // address decoding
+  //
+
+  wire sel_port60 = (iAddr[11:0] == 12'h060);
+  wire sel_port61 = (iAddr[11:0] == 12'h061);
+
+  //
+  // port 61h logic
+  //
+
+  reg [7:0] port61 = 8'h00;
+  always @(posedge iClk) begin
+    if (iWr) begin
+      if (sel_port61) begin
+        port61 <= iData;
+      end
+    end
+  end
+
+  assign oSpkGate   = port61[0];
+  assign oSpkEnable = port61[1];
+
+  //
+  // PS2 port logic
+  //
 
   reg [ 3:0] ps2ClkSync = 0;
   reg [ 3:0] ps2DatSync = 0;
@@ -219,15 +254,24 @@ module ps2_keyboard(
     end
   end
 
+  //
+  // read port logic
+  //
+
   always @(posedge iClk) begin
-    sel <= 0;
-    if (iRd && iAddr[11:0] == 12'h060) begin
-      sel <= 1;
+    oSel <= 0;
+    if (iRd) begin
+      if (sel_port60) begin
+        oSel  <= 1;
+        oData <= scancode;
+      end
+      if (sel_port61) begin
+        oSel  <= 1;
+        oData <= port61;
+      end
     end
   end
-  
-  assign oData = scancode;
-  assign oSel  = sel;
-  assign oIrq  = irq;
+
+  assign oIrq = irq;
 
 endmodule

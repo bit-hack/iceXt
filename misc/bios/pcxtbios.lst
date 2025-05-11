@@ -28766,7 +28766,7 @@ E050  72 74 20 61 74 20 32 30 31 68 00                rt at 201h.
 MAX_MEMORY	= 640		; Maximum conventional memory allowed in KB (with EGA/VGA)
 ;MAX_MEMORY	= 704		; (with Mono/Hercules)
 ;MAX_MEMORY	= 736		; (with CGA)
-ASSUME_TWO_FLOPPIES = 1 ; Set the status word to have two discs, if we don't have a switch to say so.
+ASSUME_TWO_FLOPPIES = 0 ; Set the status word to have two discs, if we don't have a switch to say so.
 
 ;FAST_MEM_CHECK	= 1		; Define to use faster but less thorough memory check
 ;NO_MEM_CHECK	= 1		; Define to clear memory only
@@ -29750,7 +29750,7 @@ E1B9  EB 03				jmp		L$9
 @@video_found:
 	call	video_init			; Setup video
 E1BB				L$8:
-E1BB  E8 C7 15				call		video_init
+E1BB  E8 C9 15				call		video_init
 
 
 @@skip_video:
@@ -30326,7 +30326,7 @@ E379				L$28:
 E379  E8 68 01				call		locate
 
 	mov	si, offset str_error
-E37C  BE FD F7				mov		si,offset L$1-0x803
+E37C  BE FF F7				mov		si,offset L$1-0x801
 
 	call	print				; Print string
 E37F  E8 57 01				call		print
@@ -30338,7 +30338,7 @@ E382  26 A0 15 00			mov		al,byte ptr es:[0x15]
 E386  E8 68 01				call		number
 
 	mov	si, offset str_continue
-E389  BE 23 F8				mov		si,offset L$1-0x7dd
+E389  BE 25 F8				mov		si,offset L$1-0x7db
 
 	call	print				;   print prompt
 E38C  E8 4A 01				call		print
@@ -30347,7 +30347,7 @@ E38C  E8 4A 01				call		print
 E38F  B3 02				mov		bl,0x02
 
 	call	beep
-E391  E8 0D 14				call		beep
+E391  E8 0F 14				call		beep
 
 	call	get_key				; Wait for keypress
 E394  E8 57 1B				call		get_key
@@ -30402,7 +30402,7 @@ E3BA  E8 A0 01				call		display_cpu
 
 
 	mov	si, offset str_mono		; Assume mono video
-E3BD  BE C7 F7				mov		si,offset L$1-0x839
+E3BD  BE C9 F7				mov		si,offset L$1-0x837
 
 	mov	ax, 0407h
 E3C0  B8 07 04				mov		ax,0x0407
@@ -30548,7 +30548,7 @@ E423  E8 BE 00				call		locate
 E426  FE C7				inc		bh
 
 	mov	si, offset str_clock
-E428  BE E0 F7				mov		si,offset L$1-0x820
+E428  BE E2 F7				mov		si,offset L$1-0x81e
 
 	call	print
 E42B  E8 AB 00				call		print
@@ -30591,7 +30591,7 @@ E443  8B C3				mov		ax,bx
 E445  E8 9C 00				call		locate
 
 	mov	si, offset str_ram_test		; Memory size string
-E448  BE E8 F7				mov		si,offset L$1-0x818
+E448  BE EA F7				mov		si,offset L$1-0x816
 
 	call	print				;   print string
 E44B  E8 8B 00				call		print
@@ -30720,7 +30720,7 @@ E495				L$40:
 E495  B3 01				mov		bl,0x01
 
 	call	beep				;   short beep
-E497  E8 07 13				call		beep
+E497  E8 09 13				call		beep
 
 	call	clear_screen			;   clear display
 E49A  E8 01 15				call		clear_screen
@@ -33443,7 +33443,7 @@ EB95				L$128:
 EB95  B3 01				mov		bl,0x01
 
 	call	beep				;   short beep
-EB97  E8 07 0C				call		beep
+EB97  E8 09 0C				call		beep
 
 
 @@done_3:
@@ -35173,21 +35173,21 @@ F032  E2 FE				loop		L$196
 F034  EB E0				jmp		L$191
 F036  C3 20 43 47 41 20 47 72 61 70 68 69 63 73 00    . CGA Graphics.
 F045  15 F1                                           DW	offset L$326
-F047  BE F1                                           DW	offset L$327
-F049  CB F1                                           DW	offset L$328
-F04B  DB F1                                           DW	offset L$329
-F04D  F7 F1                                           DW	offset L$330
-F04F  78 F2                                           DW	offset L$331
-F051  98 F2                                           DW	offset L$332
-F053  98 F2                                           DW	offset L$332
-F055  E2 F3                                           DW	offset L$333
-F057  E2 F3                                           DW	offset L$333
-F059  E2 F3                                           DW	offset L$333
-F05B  B0 F5                                           DW	offset L$334
-F05D  DB F5                                           DW	offset L$335
-F05F  1E F6                                           DW	offset L$336
-F061  47 F6                                           DW	offset L$337
-F063  C5 F6                                           DW	offset L$338
+F047  C0 F1                                           DW	offset L$327
+F049  CD F1                                           DW	offset L$328
+F04B  DD F1                                           DW	offset L$329
+F04D  F9 F1                                           DW	offset L$330
+F04F  7A F2                                           DW	offset L$331
+F051  9A F2                                           DW	offset L$332
+F053  9A F2                                           DW	offset L$332
+F055  E4 F3                                           DW	offset L$333
+F057  E4 F3                                           DW	offset L$333
+F059  E4 F3                                           DW	offset L$333
+F05B  B2 F5                                           DW	offset L$334
+F05D  DD F5                                           DW	offset L$335
+F05F  20 F6                                           DW	offset L$336
+F061  49 F6                                           DW	offset L$337
+F063  C7 F6                                           DW	offset L$338
 
 
 endp	int_17
@@ -35435,231 +35435,235 @@ endp	int_10_dispatch
 ;---------------------------------------------------------------------------------------------------
 proc	int_10_func_0	near
 
-	mov	al, [ds:10h]			; Set mode of CRT
+    out 0FEh, ax     ; hook video mode change
 F115				int_10_func_0:
-F115  A0 10 00				mov		al,byte ptr ds:[0x10]
+F115  E7 FE				out		0xfe,ax
+
+
+	mov	al, [ds:10h]			; Set mode of CRT
+F117  A0 10 00				mov		al,byte ptr ds:[0x10]
 
 	mov	dx, 3B4h			;   mono port
-F118  BA B4 03				mov		dx,0x03b4
+F11A  BA B4 03				mov		dx,0x03b4
 
 	and	al, 00110000b			;   get display type
-F11B  24 30				and		al,0x30
+F11D  24 30				and		al,0x30
 
 	cmp	al, 00110000b			;   equal if mono
-F11D  3C 30				cmp		al,0x30
+F11F  3C 30				cmp		al,0x30
 
 	mov	al, 1				; Assume mono display
-F11F  B0 01				mov		al,0x01
+F121  B0 01				mov		al,0x01
 
 	mov	bl, 7				;   mode is 7
-F121  B3 07				mov		bl,0x07
+F123  B3 07				mov		bl,0x07
 
 	jz	@@reset				;   Skip if mono, else CGA
-F123  74 0C				je		L$201
+F125  74 0C				je		L$201
 
 
 	mov	bl, [bp+2]			; bl = mode number (user al)
-F125  8A 5E 02				mov		bl,byte ptr 0x2[bp]
+F127  8A 5E 02				mov		bl,byte ptr 0x2[bp]
 
 	cmp	bl, 7
-F128  80 FB 07				cmp		bl,0x07
+F12A  80 FB 07				cmp		bl,0x07
 
 	ja	invalid
-F12B  77 DC				ja		L$199
+F12D  77 DA				ja		L$199
 
 
 	mov	dl, 0D4h			; 3D4 is CGA port
-F12D  B2 D4				mov		dl,0xd4
+F12F  B2 D4				mov		dl,0xd4
 
 	dec	al
-F12F  FE C8				dec		al
+F131  FE C8				dec		al
 
 
 @@reset:
 	mov	[ds:63h], dx			; Save current CRT display port
-F131				L$201:
-F131  89 16 63 00			mov		word ptr ds:[0x63],dx
+F133				L$201:
+F133  89 16 63 00			mov		word ptr ds:[0x63],dx
 
 	add	dl, 4
-F135  80 C2 04				add		dl,0x04
+F137  80 C2 04				add		dl,0x04
 
 	out	dx, al				; Reset the video
-F138  EE				out		dx,al
+F13A  EE				out		dx,al
 
 	mov	[ds:49h], bl			;   save current CRT mode
-F139  88 1E 49 00			mov		byte ptr ds:[0x49],bl
+F13B  88 1E 49 00			mov		byte ptr ds:[0x49],bl
 
 	push	ds
-F13D  1E				push		ds
+F13F  1E				push		ds
 
 	xor	ax, ax
-F13E  33 C0				xor		ax,ax
+F140  33 C0				xor		ax,ax
 
 	mov	ds, ax
-F140  8E D8				mov		ds,ax
+F142  8E D8				mov		ds,ax
 
 	les	si, [dword ds:74h]		; si --> INT_1D video parameters
-F142  C4 36 74 00			les		si,dword ptr ds:[0x74]
+F144  C4 36 74 00			les		si,dword ptr ds:[0x74]
 
 	pop	ds
-F146  1F				pop		ds
+F148  1F				pop		ds
 
 	mov	bh, 0
-F147  B7 00				mov		bh,0x00
+F149  B7 00				mov		bh,0x00
 
 	push	bx
-F149  53				push		bx
+F14B  53				push		bx
 
 	mov	bl, [cs:bx+mul_lookup]		; Get bl for index into INT_1D
-F14A  2E 8A 9F FC F0			mov		bl,byte ptr cs:L$1-0xf04[bx]
+F14C  2E 8A 9F FC F0			mov		bl,byte ptr cs:L$1-0xf04[bx]
 
 	add	si, bx
-F14F  03 F3				add		si,bx
+F151  03 F3				add		si,bx
 
 	mov	cx, 10h 			; Sixteen values to send
-F151  B9 10 00				mov		cx,0x0010
+F153  B9 10 00				mov		cx,0x0010
 
 
 @@loop:	mov	al, [es:si]			; Value to send in si
-F154				L$202:
-F154  26 8A 04				mov		al,byte ptr es:[si]
+F156				L$202:
+F156  26 8A 04				mov		al,byte ptr es:[si]
 
 	call	send_ax				;   send it
-F157  E8 1C 06				call		L$278
+F159  E8 1C 06				call		L$278
 
 	inc	ah				;   bump count
-F15A  FE C4				inc		ah
+F15C  FE C4				inc		ah
 
 	inc	si				;   point to next
-F15C  46				inc		si
+F15E  46				inc		si
 
 	loop	@@loop				;   loop until done
-F15D  E2 F5				loop		L$202
+F15F  E2 F5				loop		L$202
 
 
 	mov	bx, [bp+0]			; bx --> regen buffer
-F15F  8B 5E 00				mov		bx,word ptr [bp]
+F161  8B 5E 00				mov		bx,word ptr [bp]
 
 	mov	es, bx				;   into es segment
-F162  8E C3				mov		es,bx
+F164  8E C3				mov		es,bx
 
 	xor	di, di
-F164  33 FF				xor		di,di
+F166  33 FF				xor		di,di
 
 	call	mode_check			; Set flags to mode
-F166  E8 6F 05				call		mode_check
+F168  E8 6F 05				call		mode_check
 
 	mov	ch, 20h				;   assume CGA
-F169  B5 20				mov		ch,0x20
+F16B  B5 20				mov		ch,0x20
 
 	mov	ax, 0				;   and graphics
-F16B  B8 00 00				mov		ax,0x0000
+F16D  B8 00 00				mov		ax,0x0000
 
 	jb	@@fill				;   do graphics fill
-F16E  72 07				jb		L$204
+F170  72 07				jb		L$204
 
 	jnz	@@text				;   Alphanumeric fill
-F170  75 02				jne		L$203
+F172  75 02				jne		L$203
 
 	mov	ch, 8h				;   mono card
-F172  B5 08				mov		ch,0x08
+F174  B5 08				mov		ch,0x08
 
 @@text:	mov	ax, 7*100h+' '			; Word for text fill
-F174				L$203:
-F174  B8 20 07				mov		ax,0x0720
+F176				L$203:
+F176  B8 20 07				mov		ax,0x0720
 
 @@fill:	rep	stosw				;   fill regen buffer
-F177				L$204:
-F177  F3 AB				rep stosw	
+F179				L$204:
+F179  F3 AB				rep stosw	
 
 
 	mov	dx, [ds:63h]			; Get the port
-F179  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F17B  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	add	dl, 4
-F17D  80 C2 04				add		dl,0x04
+F17F  80 C2 04				add		dl,0x04
 
 	pop	bx
-F180  5B				pop		bx
+F182  5B				pop		bx
 
 	mov	al, [cs:bx+modes]		; Load data to set for mode
-F181  2E 8A 87 F4 F0			mov		al,byte ptr cs:L$1-0xf0c[bx]
+F183  2E 8A 87 F4 F0			mov		al,byte ptr cs:L$1-0xf0c[bx]
 
 	out	dx, al				;   and send it
-F186  EE				out		dx,al
+F188  EE				out		dx,al
 
 	mov	[ds:65h], al			;   then save active data
-F187  A2 65 00				mov		byte ptr ds:[0x65],al
+F189  A2 65 00				mov		byte ptr ds:[0x65],al
 
 	inc	dx
-F18A  42				inc		dx
+F18C  42				inc		dx
 
 	mov	al, 30h 			; Assume not 640x200 b/w
-F18B  B0 30				mov		al,0x30
+F18D  B0 30				mov		al,0x30
 
 	cmp	bl, 6				;   correct?
-F18D  80 FB 06				cmp		bl,0x06
+F18F  80 FB 06				cmp		bl,0x06
 
 	jnz	@@palette
-F190  75 02				jne		L$205
+F192  75 02				jne		L$205
 
 	mov	al, 3Fh 			; Palette for 640x200 b/w
-F192  B0 3F				mov		al,0x3f
+F194  B0 3F				mov		al,0x3f
 
 
 @@palette:
 	mov	[ds:66h], al			;   save palette
-F194				L$205:
-F194  A2 66 00				mov		byte ptr ds:[0x66],al
+F196				L$205:
+F196  A2 66 00				mov		byte ptr ds:[0x66],al
 
 	out	dx, al				;   send palette
-F197  EE				out		dx,al
+F199  EE				out		dx,al
 
 	xor	ax, ax
-F198  33 C0				xor		ax,ax
+F19A  33 C0				xor		ax,ax
 
 	mov	[ds:4Eh], ax			; Start at beg. of 1st page
-F19A  A3 4E 00				mov		word ptr ds:[0x4e],ax
+F19C  A3 4E 00				mov		word ptr ds:[0x4e],ax
 
 	mov	[ds:62h], al			;   active page=page 0
-F19D  A2 62 00				mov		byte ptr ds:[0x62],al
+F19F  A2 62 00				mov		byte ptr ds:[0x62],al
 
 	mov	cl, 8				; Do 8 pages of cursor data
-F1A0  B1 08				mov		cl,0x08
+F1A2  B1 08				mov		cl,0x08
 
 	mov	di, 50h 			; Page cursor data at 40:50
-F1A2  BF 50 00				mov		di,0x0050
+F1A4  BF 50 00				mov		di,0x0050
 
 
 @@cursor:
 	mov	[di], ax			; Cursor at upper left of page
-F1A5				L$206:
-F1A5  89 05				mov		word ptr [di],ax
+F1A7				L$206:
+F1A7  89 05				mov		word ptr [di],ax
 
 	inc	di				;   next page
-F1A7  47				inc		di
+F1A9  47				inc		di
 
 	loop	@@cursor
-F1A8  E2 FB				loop		L$206
+F1AA  E2 FB				loop		L$206
 
 
 	mov	al, [cs:bx+max_cols]		; Get display width
-F1AA  2E 8A 87 EC F0			mov		al,byte ptr cs:L$1-0xf14[bx]
+F1AC  2E 8A 87 EC F0			mov		al,byte ptr cs:L$1-0xf14[bx]
 
 	mov	[ds:4Ah], ax			;   save it
-F1AF  A3 4A 00				mov		word ptr ds:[0x4a],ax
+F1B1  A3 4A 00				mov		word ptr ds:[0x4a],ax
 
 	and	bl, 11111110b
-F1B2  80 E3 FE				and		bl,0xfe
+F1B4  80 E3 FE				and		bl,0xfe
 
 	mov	ax, [word cs:bx+regen_len]	; Get video regen length
-F1B5  2E 8B 87 E4 F0			mov		ax,word ptr cs:L$1-0xf1c[bx]
+F1B7  2E 8B 87 E4 F0			mov		ax,word ptr cs:L$1-0xf1c[bx]
 
 	mov	[ds:4Ch], ax			;   save it
-F1BA  A3 4C 00				mov		word ptr ds:[0x4c],ax
+F1BC  A3 4C 00				mov		word ptr ds:[0x4c],ax
 
 	ret
-F1BD  C3				ret		
+F1BF  C3				ret		
 
 
 endp	int_10_func_0
@@ -35671,20 +35675,20 @@ endp	int_10_func_0
 proc	int_10_func_1	near
 
 	mov	cx, [bp+6]			; Set cursor type, from cx
-F1BE				int_10_func_1:
-F1BE  8B 4E 06				mov		cx,word ptr 0x6[bp]
+F1C0				int_10_func_1:
+F1C0  8B 4E 06				mov		cx,word ptr 0x6[bp]
 
 	mov	[ds:60h], cx			;   save it
-F1C1  89 0E 60 00			mov		word ptr ds:[0x60],cx
+F1C3  89 0E 60 00			mov		word ptr ds:[0x60],cx
 
 	mov	ah, 0Ah 			; CRT index register 0Ah
-F1C5  B4 0A				mov		ah,0x0a
+F1C7  B4 0A				mov		ah,0x0a
 
 	call	out_6845			;   send ch, cl to CRT register
-F1C7  E8 A3 05				call		L$277
+F1C9  E8 A3 05				call		L$277
 
 	ret
-F1CA  C3				ret		
+F1CC  C3				ret		
 
 
 endp	int_10_func_1
@@ -35696,23 +35700,23 @@ endp	int_10_func_1
 proc	int_10_func_2	near
 
 	mov	bl, [bp+5]			; Set cursor position, page bh
-F1CB				int_10_func_2:
-F1CB  8A 5E 05				mov		bl,byte ptr 0x5[bp]
+F1CD				int_10_func_2:
+F1CD  8A 5E 05				mov		bl,byte ptr 0x5[bp]
 
 	shl	bl, 1				;   (our bl)
-F1CE  D0 E3				shl		bl,0x01
+F1D0  D0 E3				shl		bl,0x01
 
 	mov	bh, 0
-F1D0  B7 00				mov		bh,0x00
+F1D2  B7 00				mov		bh,0x00
 
 	mov	ax, [bp+8]			; Position in user dx (our ax)
-F1D2  8B 46 08				mov		ax,word ptr 0x8[bp]
+F1D4  8B 46 08				mov		ax,word ptr 0x8[bp]
 
 	mov	[bx+50h], ax			;   remember cursor position
-F1D5  89 47 50				mov		word ptr 0x50[bx],ax
+F1D7  89 47 50				mov		word ptr 0x50[bx],ax
 
 	jmp	set_cursor			;   set 6845 cursor hardware
-F1D8  E9 7D 05				jmp		set_cursor
+F1DA  E9 7D 05				jmp		set_cursor
 
 
 endp	int_10_func_2
@@ -35724,30 +35728,30 @@ endp	int_10_func_2
 proc	int_10_func_3	near
 
 	mov	bl, [bp+5]			; Get cursor position, page bh
-F1DB				int_10_func_3:
-F1DB  8A 5E 05				mov		bl,byte ptr 0x5[bp]
+F1DD				int_10_func_3:
+F1DD  8A 5E 05				mov		bl,byte ptr 0x5[bp]
 
 	shl	bl, 1
-F1DE  D0 E3				shl		bl,0x01
+F1E0  D0 E3				shl		bl,0x01
 
 	mov	bh, 0
-F1E0  B7 00				mov		bh,0x00
+F1E2  B7 00				mov		bh,0x00
 
 	mov	ax, [bx+50h]
-F1E2  8B 47 50				mov		ax,word ptr 0x50[bx]
+F1E4  8B 47 50				mov		ax,word ptr 0x50[bx]
 
 	mov	[bp+8], ax			;   return position in user dx
-F1E5  89 46 08				mov		word ptr 0x8[bp],ax
+F1E7  89 46 08				mov		word ptr 0x8[bp],ax
 
 	mov	ax, [ds:60h]			; Get cursor mode
-F1E8  A1 60 00				mov		ax,word ptr ds:[0x60]
+F1EA  A1 60 00				mov		ax,word ptr ds:[0x60]
 
 	mov	[bp+6], ax			;   return in user cx
-F1EB  89 46 06				mov		word ptr 0x6[bp],ax
+F1ED  89 46 06				mov		word ptr 0x6[bp],ax
 
 	ret
-F1EE  C3				ret		
-F1EF  03 03 05 05 03 03 03 04                         ........
+F1F0  C3				ret		
+F1F1  03 03 05 05 03 03 03 04                         ........
 
 
 endp	int_10_func_3
@@ -35762,179 +35766,179 @@ pen_offset	db	3, 3, 5, 5, 3, 3, 3, 4	; Light pen offset table
 proc	int_10_func_4	near
 
 	mov	dx, [ds:63h]
-F1F7				int_10_func_4:
-F1F7  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F1F9				int_10_func_4:
+F1F9  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	add	dl, 6
-F1FB  80 C2 06				add		dl,0x06
+F1FD  80 C2 06				add		dl,0x06
 
 	mov	[byte bp+3], 0			; ah=0, assume not triggered
-F1FE  C6 46 03 00			mov		byte ptr 0x3[bp],0x00
+F200  C6 46 03 00			mov		byte ptr 0x3[bp],0x00
 
 	in	al, dx
-F202  EC				in		al,dx
+F204  EC				in		al,dx
 
 	test	al, 00000100b
-F203  A8 04				test		al,0x04
+F205  A8 04				test		al,0x04
 
 	jz	@@reset				; Skip, reset if pen not set
-F205  74 68				je		L$211
+F207  74 68				je		L$211
 
 	test	al, 00000010b
-F207  A8 02				test		al,0x02
+F209  A8 02				test		al,0x02
 
 	jnz	@@triggered			; Skip if pen triggered
-F209  75 01				jne		L$207
+F20B  75 01				jne		L$207
 
 	ret					;   return, do not reset
-F20B  C3				ret		
+F20D  C3				ret		
 
 
 @@triggered:
 	mov	ah, 10h 			; Offset to pen port is 10h
-F20C				L$207:
-F20C  B4 10				mov		ah,0x10
+F20E				L$207:
+F20E  B4 10				mov		ah,0x10
 
 	call	pen_pos				;   read into ch, cl
-F20E  E8 02 05				call		pen_pos
+F210  E8 02 05				call		pen_pos
 
 	mov	bl, [ds:49h]			; Get CRT mode data word
-F211  8A 1E 49 00			mov		bl,byte ptr ds:[0x49]
+F213  8A 1E 49 00			mov		bl,byte ptr ds:[0x49]
 
 	mov	cl, bl
-F215  8A CB				mov		cl,bl
+F217  8A CB				mov		cl,bl
 
 	mov	bh, 0
-F217  B7 00				mov		bh,0x00
+F219  B7 00				mov		bh,0x00
 
 	mov	bl, [byte cs:bx+pen_offset]	; Load offset for subtraction
-F219  2E 8A 9F EF F1			mov		bl,byte ptr cs:L$1-0xe11[bx]
+F21B  2E 8A 9F F1 F1			mov		bl,byte ptr cs:L$1-0xe0f[bx]
 
 	sub	cx, bx
-F21E  2B CB				sub		cx,bx
+F220  2B CB				sub		cx,bx
 
 	jns	@@mode				;   did not overflow
-F220  79 02				jns		L$208
+F222  79 02				jns		L$208
 
 	xor	ax, ax				; Else fudge a zero
-F222  33 C0				xor		ax,ax
+F224  33 C0				xor		ax,ax
 
 
 @@mode:	call	mode_check			; Set flags on display type
-F224				L$208:
-F224  E8 B1 04				call		mode_check
+F226				L$208:
+F226  E8 B1 04				call		mode_check
 
 	jnb	@@text				;   text mode, skip
-F227  73 25				jae		L$209
+F229  73 25				jae		L$209
 
 	mov	ch, 28h
-F229  B5 28				mov		ch,0x28
+F22B  B5 28				mov		ch,0x28
 
 	div	dl
-F22B  F6 F2				div		dl
+F22D  F6 F2				div		dl
 
 	mov	bl, ah
-F22D  8A DC				mov		bl,ah
+F22F  8A DC				mov		bl,ah
 
 	mov	bh, 0
-F22F  B7 00				mov		bh,0x00
+F231  B7 00				mov		bh,0x00
 
 	mov	cl, 3
-F231  B1 03				mov		cl,0x03
+F233  B1 03				mov		cl,0x03
 
 	shl	bx, cl
-F233  D3 E3				shl		bx,cl
+F235  D3 E3				shl		bx,cl
 
 	mov	ch, al
-F235  8A E8				mov		ch,al
+F237  8A E8				mov		ch,al
 
 	shl	ch, 1
-F237  D0 E5				shl		ch,0x01
+F239  D0 E5				shl		ch,0x01
 
 	mov	dl, ah
-F239  8A D4				mov		dl,ah
+F23B  8A D4				mov		dl,ah
 
 	mov	dh, al
-F23B  8A F0				mov		dh,al
-
-	shr	dh, 1
-F23D  D0 EE				shr		dh,0x01
+F23D  8A F0				mov		dh,al
 
 	shr	dh, 1
 F23F  D0 EE				shr		dh,0x01
 
+	shr	dh, 1
+F241  D0 EE				shr		dh,0x01
+
 	cmp	[byte ds:49h], 6		; Mode 640x200 b/w?
-F241  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
+F243  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
 
 	jnz	@@done				;   no, skip
-F246  75 1A				jne		L$210
+F248  75 1A				jne		L$210
 
 	shl	dl, 1
-F248  D0 E2				shl		dl,0x01
+F24A  D0 E2				shl		dl,0x01
 
 	shl	bx, 1
-F24A  D1 E3				shl		bx,0x01
+F24C  D1 E3				shl		bx,0x01
 
 	jmp	short @@done
-F24C  EB 14				jmp		L$210
+F24E  EB 14				jmp		L$210
 
 
 @@text:	div	[byte ds:4Ah]			; Divide by columns in screen
-F24E				L$209:
-F24E  F6 36 4A 00			div		byte ptr ds:[0x4a]
+F250				L$209:
+F250  F6 36 4A 00			div		byte ptr ds:[0x4a]
 
 	xchg	al, ah				;   as this is text mode
-F252  86 E0				xchg		al,ah
+F254  86 E0				xchg		al,ah
 
 	mov	dx, ax
-F254  8B D0				mov		dx,ax
+F256  8B D0				mov		dx,ax
 
 	mov	cl, 3
-F256  B1 03				mov		cl,0x03
+F258  B1 03				mov		cl,0x03
 
 	shl	ah, cl
-F258  D2 E4				shl		ah,cl
+F25A  D2 E4				shl		ah,cl
 
 	mov	ch, ah
-F25A  8A EC				mov		ch,ah
+F25C  8A EC				mov		ch,ah
 
 	mov	bl, al
-F25C  8A D8				mov		bl,al
+F25E  8A D8				mov		bl,al
 
 	mov	bh, 0
-F25E  B7 00				mov		bh,0x00
+F260  B7 00				mov		bh,0x00
 
 	shl	bx, cl
-F260  D3 E3				shl		bx,cl
+F262  D3 E3				shl		bx,cl
 
 
 @@done:	mov	[byte bp+3], 1			; Return ah=1, light pen read
-F262				L$210:
-F262  C6 46 03 01			mov		byte ptr 0x3[bp],0x01
+F264				L$210:
+F264  C6 46 03 01			mov		byte ptr 0x3[bp],0x01
 
 	mov	[bp+8], dx			;   row, column in user dx
-F266  89 56 08				mov		word ptr 0x8[bp],dx
+F268  89 56 08				mov		word ptr 0x8[bp],dx
 
 	mov	[bp+4], bx			;   pixel column in user bx
-F269  89 5E 04				mov		word ptr 0x4[bp],bx
+F26B  89 5E 04				mov		word ptr 0x4[bp],bx
 
 	mov	[bp+7], ch			;   raster line in user ch
-F26C  88 6E 07				mov		byte ptr 0x7[bp],ch
+F26E  88 6E 07				mov		byte ptr 0x7[bp],ch
 
 
 @@reset:
 	mov	dx, [ds:63h]			; Get port of active CRT card
-F26F				L$211:
-F26F  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F271				L$211:
+F271  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	add	dx, 7
-F273  83 C2 07				add		dx,0x0007
+F275  83 C2 07				add		dx,0x0007
 
 	out	dx, al				;   reset the light pen
-F276  EE				out		dx,al
+F278  EE				out		dx,al
 
 	ret
-F277  C3				ret		
+F279  C3				ret		
 
 
 endp	int_10_func_4
@@ -35946,47 +35950,47 @@ endp	int_10_func_4
 proc	int_10_func_5	near
 
 	mov	al, [bp+2]			; Set active display page to al
-F278				int_10_func_5:
-F278  8A 46 02				mov		al,byte ptr 0x2[bp]
+F27A				int_10_func_5:
+F27A  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	mov	[ds:62h], al			;   save new active page
-F27B  A2 62 00				mov		byte ptr ds:[0x62],al
+F27D  A2 62 00				mov		byte ptr ds:[0x62],al
 
 	mov	ah, 0				;   clear high order
-F27E  B4 00				mov		ah,0x00
+F280  B4 00				mov		ah,0x00
 
 	push	ax
-F280  50				push		ax
+F282  50				push		ax
 
 	mov	bx, [ds:4Ch]			; Get size of regen buffer
-F281  8B 1E 4C 00			mov		bx,word ptr ds:[0x4c]
+F283  8B 1E 4C 00			mov		bx,word ptr ds:[0x4c]
 
 	mul	bx				;   times number of pages
-F285  F7 E3				mul		bx
+F287  F7 E3				mul		bx
 
 	mov	[ds:4Eh], ax			; Now ax = CRT offset, save
-F287  A3 4E 00				mov		word ptr ds:[0x4e],ax
+F289  A3 4E 00				mov		word ptr ds:[0x4e],ax
 
 	shr	ax, 1				;   now word offset
-F28A  D1 E8				shr		ax,0x01
+F28C  D1 E8				shr		ax,0x01
 
 	mov	cx, ax				;   save a copy
-F28C  8B C8				mov		cx,ax
+F28E  8B C8				mov		cx,ax
 
 	mov	ah, 0Ch 			; CRT index register 0Ch
-F28E  B4 0C				mov		ah,0x0c
+F290  B4 0C				mov		ah,0x0c
 
 	call	out_6845			;   send ch, cl through CRT register
-F290  E8 DA 04				call		L$277
+F292  E8 DA 04				call		L$277
 
 	pop	bx
-F293  5B				pop		bx
+F295  5B				pop		bx
 
 	call	move_cursor			; Save new parameters
-F294  E8 C9 04				call		L$276
+F296  E8 C9 04				call		L$276
 
 	ret
-F297  C3				ret		
+F299  C3				ret		
 
 
 endp	int_10_func_5
@@ -35999,513 +36003,513 @@ endp	int_10_func_5
 proc	int_10_func_6_7	near
 
 	call	mode_check
-F298				int_10_func_6_7:
-F298  E8 3D 04				call		mode_check
+F29A				int_10_func_6_7:
+F29A  E8 3D 04				call		mode_check
 
 	jnb	@@text
-F29B  73 03				jae		L$212
+F29D  73 03				jae		L$212
 
 	jmp	near @@graphics			; Graphics scroll
-F29D  E9 99 00				jmp		L$220
+F29F  E9 99 00				jmp		L$220
 
 
 @@text: cld					; Strings go upward
-F2A0				L$212:
-F2A0  FC				cld		
+F2A2				L$212:
+F2A2  FC				cld		
 
 	cmp	[byte ds:49h], 2
-F2A1  80 3E 49 00 02			cmp		byte ptr ds:[0x49],0x02
+F2A3  80 3E 49 00 02			cmp		byte ptr ds:[0x49],0x02
 
 	jb	@@get_coords			;   no retrace wait needed
-F2A6  72 13				jb		L$213
+F2A8  72 13				jb		L$213
 
 	cmp	[byte ds:49h], 3
-F2A8  80 3E 49 00 03			cmp		byte ptr ds:[0x49],0x03
+F2AA  80 3E 49 00 03			cmp		byte ptr ds:[0x49],0x03
 
 	ja	@@get_coords			;   no retrace wait needed
-F2AD  77 0C				ja		L$213
+F2AF  77 0C				ja		L$213
 
 	mov	dx, 3DAh			; Else 80x25, do the kludge
-F2AF  BA DA 03				mov		dx,0x03da
+F2B1  BA DA 03				mov		dx,0x03da
 
 
 @@wait: in	al, dx				; Read CGA status register
-F2B2  EC				in		al,dx
+F2B4  EC				in		al,dx
 
 	test	al, 00001000b			;   vertical retrace?
-F2B3  A8 08				test		al,0x08
+F2B5  A8 08				test		al,0x08
 
 	;jz	@@wait				;   wait until it is
 	mov	dx, 3D8h			; Then go and
-F2B5  BA D8 03				mov		dx,0x03d8
+F2B7  BA D8 03				mov		dx,0x03d8
 
 	mov	al, 25h 			;   turn the display
-F2B8  B0 25				mov		al,0x25
+F2BA  B0 25				mov		al,0x25
 
 	out	dx, al				;   off to avoid snow
-F2BA  EE				out		dx,al
+F2BC  EE				out		dx,al
 
 
 @@get_coords:
 	mov	ax, [bp+8]			; Get row, column of upper left
-F2BB				L$213:
-F2BB  8B 46 08				mov		ax,word ptr 0x8[bp]
+F2BD				L$213:
+F2BD  8B 46 08				mov		ax,word ptr 0x8[bp]
 
 	push	ax
-F2BE  50				push		ax
+F2C0  50				push		ax
 
 	cmp	[byte bp+3], 7			; Check for scroll down
-F2BF  80 7E 03 07			cmp		byte ptr 0x3[bp],0x07
+F2C1  80 7E 03 07			cmp		byte ptr 0x3[bp],0x07
 
 	jz	@@offset			;   yes, skip if so
-F2C3  74 03				je		L$214
+F2C5  74 03				je		L$214
 
 	mov	ax, [bp+6]			; Get row, column of lower right
-F2C5  8B 46 06				mov		ax,word ptr 0x6[bp]
+F2C7  8B 46 06				mov		ax,word ptr 0x6[bp]
 
 
 @@offset:
 	call	rc_to_col			; Get byte offset in CRT buffer
-F2C8				L$214:
-F2C8  E8 69 04				call		L$275
+F2CA				L$214:
+F2CA  E8 69 04				call		L$275
 
 	add	ax, [ds:4Eh]			;   add base for CRT buffer
-F2CB  03 06 4E 00			add		ax,word ptr ds:[0x4e]
+F2CD  03 06 4E 00			add		ax,word ptr ds:[0x4e]
 
 	mov	si, ax
-F2CF  8B F0				mov		si,ax
+F2D1  8B F0				mov		si,ax
 
 	mov	di, ax
-F2D1  8B F8				mov		di,ax
+F2D3  8B F8				mov		di,ax
 
 	pop	dx
-F2D3  5A				pop		dx
+F2D5  5A				pop		dx
 
 	sub	dx, [bp+6]			; Subtract (row, col) lwr rhgt
-F2D4  2B 56 06				sub		dx,word ptr 0x6[bp]
+F2D6  2B 56 06				sub		dx,word ptr 0x6[bp]
 
 	add	dx, 101h			;   width of one char
-F2D7  81 C2 01 01			add		dx,0x0101
+F2D9  81 C2 01 01			add		dx,0x0101
 
 	mov	bx, [ds:4Ah]			; Get columns in display
-F2DB  8B 1E 4A 00			mov		bx,word ptr ds:[0x4a]
+F2DD  8B 1E 4A 00			mov		bx,word ptr ds:[0x4a]
 
 	shl	bx, 1				;   bytes in row of display
-F2DF  D1 E3				shl		bx,0x01
+F2E1  D1 E3				shl		bx,0x01
 
 	push	ds
-F2E1  1E				push		ds
+F2E3  1E				push		ds
 
 	mov	al, [bp+2]			; Get scroll fill character
-F2E2  8A 46 02				mov		al,byte ptr 0x2[bp]
+F2E4  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	call	map_byte			;   calculate offset
-F2E5  E8 AF FD				call		L$198
+F2E7  E8 AD FD				call		L$198
 
 	mov	es, cx				; cx --> byte in buffer
-F2E8  8E C1				mov		es,cx
+F2EA  8E C1				mov		es,cx
 
 	mov	ds, cx
-F2EA  8E D9				mov		ds,cx
+F2EC  8E D9				mov		ds,cx
 
 	cmp	[byte bp+3], 6			; Scroll up?
-F2EC  80 7E 03 06			cmp		byte ptr 0x3[bp],0x06
+F2EE  80 7E 03 06			cmp		byte ptr 0x3[bp],0x06
 
 	jz	@@count				;   skip if so
-F2F0  74 05				je		L$215
+F2F2  74 05				je		L$215
 
 	neg	ax
-F2F2  F7 D8				neg		ax
+F2F4  F7 D8				neg		ax
 
 	neg	bx
-F2F4  F7 DB				neg		bx
+F2F6  F7 DB				neg		bx
 
 	std					; Else start at top of page
-F2F6  FD				std		
+F2F8  FD				std		
 
 
 @@count:
 	mov	cl, [bp+2]			; Get count of lines to scroll
-F2F7				L$215:
-F2F7  8A 4E 02				mov		cl,byte ptr 0x2[bp]
+F2F9				L$215:
+F2F9  8A 4E 02				mov		cl,byte ptr 0x2[bp]
 
 	or	cl, cl
-F2FA  0A C9				or		cl,cl
+F2FC  0A C9				or		cl,cl
 
 	jz	@@attr				;   nothing to do
-F2FC  74 1A				je		L$217
+F2FE  74 1A				je		L$217
 
 	add	si, ax
-F2FE  03 F0				add		si,ax
+F300  03 F0				add		si,ax
 
 	sub	dh, [bp+2]
-F300  2A 76 02				sub		dh,byte ptr 0x2[bp]
+F302  2A 76 02				sub		dh,byte ptr 0x2[bp]
 
 
 @@scroll:
 	mov	ch, 0				; Clear high order word count
-F303				L$216:
-F303  B5 00				mov		ch,0x00
+F305				L$216:
+F305  B5 00				mov		ch,0x00
 
 	mov	cl, dl				;   load low order word count
-F305  8A CA				mov		cl,dl
+F307  8A CA				mov		cl,dl
 
 	push	di
-F307  57				push		di
+F309  57				push		di
 
 	push	si
-F308  56				push		si
+F30A  56				push		si
 
 	rep	movsw				; Do the scroll
-F309  F3 A5				rep movsw	
+F30B  F3 A5				rep movsw	
 
 	pop	si
-F30B  5E				pop		si
+F30D  5E				pop		si
 
 	pop	di
-F30C  5F				pop		di
+F30E  5F				pop		di
 
 	add	si, bx				; Move one line in direction
-F30D  03 F3				add		si,bx
+F30F  03 F3				add		si,bx
 
 	add	di, bx				;	 ""	  ""
-F30F  03 FB				add		di,bx
+F311  03 FB				add		di,bx
 
 	dec	dh				; One less line to scroll
-F311  FE CE				dec		dh
+F313  FE CE				dec		dh
 
 	jnz	@@scroll
-F313  75 EE				jne		L$216
+F315  75 EE				jne		L$216
 
 	mov	dh, [bp+2]			; Now get number of rows
-F315  8A 76 02				mov		dh,byte ptr 0x2[bp]
+F317  8A 76 02				mov		dh,byte ptr 0x2[bp]
 
 
 @@attr: mov	ch, 0				; Clear high order word count
-F318				L$217:
-F318  B5 00				mov		ch,0x00
+F31A				L$217:
+F31A  B5 00				mov		ch,0x00
 
 	mov	ah, [bp+5]			;   get fill attribute
-F31A  8A 66 05				mov		ah,byte ptr 0x5[bp]
+F31C  8A 66 05				mov		ah,byte ptr 0x5[bp]
 
 	mov	al, ' ' 			;   fill character
-F31D  B0 20				mov		al,0x20
+F31F  B0 20				mov		al,0x20
 
 
 @@fill: mov	cl, dl				; Get characters to scroll
-F31F				L$218:
-F31F  8A CA				mov		cl,dl
+F321				L$218:
+F321  8A CA				mov		cl,dl
 
 	push	di
-F321  57				push		di
+F323  57				push		di
 
 	rep	stosw				;   store fill attr/char
-F322  F3 AB				rep stosw	
+F324  F3 AB				rep stosw	
 
 	pop	di
-F324  5F				pop		di
+F326  5F				pop		di
 
 	add	di, bx				; Show row was filled
-F325  03 FB				add		di,bx
+F327  03 FB				add		di,bx
 
 	dec	dh
-F327  FE CE				dec		dh
+F329  FE CE				dec		dh
 
 	jnz	@@fill				;   more rows are left
-F329  75 F4				jne		L$218
+F32B  75 F4				jne		L$218
 
 	pop	ds
-F32B  1F				pop		ds
+F32D  1F				pop		ds
 
 	call	mode_check			; Check for monochrome card
-F32C  E8 A9 03				call		mode_check
+F32E  E8 A9 03				call		mode_check
 
 	jz	@@done				;   skip if so
-F32F  74 07				je		L$219
+F331  74 07				je		L$219
 
 	mov	al, [ds:65h]			; Get the mode data byte
-F331  A0 65 00				mov		al,byte ptr ds:[0x65]
+F333  A0 65 00				mov		al,byte ptr ds:[0x65]
 
 	mov	dx, 3D8h			;   load active CRT card port
-F334  BA D8 03				mov		dx,0x03d8
+F336  BA D8 03				mov		dx,0x03d8
 
 	out	dx, al				;   and unblank the screen
-F337  EE				out		dx,al
+F339  EE				out		dx,al
 
 
 @@done: ret
-F338				L$219:
-F338  C3				ret		
+F33A				L$219:
+F33A  C3				ret		
 
 
 @@graphics:
 	cld					; Assume graphics scroll up
-F339				L$220:
-F339  FC				cld		
+F33B				L$220:
+F33B  FC				cld		
 
 	mov	ax, [bp+8]			; (Row, Col) of lower right
-F33A  8B 46 08				mov		ax,word ptr 0x8[bp]
+F33C  8B 46 08				mov		ax,word ptr 0x8[bp]
 
 	push	ax
-F33D  50				push		ax
+F33F  50				push		ax
 
 	cmp	[byte bp+3], 7			; Scroll down?
-F33E  80 7E 03 07			cmp		byte ptr 0x3[bp],0x07
+F340  80 7E 03 07			cmp		byte ptr 0x3[bp],0x07
 
 	jz	@@gfx_offset			;   skip if so
-F342  74 03				je		L$221
+F344  74 03				je		L$221
 
 	mov	ax, [bp+6]			; (Row, Col) of upper left
-F344  8B 46 06				mov		ax,word ptr 0x6[bp]
+F346  8B 46 06				mov		ax,word ptr 0x6[bp]
 
 
 @@gfx_offset:
 	call	gfx_rc_col			; Convert (Row, Col) -> Chars
-F347				L$221:
-F347  E8 FB 03				call		gfx_rc_col
+F349				L$221:
+F349  E8 FB 03				call		gfx_rc_col
 
 	mov	di, ax
-F34A  8B F8				mov		di,ax
+F34C  8B F8				mov		di,ax
 
 	pop	dx
-F34C  5A				pop		dx
+F34E  5A				pop		dx
 
 	sub	dx, [bp+6]			; Chars to copy over
-F34D  2B 56 06				sub		dx,word ptr 0x6[bp]
+F34F  2B 56 06				sub		dx,word ptr 0x6[bp]
 
 	add	dx, 101h			;   width of one char
-F350  81 C2 01 01			add		dx,0x0101
-
-	shl	dh, 1
-F354  D0 E6				shl		dh,0x01
+F352  81 C2 01 01			add		dx,0x0101
 
 	shl	dh, 1
 F356  D0 E6				shl		dh,0x01
 
+	shl	dh, 1
+F358  D0 E6				shl		dh,0x01
+
 	mov	al, [bp+3]			; Get command type
-F358  8A 46 03				mov		al,byte ptr 0x3[bp]
+F35A  8A 46 03				mov		al,byte ptr 0x3[bp]
 
 	cmp	[byte ds:49h], 6		;   is this 640x200?
-F35B  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
+F35D  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
 
 	jz	@@gfx_next			;   skip if so
-F360  74 09				je		L$222
+F362  74 09				je		L$222
 
 	shl	dl, 1				; Else bigger characters
-F362  D0 E2				shl		dl,0x01
+F364  D0 E2				shl		dl,0x01
 
 	shl	di, 1
-F364  D1 E7				shl		di,0x01
+F366  D1 E7				shl		di,0x01
 
 	cmp	al, 7				; Is this scroll down?
-F366  3C 07				cmp		al,0x07
+F368  3C 07				cmp		al,0x07
 
 	jnz	@@gfx_next			;   skip if not so
-F368  75 01				jne		L$222
+F36A  75 01				jne		L$222
 
 	inc	di
-F36A  47				inc		di
+F36C  47				inc		di
 
 
 @@gfx_next:
 	cmp	al, 7				; Is this scroll down?
-F36B				L$222:
-F36B  3C 07				cmp		al,0x07
+F36D				L$222:
+F36D  3C 07				cmp		al,0x07
 
 	jnz	@@gfx_start			;   skip if not so
-F36D  75 04				jne		L$223
+F36F  75 04				jne		L$223
 
 	add	di, 0F0h
-F36F  81 C7 F0 00			add		di,0x00f0
+F371  81 C7 F0 00			add		di,0x00f0
 
 
 @@gfx_start:
 	mov	bl, [bp+2]			; Number of rows to blank
-F373				L$223:
-F373  8A 5E 02				mov		bl,byte ptr 0x2[bp]
-
-	shl	bl, 1
-F376  D0 E3				shl		bl,0x01
+F375				L$223:
+F375  8A 5E 02				mov		bl,byte ptr 0x2[bp]
 
 	shl	bl, 1
 F378  D0 E3				shl		bl,0x01
 
+	shl	bl, 1
+F37A  D0 E3				shl		bl,0x01
+
 	push	bx
-F37A  53				push		bx
+F37C  53				push		bx
 
 	sub	dh, bl				; Subtract from row count
-F37B  2A F3				sub		dh,bl
+F37D  2A F3				sub		dh,bl
 
 	mov	al, 50h
-F37D  B0 50				mov		al,0x50
+F37F  B0 50				mov		al,0x50
 
 	mul	bl
-F37F  F6 E3				mul		bl
+F381  F6 E3				mul		bl
 
 	mov	bx, 1FB0h
-F381  BB B0 1F				mov		bx,0x1fb0
+F383  BB B0 1F				mov		bx,0x1fb0
 
 	cmp	[byte bp+3], 6			; Is this scroll up?
-F384  80 7E 03 06			cmp		byte ptr 0x3[bp],0x06
+F386  80 7E 03 06			cmp		byte ptr 0x3[bp],0x06
 
 	jz	@@gfx_end			;   skip if so
-F388  74 06				je		L$224
+F38A  74 06				je		L$224
 
 	neg	ax				; Else do it
-F38A  F7 D8				neg		ax
+F38C  F7 D8				neg		ax
 
 	mov	bx, 2050h
-F38C  BB 50 20				mov		bx,0x2050
+F38E  BB 50 20				mov		bx,0x2050
 
 	std					;   in reverse
-F38F  FD				std		
+F391  FD				std		
 
 
 @@gfx_end:
 	mov	si, di				; End of area
-F390				L$224:
-F390  8B F7				mov		si,di
+F392				L$224:
+F392  8B F7				mov		si,di
 
 	add	si, ax				;   start
-F392  03 F0				add		si,ax
+F394  03 F0				add		si,ax
 
 	pop	ax
-F394  58				pop		ax
+F396  58				pop		ax
 
 	or	al, al
-F395  0A C0				or		al,al
+F397  0A C0				or		al,al
 
 	mov	cx, [bp+0]
-F397  8B 4E 00				mov		cx,word ptr [bp]
+F399  8B 4E 00				mov		cx,word ptr [bp]
 
 	mov	ds, cx
-F39A  8E D9				mov		ds,cx
+F39C  8E D9				mov		ds,cx
 
 	mov	es, cx
-F39C  8E C1				mov		es,cx
+F39E  8E C1				mov		es,cx
 
 	jz	@@gfx_attr			; No rows to scroll
-F39E  74 26				je		L$226
+F3A0  74 26				je		L$226
 
 	push	ax
-F3A0  50				push		ax
+F3A2  50				push		ax
 
 
 @@gfx_scroll:
 	mov	ch, 0				; Zero hi order byte count
-F3A1				L$225:
-F3A1  B5 00				mov		ch,0x00
+F3A3				L$225:
+F3A3  B5 00				mov		ch,0x00
 
 	mov	cl, dl				;   bytes in row
-F3A3  8A CA				mov		cl,dl
+F3A5  8A CA				mov		cl,dl
 
 	push	si
-F3A5  56				push		si
+F3A7  56				push		si
 
 	push	di
-F3A6  57				push		di
+F3A8  57				push		di
 
 	rep	movsb				; Copy one plane
-F3A7  F3 A4				rep movsb	
+F3A9  F3 A4				rep movsb	
 
 	pop	di
-F3A9  5F				pop		di
+F3AB  5F				pop		di
 
 	pop	si
-F3AA  5E				pop		si
+F3AC  5E				pop		si
 
 	add	si, 2000h			; Load other graphics
-F3AB  81 C6 00 20			add		si,0x2000
+F3AD  81 C6 00 20			add		si,0x2000
 
 	add	di, 2000h			;   video plane
-F3AF  81 C7 00 20			add		di,0x2000
+F3B1  81 C7 00 20			add		di,0x2000
 
 	mov	cl, dl
-F3B3  8A CA				mov		cl,dl
+F3B5  8A CA				mov		cl,dl
 
 	push	si
-F3B5  56				push		si
+F3B7  56				push		si
 
 	push	di
-F3B6  57				push		di
+F3B8  57				push		di
 
 	rep	movsb				; Copy other plane
-F3B7  F3 A4				rep movsb	
+F3B9  F3 A4				rep movsb	
 
 	pop	di
-F3B9  5F				pop		di
+F3BB  5F				pop		di
 
 	pop	si
-F3BA  5E				pop		si
+F3BC  5E				pop		si
 
 	sub	si, bx
-F3BB  2B F3				sub		si,bx
+F3BD  2B F3				sub		si,bx
 
 	sub	di, bx
-F3BD  2B FB				sub		di,bx
+F3BF  2B FB				sub		di,bx
 
 	dec	dh				; One less row to scroll
-F3BF  FE CE				dec		dh
+F3C1  FE CE				dec		dh
 
 	jnz	@@gfx_scroll			;   loop if more to do
-F3C1  75 DE				jne		L$225
+F3C3  75 DE				jne		L$225
 
 	pop	ax
-F3C3  58				pop		ax
+F3C5  58				pop		ax
 
 	mov	dh, al				; Load rows to blank
-F3C4  8A F0				mov		dh,al
+F3C6  8A F0				mov		dh,al
 
 
 @@gfx_attr:
 	mov	al, [bp+5]			; Get fill attribute
-F3C6				L$226:
-F3C6  8A 46 05				mov		al,byte ptr 0x5[bp]
+F3C8				L$226:
+F3C8  8A 46 05				mov		al,byte ptr 0x5[bp]
 
 	mov	ch, 0
-F3C9  B5 00				mov		ch,0x00
+F3CB  B5 00				mov		ch,0x00
 
 
 @@gfx_fill:
 	mov	cl, dl				; Get bytes per row
-F3CB				L$227:
-F3CB  8A CA				mov		cl,dl
+F3CD				L$227:
+F3CD  8A CA				mov		cl,dl
 
 	push	di
-F3CD  57				push		di
+F3CF  57				push		di
 
 	rep	stosb				; Load row with fill attribute
-F3CE  F3 AA				rep stosb	
+F3D0  F3 AA				rep stosb	
 
 	pop	di
-F3D0  5F				pop		di
+F3D2  5F				pop		di
 
 	add	di, 2000h			; Do other graphics video plane
-F3D1  81 C7 00 20			add		di,0x2000
+F3D3  81 C7 00 20			add		di,0x2000
 
 	mov	cl, dl
-F3D5  8A CA				mov		cl,dl
+F3D7  8A CA				mov		cl,dl
 
 	push	di
-F3D7  57				push		di
+F3D9  57				push		di
 
 	rep	stosb				; Load row with fill attribute
-F3D8  F3 AA				rep stosb	
+F3DA  F3 AA				rep stosb	
 
 	pop	di
-F3DA  5F				pop		di
+F3DC  5F				pop		di
 
 	sub	di, bx
-F3DB  2B FB				sub		di,bx
+F3DD  2B FB				sub		di,bx
 
 	dec	dh				; Show one less row to blank
-F3DD  FE CE				dec		dh
+F3DF  FE CE				dec		dh
 
 	jnz	@@gfx_fill			;   loop if more to do
-F3DF  75 EA				jne		L$227
+F3E1  75 EA				jne		L$227
 
 	ret
-F3E1  C3				ret		
+F3E3  C3				ret		
 
 
 endp	int_10_func_6_7
@@ -36519,88 +36523,88 @@ endp	int_10_func_6_7
 proc	int_10_func_8_9_10	near
 
 	call	mode_check
-F3E2				int_10_func_8_9_10:
-F3E2  E8 F3 02				call		mode_check
+F3E4				int_10_func_8_9_10:
+F3E4  E8 F3 02				call		mode_check
 
 	jb	@@graphics			; Graphics operation
-F3E5  72 64				jb		L$231
+F3E7  72 64				jb		L$231
 
 	mov	bl, [bp+5]			; Get the display page
-F3E7  8A 5E 05				mov		bl,byte ptr 0x5[bp]
+F3E9  8A 5E 05				mov		bl,byte ptr 0x5[bp]
 
 	mov	bh, 0
-F3EA  B7 00				mov		bh,0x00
+F3EC  B7 00				mov		bh,0x00
 
 	push	bx
-F3EC  53				push		bx
+F3EE  53				push		bx
 
 	call	text_rc_col			; Convert Row, Col, Page -> Col
-F3ED  E8 3D 03				call		text_rc_col
+F3EF  E8 3D 03				call		text_rc_col
 
 	mov	di, ax				;   offset in di
-F3F0  8B F8				mov		di,ax
+F3F2  8B F8				mov		di,ax
 
 	pop	ax
-F3F2  58				pop		ax
+F3F4  58				pop		ax
 
 	mul	[word ds:4Ch]			; Page length X page number
-F3F3  F7 26 4C 00			mul		word ptr ds:[0x4c]
+F3F5  F7 26 4C 00			mul		word ptr ds:[0x4c]
 
 	add	di, ax				;   current char position
-F3F7  03 F8				add		di,ax
+F3F9  03 F8				add		di,ax
 
 	mov	si, di				;   move into si
-F3F9  8B F7				mov		si,di
+F3FB  8B F7				mov		si,di
 
 	mov	dx, [ds:63h]			; Display port into dx
-F3FB  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F3FD  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	add	dx, 6				;   get status port
-F3FF  83 C2 06				add		dx,0x0006
+F401  83 C2 06				add		dx,0x0006
 
 	push	ds
-F402  1E				push		ds
+F404  1E				push		ds
 
 	mov	bx, [bp+0]			; bx --> regen. buffer
-F403  8B 5E 00				mov		bx,word ptr [bp]
+F405  8B 5E 00				mov		bx,word ptr [bp]
 
 	mov	ds, bx
-F406  8E DB				mov		ds,bx
+F408  8E DB				mov		ds,bx
 
 	mov	es, bx
-F408  8E C3				mov		es,bx
+F40A  8E C3				mov		es,bx
 
 	mov	al, [bp+3]			; Get user (ah) function request
-F40A  8A 46 03				mov		al,byte ptr 0x3[bp]
+F40C  8A 46 03				mov		al,byte ptr 0x3[bp]
 
 	cmp	al, 8
-F40D  3C 08				cmp		al,0x08
+F40F  3C 08				cmp		al,0x08
 
 	jnz	@@write				;   skip if not read attribute
-F40F  75 10				jne		L$228
+F411  75 10				jne		L$228
 
 
 @@read:
 	in	al, dx				; Read CRT display status
-F411  EC				in		al,dx
+F413  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F412  A8 01				test		al,0x01
+F414  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;jnz	@@read				; Yes, wait for display on
 	cli					;   no interrupts now
-F414  FA				cli		
+F416  FA				cli		
 
 
 @@read_wait:
 	in	al, dx				; Read CRT display status
-F415  EC				in		al,dx
+F417  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F416  A8 01				test		al,0x01
+F418  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
@@ -36608,61 +36612,61 @@ F416  A8 01				test		al,0x01
 	;jz	@@read_wait			;   not yet, wait for it
 
 	lodsw					; Read character/attribute
-F418  AD				lodsw		
+F41A  AD				lodsw		
 
 	pop	ds
-F419  1F				pop		ds
+F41B  1F				pop		ds
 
 	mov	[bp+2], al			; Return character
-F41A  88 46 02				mov		byte ptr 0x2[bp],al
+F41C  88 46 02				mov		byte ptr 0x2[bp],al
 
 	mov	[bp+3], ah			;   and attribute
-F41D  88 66 03				mov		byte ptr 0x3[bp],ah
+F41F  88 66 03				mov		byte ptr 0x3[bp],ah
 
 	ret
-F420  C3				ret		
+F422  C3				ret		
 
 
 @@write:
 	mov	bl, [bp+2]			; Get character to write
-F421				L$228:
-F421  8A 5E 02				mov		bl,byte ptr 0x2[bp]
+F423				L$228:
+F423  8A 5E 02				mov		bl,byte ptr 0x2[bp]
 
 	mov	bh, [bp+4]			;   attribute
-F424  8A 7E 04				mov		bh,byte ptr 0x4[bp]
+F426  8A 7E 04				mov		bh,byte ptr 0x4[bp]
 
 	mov	cx, [bp+6]			;   character count
-F427  8B 4E 06				mov		cx,word ptr 0x6[bp]
+F429  8B 4E 06				mov		cx,word ptr 0x6[bp]
 
 	cmp	al, 0Ah 			; Write character only?
-F42A  3C 0A				cmp		al,0x0a
+F42C  3C 0A				cmp		al,0x0a
 
 	jz	@@char_write			;   skip if so
-F42C  74 0E				je		L$230
+F42E  74 0E				je		L$230
 
 
 @@write_loop:
 	in	al, dx				; Read CRT display status
-F42E				L$229:
-F42E  EC				in		al,dx
+F430				L$229:
+F430  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F42F  A8 01				test		al,0x01
+F431  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;jnz	@@write_loop			; Yes, wait for display on
 	cli					;   no interrupts now
-F431  FA				cli		
+F433  FA				cli		
 
 
 @@write_wait:
 	in	al, dx				; Read CRT display status
-F432  EC				in		al,dx
+F434  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F433  A8 01				test		al,0x01
+F435  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
@@ -36670,43 +36674,43 @@ F433  A8 01				test		al,0x01
 	;jz	@@write_wait			;   not yet, wait for it
 
 	mov	ax, bx				; Get char/attribute
-F435  8B C3				mov		ax,bx
+F437  8B C3				mov		ax,bx
 
 	stosw					;   write it
-F437  AB				stosw		
+F439  AB				stosw		
 
 	loop	@@write_loop			;   loop for character count
-F438  E2 F4				loop		L$229
+F43A  E2 F4				loop		L$229
 
 	pop	ds
-F43A  1F				pop		ds
+F43C  1F				pop		ds
 
 	ret
-F43B  C3				ret		
+F43D  C3				ret		
 
 
 @@char_write:
 	in	al, dx				; Read CRT display status
-F43C				L$230:
-F43C  EC				in		al,dx
+F43E				L$230:
+F43E  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F43D  A8 01				test		al,0x01
+F43F  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;jnz	@@char_write			;   not yet, wait for it
 	cli					;   no interrupts now
-F43F  FA				cli		
+F441  FA				cli		
 
 
 @@char_wait:
 	in	al, dx				; Read CRT display status
-F440  EC				in		al,dx
+F442  EC				in		al,dx
 
 	test	al, 00000001b			;   test for horizontal retrace
-F441  A8 01				test		al,0x01
+F443  A8 01				test		al,0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MODIFIED 
@@ -36714,610 +36718,610 @@ F441  A8 01				test		al,0x01
 	;jz	@@char_wait			;   not yet, wait for it
 
 	mov	al, bl				; Get character
-F443  8A C3				mov		al,bl
+F445  8A C3				mov		al,bl
 
 	stosb					;   write it
-F445  AA				stosb		
+F447  AA				stosb		
 
 	inc	di				;   skip attribute
-F446  47				inc		di
+F448  47				inc		di
 
 	loop	@@char_write			;   loop for character count
-F447  E2 F3				loop		L$230
+F449  E2 F3				loop		L$230
 
 	pop	ds
-F449  1F				pop		ds
+F44B  1F				pop		ds
 
 	ret
-F44A  C3				ret		
+F44C  C3				ret		
 
 
 @@graphics:
 	cmp	[byte bp+3], 8			; Read graphics char/attr?
-F44B				L$231:
-F44B  80 7E 03 08			cmp		byte ptr 0x3[bp],0x08
+F44D				L$231:
+F44D  80 7E 03 08			cmp		byte ptr 0x3[bp],0x08
 
 	jnz	@@gfx_write			;   no, must be write
-F44F  75 03				jne		L$232
+F451  75 03				jne		L$232
 
 	jmp	near @@gfx_read			; Else read char/attr
-F451  E9 B8 00				jmp		L$245
+F453  E9 B8 00				jmp		L$245
 
 
 @@gfx_write:
 	mov	ax, [ds:50h]			; Get cursor position
-F454				L$232:
-F454  A1 50 00				mov		ax,word ptr ds:[0x50]
+F456				L$232:
+F456  A1 50 00				mov		ax,word ptr ds:[0x50]
 
 	call	gfx_rc_col			;   convert (row, col) -> col
-F457  E8 EB 02				call		gfx_rc_col
+F459  E8 EB 02				call		gfx_rc_col
 
 	mov	di, ax				; Save in displacement register
-F45A  8B F8				mov		di,ax
+F45C  8B F8				mov		di,ax
 
 	push	ds
-F45C  1E				push		ds
+F45E  1E				push		ds
 
 	mov	al, [bp+2]			; Get character to write
-F45D  8A 46 02				mov		al,byte ptr 0x2[bp]
+F45F  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	mov	ah, 0
-F460  B4 00				mov		ah,0x00
+F462  B4 00				mov		ah,0x00
 
 	or	al, al				; Is it user character set?
-F462  0A C0				or		al,al
+F464  0A C0				or		al,al
 
 	js	@@user_chars			;   skip if so
-F464  78 07				js		L$233
+F466  78 07				js		L$233
 
 	mov	dx, cs				; Else use ROM character set
-F466  8C CA				mov		dx,cs
+F468  8C CA				mov		dx,cs
 
 	mov	si, offset gfx_chars		;   offset gfx_chars into si
-F468  BE 6E FA				mov		si,offset L$1-0x592
+F46A  BE 6E FA				mov		si,offset L$1-0x592
 
 	jmp	short @@buffer
-F46B  EB 0C				jmp		L$234
+F46D  EB 0C				jmp		L$234
 
 
 @@user_chars:
 	and	al, 7Fh 			; Origin to zero
-F46D				L$233:
-F46D  24 7F				and		al,0x7f
+F46F				L$233:
+F46F  24 7F				and		al,0x7f
 
 	xor	bx, bx				;   then go load
-F46F  33 DB				xor		bx,bx
+F471  33 DB				xor		bx,bx
 
 	mov	ds, bx				;   user graphics
-F471  8E DB				mov		ds,bx
+F473  8E DB				mov		ds,bx
 
 	lds	si, [dword ds:7Ch]		;   vector, offset in si
-F473  C5 36 7C 00			lds		si,dword ptr ds:[0x7c]
+F475  C5 36 7C 00			lds		si,dword ptr ds:[0x7c]
 
 	mov	dx, ds				;   segment into dx
-F477  8C DA				mov		dx,ds
+F479  8C DA				mov		dx,ds
 
 
 @@buffer:
 	pop	ds				; Restore data segment
-F479				L$234:
-F479  1F				pop		ds
+F47B				L$234:
+F47B  1F				pop		ds
 
 	mov	cl, 3				;   char 8 pixels wide
-F47A  B1 03				mov		cl,0x03
+F47C  B1 03				mov		cl,0x03
 
 	shl	ax, cl
-F47C  D3 E0				shl		ax,cl
+F47E  D3 E0				shl		ax,cl
 
 	add	si, ax				; Add regen buffer base address
-F47E  03 F0				add		si,ax
+F480  03 F0				add		si,ax
 
 	mov	ax, [bp+0]			;   get regen buffer address
-F480  8B 46 00				mov		ax,word ptr [bp]
+F482  8B 46 00				mov		ax,word ptr [bp]
 
 	mov	es, ax				;   into es
-F483  8E C0				mov		es,ax
+F485  8E C0				mov		es,ax
 
 	mov	cx, [bp+6]			;   load character count
-F485  8B 4E 06				mov		cx,word ptr 0x6[bp]
+F487  8B 4E 06				mov		cx,word ptr 0x6[bp]
 
 	cmp	[byte ds:49h], 6		; Is the mode 640x200 b/w?
-F488  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
+F48A  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
 
 	push	ds
-F48D  1E				push		ds
+F48F  1E				push		ds
 
 	mov	ds, dx
-F48E  8E DA				mov		ds,dx
+F490  8E DA				mov		ds,dx
 
 	jz	@@write_640x200			;   skip if so
-F490  74 51				je		L$240
+F492  74 51				je		L$240
 
 	shl	di, 1
-F492  D1 E7				shl		di,0x01
+F494  D1 E7				shl		di,0x01
 
 	mov	al, [bp+4]			; Get character attribute
-F494  8A 46 04				mov		al,byte ptr 0x4[bp]
+F496  8A 46 04				mov		al,byte ptr 0x4[bp]
 
 	and	ax, 3
-F497  83 E0 03				and		ax,0x0003
+F499  83 E0 03				and		ax,0x0003
 
 	mov	bx, 5555h
-F49A  BB 55 55				mov		bx,0x5555
+F49C  BB 55 55				mov		bx,0x5555
 
 	mul	bx
-F49D  F7 E3				mul		bx
+F49F  F7 E3				mul		bx
 
 	mov	dx, ax
-F49F  8B D0				mov		dx,ax
+F4A1  8B D0				mov		dx,ax
 
 	mov	bl, [bp+4]
-F4A1  8A 5E 04				mov		bl,byte ptr 0x4[bp]
+F4A3  8A 5E 04				mov		bl,byte ptr 0x4[bp]
 
 
 @@gfx_write_loop:
 	mov	bh, 8				; Char 8 pixels wide
-F4A4				L$235:
-F4A4  B7 08				mov		bh,0x08
+F4A6				L$235:
+F4A6  B7 08				mov		bh,0x08
 
 	push	di
-F4A6  57				push		di
+F4A8  57				push		di
 
 	push	si
-F4A7  56				push		si
+F4A9  56				push		si
 
 
 @@write_read:
 	lodsb					; Read the screen
-F4A8				L$236:
-F4A8  AC				lodsb		
+F4AA				L$236:
+F4AA  AC				lodsb		
 
 	push	cx
-F4A9  51				push		cx
+F4AB  51				push		cx
 
 	push	bx
-F4AA  53				push		bx
+F4AC  53				push		bx
 
 	xor	bx, bx
-F4AB  33 DB				xor		bx,bx
+F4AD  33 DB				xor		bx,bx
 
 	mov	cx, 8
-F4AD  B9 08 00				mov		cx,0x0008
+F4AF  B9 08 00				mov		cx,0x0008
 
 
 @@shift:
 	shr	al, 1				; Shift bits through byte
-F4B0				L$237:
-F4B0  D0 E8				shr		al,0x01
+F4B2				L$237:
+F4B2  D0 E8				shr		al,0x01
 
 	rcr	bx, 1
-F4B2  D1 DB				rcr		bx,0x01
+F4B4  D1 DB				rcr		bx,0x01
 
 	sar	bx, 1
-F4B4  D1 FB				sar		bx,0x01
+F4B6  D1 FB				sar		bx,0x01
 
 	loop	@@shift
-F4B6  E2 F8				loop		L$237
+F4B8  E2 F8				loop		L$237
 
 
 	mov	ax, bx				; Result into ax
-F4B8  8B C3				mov		ax,bx
+F4BA  8B C3				mov		ax,bx
 
 	pop	bx
-F4BA  5B				pop		bx
+F4BC  5B				pop		bx
 
 	pop	cx
-F4BB  59				pop		cx
+F4BD  59				pop		cx
 
 	and	ax, dx
-F4BC  23 C2				and		ax,dx
+F4BE  23 C2				and		ax,dx
 
 	xchg	ah, al
-F4BE  86 C4				xchg		ah,al
+F4C0  86 C4				xchg		ah,al
 
 	or	bl, bl
-F4C0  0A DB				or		bl,bl
+F4C2  0A DB				or		bl,bl
 
 	jns	@@write_word
-F4C2  79 03				jns		L$238
+F4C4  79 03				jns		L$238
 
 	xor	ax, [es:di]
-F4C4  26 33 05				xor		ax,word ptr es:[di]
+F4C6  26 33 05				xor		ax,word ptr es:[di]
 
 
 @@write_word:
 	mov	[es:di], ax			; Write new word
-F4C7				L$238:
-F4C7  26 89 05				mov		word ptr es:[di],ax
+F4C9				L$238:
+F4C9  26 89 05				mov		word ptr es:[di],ax
 
 	xor	di, 2000h
-F4CA  81 F7 00 20			xor		di,0x2000
+F4CC  81 F7 00 20			xor		di,0x2000
 
 	test	di, 2000h			; Is this other plane?
-F4CE  F7 C7 00 20			test		di,0x2000
+F4D0  F7 C7 00 20			test		di,0x2000
 
 	jnz	@@write_next			;   nope
-F4D2  75 03				jne		L$239
+F4D4  75 03				jne		L$239
 
 	add	di, 50h 			; Else advance character
-F4D4  83 C7 50				add		di,0x0050
+F4D6  83 C7 50				add		di,0x0050
 
 
 @@write_next:
 	dec	bh				; Show another char written
-F4D7				L$239:
-F4D7  FE CF				dec		bh
+F4D9				L$239:
+F4D9  FE CF				dec		bh
 
 	jnz	@@write_read			;   more to go
-F4D9  75 CD				jne		L$236
+F4DB  75 CD				jne		L$236
 
 	pop	si
-F4DB  5E				pop		si
+F4DD  5E				pop		si
 
 	pop	di
-F4DC  5F				pop		di
+F4DE  5F				pop		di
 
 	inc	di
-F4DD  47				inc		di
+F4DF  47				inc		di
 
 	inc	di
-F4DE  47				inc		di
+F4E0  47				inc		di
 
 	loop	@@gfx_write_loop
-F4DF  E2 C3				loop		L$235
+F4E1  E2 C3				loop		L$235
 
 	pop	ds
-F4E1  1F				pop		ds
+F4E3  1F				pop		ds
 
 	ret
-F4E2  C3				ret		
+F4E4  C3				ret		
 
 
 @@write_640x200:
 	mov	bl, [bp+4]			; Get display page
-F4E3				L$240:
-F4E3  8A 5E 04				mov		bl,byte ptr 0x4[bp]
+F4E5				L$240:
+F4E5  8A 5E 04				mov		bl,byte ptr 0x4[bp]
 
 	mov	dx, 2000h			;   size of graphics plane
-F4E6  BA 00 20				mov		dx,0x2000
+F4E8  BA 00 20				mov		dx,0x2000
 
 
 @@write_loop_640:
 	mov	bh, 8				; Pixel count to write
-F4E9				L$241:
-F4E9  B7 08				mov		bh,0x08
+F4EB				L$241:
+F4EB  B7 08				mov		bh,0x08
 
 	push	di
-F4EB  57				push		di
+F4ED  57				push		di
 
 	push	si
-F4EC  56				push		si
+F4EE  56				push		si
 
 
 @@write_read_640:
 	lodsb					; Read from one plane
-F4ED				L$242:
-F4ED  AC				lodsb		
+F4EF				L$242:
+F4EF  AC				lodsb		
 
 	or	bl, bl				;   done both planes?
-F4EE  0A DB				or		bl,bl
+F4F0  0A DB				or		bl,bl
 
 	jns	@@write_byte_640		;   skip if not
-F4F0  79 03				jns		L$243
+F4F2  79 03				jns		L$243
 
 	xor	al, [es:di]			; Else load attribute
-F4F2  26 32 05				xor		al,byte ptr es:[di]
+F4F4  26 32 05				xor		al,byte ptr es:[di]
 
 
 @@write_byte_640:
 	mov	[es:di], al			; Write out attribute
-F4F5				L$243:
-F4F5  26 88 05				mov		byte ptr es:[di],al
+F4F7				L$243:
+F4F7  26 88 05				mov		byte ptr es:[di],al
 
 	xor	di, dx				;   get other plane
-F4F8  33 FA				xor		di,dx
+F4FA  33 FA				xor		di,dx
 
 	test	di, dx				; Done both planes?
-F4FA  85 FA				test		dx,di
+F4FC  85 FA				test		dx,di
 
 	jnz	@@write_next_640		;   skip if not
-F4FC  75 03				jne		L$244
+F4FE  75 03				jne		L$244
 
 	add	di, 50h 			; Else position for now char
-F4FE  83 C7 50				add		di,0x0050
+F500  83 C7 50				add		di,0x0050
 
 
 @@write_next_640:
 	dec	bh				; Show row of pixels read
-F501				L$244:
-F501  FE CF				dec		bh
+F503				L$244:
+F503  FE CF				dec		bh
 
 	jnz	@@write_read_640		;   not done all of them
-F503  75 E8				jne		L$242
+F505  75 E8				jne		L$242
 
 	pop	si
-F505  5E				pop		si
+F507  5E				pop		si
 
 	pop	di
-F506  5F				pop		di
+F508  5F				pop		di
 
 	inc	di
-F507  47				inc		di
+F509  47				inc		di
 
 	loop	@@write_loop_640
-F508  E2 DF				loop		L$241
+F50A  E2 DF				loop		L$241
 
 	pop	ds
-F50A  1F				pop		ds
+F50C  1F				pop		ds
 
 	ret
-F50B  C3				ret		
+F50D  C3				ret		
 
 
 @@gfx_read:
 	cld					; Increment upwards
-F50C				L$245:
-F50C  FC				cld		
+F50E				L$245:
+F50E  FC				cld		
 
 	mov	ax, [ds:50h]			;   get cursor position
-F50D  A1 50 00				mov		ax,word ptr ds:[0x50]
+F50F  A1 50 00				mov		ax,word ptr ds:[0x50]
 
 	call	gfx_rc_col			; Convert (row, col) -> columns
-F510  E8 32 02				call		gfx_rc_col
+F512  E8 32 02				call		gfx_rc_col
 
 	mov	si, ax				;   save in si
-F513  8B F0				mov		si,ax
+F515  8B F0				mov		si,ax
 
 	sub	sp, 8				; Grab 8 bytes temp storage
-F515  83 EC 08				sub		sp,0x0008
+F517  83 EC 08				sub		sp,0x0008
 
 	mov	di, sp				;   save base in di
-F518  8B FC				mov		di,sp
+F51A  8B FC				mov		di,sp
 
 	cmp	[byte ds:49h], 6		; Mode 640x200 b/w?
-F51A  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
+F51C  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
 
 	mov	ax, [bp+0]			;   ax --> CRT regen buffer
-F51F  8B 46 00				mov		ax,word ptr [bp]
+F521  8B 46 00				mov		ax,word ptr [bp]
 
 	push	ds
-F522  1E				push		ds
+F524  1E				push		ds
 
 	push	di
-F523  57				push		di
+F525  57				push		di
 
 	mov	ds, ax
-F524  8E D8				mov		ds,ax
+F526  8E D8				mov		ds,ax
 
 	jz	@@640x200			; Mode is 640x200 b/w - skip
-F526  74 31				je		L$250
+F528  74 31				je		L$250
 
 	mov	dh, 8				; Eight pixels high/char
-F528  B6 08				mov		dh,0x08
+F52A  B6 08				mov		dh,0x08
 
 	shl	si, 1
-F52A  D1 E6				shl		si,0x01
+F52C  D1 E6				shl		si,0x01
 
 	mov	bx, 2000h			; Bytes per video plane
-F52C  BB 00 20				mov		bx,0x2000
+F52E  BB 00 20				mov		bx,0x2000
 
 
 @@read_loop:
 	mov	ax, [si]			; Read existing word
-F52F				L$246:
-F52F  8B 04				mov		ax,word ptr [si]
+F531				L$246:
+F531  8B 04				mov		ax,word ptr [si]
 
 	xchg	ah, al
-F531  86 C4				xchg		ah,al
+F533  86 C4				xchg		ah,al
 
 	mov	cx, 0C000h			; Attributes to scan for
-F533  B9 00 C0				mov		cx,0xc000
+F535  B9 00 C0				mov		cx,0xc000
 
 	mov	dl, 0
-F536  B2 00				mov		dl,0x00
+F538  B2 00				mov		dl,0x00
 
 
 @@attr: test	ax, cx				; Look for attributes
-F538				L$247:
-F538  85 C1				test		cx,ax
+F53A				L$247:
+F53A  85 C1				test		cx,ax
 
 	clc
-F53A  F8				clc		
+F53C  F8				clc		
 
 	jz	@@skip				;   set, skip
-F53B  74 01				je		L$248
+F53D  74 01				je		L$248
 
 	stc					; Else show not set
-F53D  F9				stc		
+F53F  F9				stc		
 
 
 @@skip: rcl	dl, 1
-F53E				L$248:
-F53E  D0 D2				rcl		dl,0x01
-
-	shr	cx, 1
-F540  D1 E9				shr		cx,0x01
+F540				L$248:
+F540  D0 D2				rcl		dl,0x01
 
 	shr	cx, 1
 F542  D1 E9				shr		cx,0x01
 
+	shr	cx, 1
+F544  D1 E9				shr		cx,0x01
+
 	jnb	@@attr				;   more shifts to go
-F544  73 F2				jae		L$247
+F546  73 F2				jae		L$247
 
 	mov	[ss:di], dl
-F546  36 88 15				mov		byte ptr ss:[di],dl
+F548  36 88 15				mov		byte ptr ss:[di],dl
 
 	inc	di
-F549  47				inc		di
+F54B  47				inc		di
 
 	xor	si, bx				; Do other video plane
-F54A  33 F3				xor		si,bx
+F54C  33 F3				xor		si,bx
 
 	test	si, bx				;   done both planes?
-F54C  85 F3				test		bx,si
+F54E  85 F3				test		bx,si
 
 	jnz	@@row_done			;   no, skip
-F54E  75 03				jne		L$249
+F550  75 03				jne		L$249
 
 	add	si, 50h 			; Else advance pointer
-F550  83 C6 50				add		si,0x0050
+F552  83 C6 50				add		si,0x0050
 
 
 @@row_done:
 	dec	dh				; Show another pixel row done
-F553				L$249:
-F553  FE CE				dec		dh
+F555				L$249:
+F555  FE CE				dec		dh
 
 	jnz	@@read_loop			;   more rows to do
-F555  75 D8				jne		L$246
+F557  75 D8				jne		L$246
 
 	jmp	short @@load_chars
-F557  EB 17				jmp		L$252
+F559  EB 17				jmp		L$252
 
 
 @@640x200:
 	mov	dh, 4				; Mode 640x200 b/w - special
-F559				L$250:
-F559  B6 04				mov		dh,0x04
+F55B				L$250:
+F55B  B6 04				mov		dh,0x04
 
 
 @@read_plane:
 	mov	ah, [si]			; Read pixels from one plane
-F55B				L$251:
-F55B  8A 24				mov		ah,byte ptr [si]
+F55D				L$251:
+F55D  8A 24				mov		ah,byte ptr [si]
 
 	mov	[ss:di], ah			;   save on stack
-F55D  36 88 25				mov		byte ptr ss:[di],ah
+F55F  36 88 25				mov		byte ptr ss:[di],ah
 
 	inc	di				;   advance
-F560  47				inc		di
+F562  47				inc		di
 
 	mov	ah, [si+2000h]			; Read pixels from other plane
-F561  8A A4 00 20			mov		ah,byte ptr 0x2000[si]
+F563  8A A4 00 20			mov		ah,byte ptr 0x2000[si]
 
 	mov	[ss:di], ah			; Save pixels on stack
-F565  36 88 25				mov		byte ptr ss:[di],ah
+F567  36 88 25				mov		byte ptr ss:[di],ah
 
 	inc	di				;   advance
-F568  47				inc		di
+F56A  47				inc		di
 
 	add	si, 50h 			; Total pixels in char
-F569  83 C6 50				add		si,0x0050
+F56B  83 C6 50				add		si,0x0050
 
 	dec	dh				;   another row processed
-F56C  FE CE				dec		dh
+F56E  FE CE				dec		dh
 
 	jnz	@@read_plane			;   more to do
-F56E  75 EB				jne		L$251
+F570  75 EB				jne		L$251
 
 
 @@load_chars:
 	mov	dx, cs				; Load segment of graphics char
-F570				L$252:
-F570  8C CA				mov		dx,cs
+F572				L$252:
+F572  8C CA				mov		dx,cs
 
 	mov	di, offset gfx_chars		;   and offset
-F572  BF 6E FA				mov		di,offset L$1-0x592
+F574  BF 6E FA				mov		di,offset L$1-0x592
 
 	mov	es, dx				;   save offset in es
-F575  8E C2				mov		es,dx
+F577  8E C2				mov		es,dx
 
 	mov	dx, ss
-F577  8C D2				mov		dx,ss
+F579  8C D2				mov		dx,ss
 
 	mov	ds, dx
-F579  8E DA				mov		ds,dx
+F57B  8E DA				mov		ds,dx
 
 	pop	si
-F57B  5E				pop		si
+F57D  5E				pop		si
 
 	mov	al, 0
-F57C  B0 00				mov		al,0x00
+F57E  B0 00				mov		al,0x00
 
 
 @@gfx_user_chars:
 	mov	dx, 80h 			; Number of characters in graphics set
-F57E				L$253:
-F57E  BA 80 00				mov		dx,0x0080
+F580				L$253:
+F580  BA 80 00				mov		dx,0x0080
 
 
 @@gfx_read_loop:
 	push	si
-F581				L$254:
-F581  56				push		si
+F583				L$254:
+F583  56				push		si
 
 	push	di
-F582  57				push		di
+F584  57				push		di
 
 	mov	cx, 8				; Bytes to compare for char
-F583  B9 08 00				mov		cx,0x0008
+F585  B9 08 00				mov		cx,0x0008
 
 	repz	cmpsb				;   do compare
-F586  F3 A6				repe cmpsb	
+F588  F3 A6				repe cmpsb	
 
 	pop	di
-F588  5F				pop		di
+F58A  5F				pop		di
 
 	pop	si
-F589  5E				pop		si
+F58B  5E				pop		si
 
 	jz	@@read_done			; Found graphics character
-F58A  74 1C				je		L$255
+F58C  74 1C				je		L$255
 
 	inc	al				;   else show another char
-F58C  FE C0				inc		al
+F58E  FE C0				inc		al
 
 	add	di, 8				;   advance one row
-F58E  83 C7 08				add		di,0x0008
+F590  83 C7 08				add		di,0x0008
 
 	dec	dx				;   one less char to scan
-F591  4A				dec		dx
+F593  4A				dec		dx
 
 	jnz	@@gfx_read_loop			; Loop if more char left
-F592  75 ED				jne		L$254
+F594  75 ED				jne		L$254
 
 
 	or	al, al				; User graphics character set?
-F594  0A C0				or		al,al
+F596  0A C0				or		al,al
 
 	jz	@@read_done			;   no, not found
-F596  74 10				je		L$255
+F598  74 10				je		L$255
 
 	xor	bx, bx
-F598  33 DB				xor		bx,bx
+F59A  33 DB				xor		bx,bx
 
 	mov	ds, bx
-F59A  8E DB				mov		ds,bx
+F59C  8E DB				mov		ds,bx
 
 	les	di, [dword ds:7Ch]		; Else load user graphics char
-F59C  C4 3E 7C 00			les		di,dword ptr ds:[0x7c]
+F59E  C4 3E 7C 00			les		di,dword ptr ds:[0x7c]
 
 	mov	bx, es
-F5A0  8C C3				mov		bx,es
+F5A2  8C C3				mov		bx,es
 
 	or	bx, di
-F5A2  0B DF				or		bx,di
+F5A4  0B DF				or		bx,di
 
 	jz	@@read_done			;   not found
-F5A4  74 02				je		L$255
+F5A6  74 02				je		L$255
 
 	jmp	@@gfx_user_chars		; Try using user graphics char
-F5A6  EB D6				jmp		L$253
+F5A8  EB D6				jmp		L$253
 
 
 @@read_done:
 	mov	[bp+2], al			; Return char in user al
-F5A8				L$255:
-F5A8  88 46 02				mov		byte ptr 0x2[bp],al
+F5AA				L$255:
+F5AA  88 46 02				mov		byte ptr 0x2[bp],al
 
 	pop	ds
-F5AB  1F				pop		ds
+F5AD  1F				pop		ds
 
 	add	sp, 8				;   return temp storage
-F5AC  83 C4 08				add		sp,0x0008
+F5AE  83 C4 08				add		sp,0x0008
 
 	ret
-F5AF  C3				ret		
+F5B1  C3				ret		
 
 
 endp	int_10_func_8_9_10
@@ -37329,64 +37333,64 @@ endp	int_10_func_8_9_10
 proc	int_10_func_11	near
 
 	mov	dx, [ds:63h]			; Set color, get CGA card port
-F5B0				int_10_func_11:
-F5B0  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F5B2				int_10_func_11:
+F5B2  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	add	dx, 5				;   color select register
-F5B4  83 C2 05				add		dx,0x0005
+F5B6  83 C2 05				add		dx,0x0005
 
 	mov	al, [ds:66h]			; Get CRT palette
-F5B7  A0 66 00				mov		al,byte ptr ds:[0x66]
+F5B9  A0 66 00				mov		al,byte ptr ds:[0x66]
 
 	mov	ah, [bp+5]			;   new palette ID, user bh
-F5BA  8A 66 05				mov		ah,byte ptr 0x5[bp]
+F5BC  8A 66 05				mov		ah,byte ptr 0x5[bp]
 
 	or	ah, ah
-F5BD  0A E4				or		ah,ah
+F5BF  0A E4				or		ah,ah
 
 	mov	ah, [bp+4]			;   new palette color, user bl
-F5BF  8A 66 04				mov		ah,byte ptr 0x4[bp]
+F5C1  8A 66 04				mov		ah,byte ptr 0x4[bp]
 
 	jnz	@@skip				; Palette ID specified, skip
-F5C2  75 09				jne		L$256
+F5C4  75 09				jne		L$256
 
 	and	al, 0E0h
-F5C4  24 E0				and		al,0xe0
+F5C6  24 E0				and		al,0xe0
 
 	and	ah, 1Fh 			; Null ID = ID 01Fh
-F5C6  80 E4 1F				and		ah,0x1f
+F5C8  80 E4 1F				and		ah,0x1f
 
 	or	al, ah				;   set in color
-F5C9  0A C4				or		al,ah
+F5CB  0A C4				or		al,ah
 
 	jmp	short @@new_palette
-F5CB  EB 09				jmp		L$257
+F5CD  EB 09				jmp		L$257
 
 
 @@skip: and	al, 0DFh
-F5CD				L$256:
-F5CD  24 DF				and		al,0xdf
+F5CF				L$256:
+F5CF  24 DF				and		al,0xdf
 
 	test	ah, 1
-F5CF  F6 C4 01				test		ah,0x01
+F5D1  F6 C4 01				test		ah,0x01
 
 	jz	@@new_palette
-F5D2  74 02				je		L$257
+F5D4  74 02				je		L$257
 
 	or	al, 20h
-F5D4  0C 20				or		al,0x20
+F5D6  0C 20				or		al,0x20
 
 
 @@new_palette:
 	mov	[ds:66h], al			; Save new palette
-F5D6				L$257:
-F5D6  A2 66 00				mov		byte ptr ds:[0x66],al
+F5D8				L$257:
+F5D8  A2 66 00				mov		byte ptr ds:[0x66],al
 
 	out	dx, al				;   tell CGA about it
-F5D9  EE				out		dx,al
+F5DB  EE				out		dx,al
 
 	ret
-F5DA  C3				ret		
+F5DC  C3				ret		
 
 
 endp	int_10_func_11
@@ -37398,105 +37402,105 @@ endp	int_10_func_11
 proc	int_10_func_12	near
 
 	mov	ax, [bp+0]			; Write pixel
-F5DB				int_10_func_12:
-F5DB  8B 46 00				mov		ax,word ptr [bp]
+F5DD				int_10_func_12:
+F5DD  8B 46 00				mov		ax,word ptr [bp]
 
 	mov	es, ax
-F5DE  8E C0				mov		es,ax
+F5E0  8E C0				mov		es,ax
 
 	mov	dx, [bp+8]			; Load row from user dx
-F5E0  8B 56 08				mov		dx,word ptr 0x8[bp]
+F5E2  8B 56 08				mov		dx,word ptr 0x8[bp]
 
 	mov	cx, [bp+6]			;   col from user cx
-F5E3  8B 4E 06				mov		cx,word ptr 0x6[bp]
+F5E5  8B 4E 06				mov		cx,word ptr 0x6[bp]
 
 	call	dot_offset			; Find dot offset
-F5E6  E8 01 01				call		dot_offset
+F5E8  E8 01 01				call		dot_offset
 
 	jnz	@@ok				;   valid
-F5E9  75 0D				jne		L$258
+F5EB  75 0D				jne		L$258
 
 	mov	al, [bp+2]			; Load user color
-F5EB  8A 46 02				mov		al,byte ptr 0x2[bp]
+F5ED  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	mov	bl, al
-F5EE  8A D8				mov		bl,al
+F5F0  8A D8				mov		bl,al
 
 	and	al, 1
-F5F0  24 01				and		al,0x01
+F5F2  24 01				and		al,0x01
 
 	ror	al, 1
-F5F2  D0 C8				ror		al,0x01
+F5F4  D0 C8				ror		al,0x01
 
 	mov	ah, 7Fh
-F5F4  B4 7F				mov		ah,0x7f
+F5F6  B4 7F				mov		ah,0x7f
 
 	jmp	short @@read
-F5F6  EB 0F				jmp		L$259
+F5F8  EB 0F				jmp		L$259
 
 
 @@ok:	shl	cl, 1
-F5F8				L$258:
-F5F8  D0 E1				shl		cl,0x01
+F5FA				L$258:
+F5FA  D0 E1				shl		cl,0x01
 
 	mov	al, [bp+2]
-F5FA  8A 46 02				mov		al,byte ptr 0x2[bp]
+F5FC  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	mov	bl, al
-F5FD  8A D8				mov		bl,al
+F5FF  8A D8				mov		bl,al
 
 	and	al, 3
-F5FF  24 03				and		al,0x03
-
-	ror	al, 1
-F601  D0 C8				ror		al,0x01
+F601  24 03				and		al,0x03
 
 	ror	al, 1
 F603  D0 C8				ror		al,0x01
 
+	ror	al, 1
+F605  D0 C8				ror		al,0x01
+
 	mov	ah, 3Fh
-F605  B4 3F				mov		ah,0x3f
+F607  B4 3F				mov		ah,0x3f
 
 
 @@read:	ror	ah, cl
-F607				L$259:
-F607  D2 CC				ror		ah,cl
+F609				L$259:
+F609  D2 CC				ror		ah,cl
 
 	shr	al, cl
-F609  D2 E8				shr		al,cl
+F60B  D2 E8				shr		al,cl
 
 	mov	cl, [es:si]			; Read the char with the dot
-F60B  26 8A 0C				mov		cl,byte ptr es:[si]
+F60D  26 8A 0C				mov		cl,byte ptr es:[si]
 
 	or	bl, bl
-F60E  0A DB				or		bl,bl
+F610  0A DB				or		bl,bl
 
 	jns	@@color
-F610  79 04				jns		L$260
+F612  79 04				jns		L$260
 
 	xor	cl, al				; Exclusive or existing color
-F612  32 C8				xor		cl,al
+F614  32 C8				xor		cl,al
 
 	jmp	short @@write
-F614  EB 04				jmp		L$261
+F616  EB 04				jmp		L$261
 
 
 @@color:
 	and	cl, ah				; Set new color for dot
-F616				L$260:
-F616  22 CC				and		cl,ah
+F618				L$260:
+F618  22 CC				and		cl,ah
 
 	or	cl, al
-F618  0A C8				or		cl,al
+F61A  0A C8				or		cl,al
 
 
 @@write:
 	mov	[es:si], cl			; Write out char with the dot
-F61A				L$261:
-F61A  26 88 0C				mov		byte ptr es:[si],cl
+F61C				L$261:
+F61C  26 88 0C				mov		byte ptr es:[si],cl
 
 	ret
-F61D  C3				ret		
+F61F  C3				ret		
 
 
 endp	int_10_func_12
@@ -37508,64 +37512,64 @@ endp	int_10_func_12
 proc	int_10_func_13	near
 
 	mov	ax, [bp+0]			; ax --> video regen buffer
-F61E				int_10_func_13:
-F61E  8B 46 00				mov		ax,word ptr [bp]
+F620				int_10_func_13:
+F620  8B 46 00				mov		ax,word ptr [bp]
 
 	mov	es, ax				;   into es segment
-F621  8E C0				mov		es,ax
+F623  8E C0				mov		es,ax
 
 	mov	dx, [bp+8]			; Load row from user dx
-F623  8B 56 08				mov		dx,word ptr 0x8[bp]
+F625  8B 56 08				mov		dx,word ptr 0x8[bp]
 
 	mov	cx, [bp+6]			;   col from user cx
-F626  8B 4E 06				mov		cx,word ptr 0x6[bp]
+F628  8B 4E 06				mov		cx,word ptr 0x6[bp]
 
 	call	dot_offset			; Calculate dot offset
-F629  E8 BE 00				call		dot_offset
+F62B  E8 BE 00				call		dot_offset
 
 	mov	al, [es:si]			;   read dot
-F62C  26 8A 04				mov		al,byte ptr es:[si]
+F62E  26 8A 04				mov		al,byte ptr es:[si]
 
 	jnz	@@offset			;   was there
-F62F  75 08				jne		L$262
+F631  75 08				jne		L$262
 
 	shl	al, cl
-F631  D2 E0				shl		al,cl
+F633  D2 E0				shl		al,cl
 
 	rol	al, 1
-F633  D0 C0				rol		al,0x01
+F635  D0 C0				rol		al,0x01
 
 	and	al, 1
-F635  24 01				and		al,0x01
+F637  24 01				and		al,0x01
 
 	jmp	short @@done
-F637  EB 0A				jmp		L$263
+F639  EB 0A				jmp		L$263
 
 
 @@offset:
 	shl	cl, 1				; Calculate offset in char
-F639				L$262:
-F639  D0 E1				shl		cl,0x01
+F63B				L$262:
+F63B  D0 E1				shl		cl,0x01
 
 	shl	al, cl
-F63B  D2 E0				shl		al,cl
-
-	rol	al, 1
-F63D  D0 C0				rol		al,0x01
+F63D  D2 E0				shl		al,cl
 
 	rol	al, 1
 F63F  D0 C0				rol		al,0x01
 
+	rol	al, 1
+F641  D0 C0				rol		al,0x01
+
 	and	al, 3
-F641  24 03				and		al,0x03
+F643  24 03				and		al,0x03
 
 
 @@done:	mov	[bp+2], al			; Return dot pos in user al
-F643				L$263:
-F643  88 46 02				mov		byte ptr 0x2[bp],al
+F645				L$263:
+F645  88 46 02				mov		byte ptr 0x2[bp],al
 
 	ret
-F646  C3				ret		
+F648  C3				ret		
 
 
 endp	int_10_func_13
@@ -37577,191 +37581,191 @@ endp	int_10_func_13
 proc	int_10_func_14	near
 
 	mov	bl, [ds:62h]			; Get active video page (0-7)
-F647				int_10_func_14:
-F647  8A 1E 62 00			mov		bl,byte ptr ds:[0x62]
+F649				int_10_func_14:
+F649  8A 1E 62 00			mov		bl,byte ptr ds:[0x62]
 
 	shl	bl, 1				;   as word index
-F64B  D0 E3				shl		bl,0x01
+F64D  D0 E3				shl		bl,0x01
 
 	mov	bh, 0				;   clear high order
-F64D  B7 00				mov		bh,0x00
+F64F  B7 00				mov		bh,0x00
 
 	mov	dx, [bx+50h]			; Index into cursor position
-F64F  8B 57 50				mov		dx,word ptr 0x50[bx]
+F651  8B 57 50				mov		dx,word ptr 0x50[bx]
 
 
 	mov	al, [bp+2]			; Get character to write
-F652  8A 46 02				mov		al,byte ptr 0x2[bp]
+F654  8A 46 02				mov		al,byte ptr 0x2[bp]
 
 	cmp	al, 8				;   back space?
-F655  3C 08				cmp		al,0x08
+F657  3C 08				cmp		al,0x08
 
 	jz	@@back_space			;   skip if so
-F657  74 22				je		L$264
+F659  74 22				je		L$264
 
 	cmp	al, LF				; Is it a line feed?
-F659  3C 0A				cmp		al,0x0a
+F65B  3C 0A				cmp		al,0x0a
 
 	jz	@@line_feed			;   skip if so
-F65B  74 3D				je		L$268
+F65D  74 3D				je		L$268
 
 	cmp	al, 7				; Print a bell?
-F65D  3C 07				cmp		al,0x07
+F65F  3C 07				cmp		al,0x07
 
 	jz	@@beep				;   do beep
-F65F  74 23				je		L$265
+F661  74 23				je		L$265
 
 	cmp	al, CR				; Is it a carriage return?
-F661  3C 0D				cmp		al,0x0d
+F663  3C 0D				cmp		al,0x0d
 
 	jz	@@carriage_return		;   skip if so
-F663  74 25				je		L$266
+F665  74 25				je		L$266
 
 	mov	bl, [bp+4]			; Else write at cursor position
-F665  8A 5E 04				mov		bl,byte ptr 0x4[bp]
+F667  8A 5E 04				mov		bl,byte ptr 0x4[bp]
 
 	mov	ah, 0Ah
-F668  B4 0A				mov		ah,0x0a
+F66A  B4 0A				mov		ah,0x0a
 
 	mov	cx, 1				;   one time
-F66A  B9 01 00				mov		cx,0x0001
+F66C  B9 01 00				mov		cx,0x0001
 
 	int	10h
-F66D  CD 10				int		0x10
+F66F  CD 10				int		0x10
 
 	inc	dl				; Advance cursor
-F66F  FE C2				inc		dl
+F671  FE C2				inc		dl
 
 	cmp	dl, [ds:4Ah]			;   check for line overflow
-F671  3A 16 4A 00			cmp		dl,byte ptr ds:[0x4a]
+F673  3A 16 4A 00			cmp		dl,byte ptr ds:[0x4a]
 
 	jnz	@@position
-F675  75 15				jne		L$267
+F677  75 15				jne		L$267
 
 	mov	dl, 0				; Overflowed, then fake
-F677  B2 00				mov		dl,0x00
+F679  B2 00				mov		dl,0x00
 
 	jmp	short @@line_feed		;   new line
-F679  EB 1F				jmp		L$268
+F67B  EB 1F				jmp		L$268
 
 
 @@back_space:
 	cmp	dl, 0				; At start of line?
-F67B				L$264:
-F67B  80 FA 00				cmp		dl,0x00
+F67D				L$264:
+F67D  80 FA 00				cmp		dl,0x00
 
 	jz	@@position			;   skip if so
-F67E  74 0C				je		L$267
+F680  74 0C				je		L$267
 
 	dec	dl				; Else back up
-F680  FE CA				dec		dl
+F682  FE CA				dec		dl
 
 	jmp	short @@position		;   join common code
-F682  EB 08				jmp		L$267
+F684  EB 08				jmp		L$267
 
 
 @@beep:	mov	bl, 1				; Do a short
-F684				L$265:
-F684  B3 01				mov		bl,0x01
+F686				L$265:
+F686  B3 01				mov		bl,0x01
 
 	call	beep				;   beep
-F686  E8 18 01				call		beep
+F688  E8 18 01				call		beep
 
 	ret
-F689  C3				ret		
+F68B  C3				ret		
 
 
 @@carriage_return:
 	mov	dl, 0				; Position to start of line
-F68A				L$266:
-F68A  B2 00				mov		dl,0x00
+F68C				L$266:
+F68C  B2 00				mov		dl,0x00
 
 
 @@position:
 	mov	bl, [ds:62h]			; Get active video page (0-7)
-F68C				L$267:
-F68C  8A 1E 62 00			mov		bl,byte ptr ds:[0x62]
+F68E				L$267:
+F68E  8A 1E 62 00			mov		bl,byte ptr ds:[0x62]
 
 	shl	bl, 1				;   as word index
-F690  D0 E3				shl		bl,0x01
+F692  D0 E3				shl		bl,0x01
 
 	mov	bh, 0				;   clear high order
-F692  B7 00				mov		bh,0x00
+F694  B7 00				mov		bh,0x00
 
 	mov	[bx+50h], dx			; Remember the cursor position
-F694  89 57 50				mov		word ptr 0x50[bx],dx
+F696  89 57 50				mov		word ptr 0x50[bx],dx
 
 	jmp	set_cursor			;   set 6845 cursor hardware
-F697  E9 BE 00				jmp		set_cursor
+F699  E9 BE 00				jmp		set_cursor
 
 
 @@line_feed:
 	cmp	dh, 18h 			; Done all 24 lines on page?
-F69A				L$268:
-F69A  80 FE 18				cmp		dh,0x18
+F69C				L$268:
+F69C  80 FE 18				cmp		dh,0x18
 
 	jz	@@scroll			;   yes, scroll
-F69D  74 04				je		L$269
+F69F  74 04				je		L$269
 
 	inc	dh				; Else advance line
-F69F  FE C6				inc		dh
+F6A1  FE C6				inc		dh
 
 	jnz	@@position
-F6A1  75 E9				jne		L$267
+F6A3  75 E9				jne		L$267
 
 
 @@scroll:
 	mov	ah, 2				; Position cursor at line start
-F6A3				L$269:
-F6A3  B4 02				mov		ah,0x02
+F6A5				L$269:
+F6A5  B4 02				mov		ah,0x02
 
 	int	10h
-F6A5  CD 10				int		0x10
+F6A7  CD 10				int		0x10
 
 	call	mode_check			; Is this text mode?
-F6A7  E8 2E 00				call		mode_check
+F6A9  E8 2E 00				call		mode_check
 
 	mov	bh, 0
-F6AA  B7 00				mov		bh,0x00
+F6AC  B7 00				mov		bh,0x00
 
 	jb	@@scroll_up			; Skip if text mode
-F6AC  72 06				jb		L$270
+F6AE  72 06				jb		L$270
 
 	mov	ah, 8
-F6AE  B4 08				mov		ah,0x08
+F6B0  B4 08				mov		ah,0x08
 
 	int	10h				;   else read attribute
-F6B0  CD 10				int		0x10
+F6B2  CD 10				int		0x10
 
 	mov	bh, ah
-F6B2  8A FC				mov		bh,ah
+F6B4  8A FC				mov		bh,ah
 
 
 @@scroll_up:
 	mov	ah, 6				; Now prepare to
-F6B4				L$270:
-F6B4  B4 06				mov		ah,0x06
+F6B6				L$270:
+F6B6  B4 06				mov		ah,0x06
 
 	mov	al, 1				;   scroll
-F6B6  B0 01				mov		al,0x01
+F6B8  B0 01				mov		al,0x01
 
 	xor	cx, cx				;   the
-F6B8  33 C9				xor		cx,cx
+F6BA  33 C9				xor		cx,cx
 
 	mov	dh, 18h 			;   page
-F6BA  B6 18				mov		dh,0x18
+F6BC  B6 18				mov		dh,0x18
 
 	mov	dl, [ds:4Ah]			;   up
-F6BC  8A 16 4A 00			mov		dl,byte ptr ds:[0x4a]
+F6BE  8A 16 4A 00			mov		dl,byte ptr ds:[0x4a]
 
 	dec	dl
-F6C0  FE CA				dec		dl
+F6C2  FE CA				dec		dl
 
 	int	10h
-F6C2  CD 10				int		0x10
+F6C4  CD 10				int		0x10
 
 	ret
-F6C4  C3				ret		
+F6C6  C3				ret		
 
 
 endp	int_10_func_14
@@ -37773,26 +37777,26 @@ endp	int_10_func_14
 proc	int_10_func_15	near
 
 	mov	al, [ds:4Ah]			; Get current video state
-F6C5				int_10_func_15:
-F6C5  A0 4A 00				mov		al,byte ptr ds:[0x4a]
+F6C7				int_10_func_15:
+F6C7  A0 4A 00				mov		al,byte ptr ds:[0x4a]
 
 	mov	[bp+3], al			;   columns
-F6C8  88 46 03				mov		byte ptr 0x3[bp],al
+F6CA  88 46 03				mov		byte ptr 0x3[bp],al
 
 	mov	al, [ds:49h]
-F6CB  A0 49 00				mov		al,byte ptr ds:[0x49]
+F6CD  A0 49 00				mov		al,byte ptr ds:[0x49]
 
 	mov	[bp+2], al			;   mode
-F6CE  88 46 02				mov		byte ptr 0x2[bp],al
+F6D0  88 46 02				mov		byte ptr 0x2[bp],al
 
 	mov	al, [ds:62h]
-F6D1  A0 62 00				mov		al,byte ptr ds:[0x62]
+F6D3  A0 62 00				mov		al,byte ptr ds:[0x62]
 
 	mov	[bp+5], al			;   page
-F6D4  88 46 05				mov		byte ptr 0x5[bp],al
+F6D6  88 46 05				mov		byte ptr 0x5[bp],al
 
 	ret
-F6D7  C3				ret		
+F6D9  C3				ret		
 
 
 endp	int_10_func_15
@@ -37804,40 +37808,40 @@ endp	int_10_func_15
 proc	mode_check	near
 
 	push	ax				; Set flags to current mode
-F6D8				mode_check:
-F6D8  50				push		ax
+F6DA				mode_check:
+F6DA  50				push		ax
 
 	mov	al, [ds:49h]			;   get mode
-F6D9  A0 49 00				mov		al,byte ptr ds:[0x49]
+F6DB  A0 49 00				mov		al,byte ptr ds:[0x49]
 
 	cmp	al, 7				;   equal if mono
-F6DC  3C 07				cmp		al,0x07
+F6DE  3C 07				cmp		al,0x07
 
 	jz	@@done
-F6DE  74 08				je		L$271
+F6E0  74 08				je		L$271
 
 	cmp	al, 4
-F6E0  3C 04				cmp		al,0x04
+F6E2  3C 04				cmp		al,0x04
 
 	cmc
-F6E2  F5				cmc		
+F6E4  F5				cmc		
 
 	jnb	@@done				;   carry set on graphics
-F6E3  73 03				jae		L$271
+F6E5  73 03				jae		L$271
 
 	sbb	al, al
-F6E5  18 C0				sbb		al,al
+F6E7  18 C0				sbb		al,al
 
 	stc
-F6E7  F9				stc		
+F6E9  F9				stc		
 
 
 @@done: pop	ax
-F6E8				L$271:
-F6E8  58				pop		ax
+F6EA				L$271:
+F6EA  58				pop		ax
 
 	ret
-F6E9  C3				ret		
+F6EB  C3				ret		
 
 
 endp	mode_check
@@ -37849,66 +37853,66 @@ endp	mode_check
 proc	dot_offset	near
 
 	mov	al, 50h 			; Dots in character position
-F6EA				dot_offset:
-F6EA  B0 50				mov		al,0x50
+F6EC				dot_offset:
+F6EC  B0 50				mov		al,0x50
 
 	xor	si, si
-F6EC  33 F6				xor		si,si
+F6EE  33 F6				xor		si,si
 
 	shr	dl, 1				; Two bytes/char position
-F6EE  D0 EA				shr		dl,0x01
+F6F0  D0 EA				shr		dl,0x01
 
 	jnb	@@calc				;   no overflow
-F6F0  73 03				jae		L$272
+F6F2  73 03				jae		L$272
 
 	mov	si, 2000h			; Else on other video plane
-F6F2  BE 00 20				mov		si,0x2000
+F6F4  BE 00 20				mov		si,0x2000
 
 
 @@calc: mul	dl				; Multiply position by row
-F6F5				L$272:
-F6F5  F6 E2				mul		dl
+F6F7				L$272:
+F6F7  F6 E2				mul		dl
 
 	add	si, ax				;   add in column position
-F6F7  03 F0				add		si,ax
+F6F9  03 F0				add		si,ax
 
 	mov	dx, cx				; Copy column position
-F6F9  8B D1				mov		dx,cx
+F6FB  8B D1				mov		dx,cx
 
 	mov	cx, 302h			;   regular char size
-F6FB  B9 02 03				mov		cx,0x0302
+F6FD  B9 02 03				mov		cx,0x0302
 
 	cmp	[byte ds:49h], 6		; Mode 640x200, b/w?
-F6FE  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
+F700  80 3E 49 00 06			cmp		byte ptr ds:[0x49],0x06
 
 	pushf
-F703  9C				pushf		
+F705  9C				pushf		
 
 	jnz	@@done				;   skip if not
-F704  75 03				jne		L$273
+F706  75 03				jne		L$273
 
 	mov	cx, 703h			; Else special char size
-F706  B9 03 07				mov		cx,0x0703
+F708  B9 03 07				mov		cx,0x0703
 
 
 @@done: and	ch, dl
-F709				L$273:
-F709  22 EA				and		ch,dl
+F70B				L$273:
+F70B  22 EA				and		ch,dl
 
 	shr	dx, cl
-F70B  D3 EA				shr		dx,cl
+F70D  D3 EA				shr		dx,cl
 
 	add	si, dx
-F70D  03 F2				add		si,dx
+F70F  03 F2				add		si,dx
 
 	xchg	cl, ch
-F70F  86 E9				xchg		cl,ch
+F711  86 E9				xchg		cl,ch
 
 	popf
-F711  9D				popf		
+F713  9D				popf		
 
 	ret
-F712  C3				ret		
+F714  C3				ret		
 
 
 endp	dot_offset
@@ -37920,50 +37924,50 @@ endp	dot_offset
 proc	pen_pos	near
 
 	call	near @@pen_xy			; Read light pen position high
-F713				pen_pos:
-F713  E8 0A 00				call		L$274
+F715				pen_pos:
+F715  E8 0A 00				call		L$274
 
 	mov	ch, al				;   save in ch
-F716  8A E8				mov		ch,al
+F718  8A E8				mov		ch,al
 
 	inc	ah
-F718  FE C4				inc		ah
+F71A  FE C4				inc		ah
 
 	call	near @@pen_xy			; Read light pen position low
-F71A  E8 03 00				call		L$274
+F71C  E8 03 00				call		L$274
 
 	mov	cl, al				;   save in cl
-F71D  8A C8				mov		cl,al
+F71F  8A C8				mov		cl,al
 
 	ret
-F71F  C3				ret		
+F721  C3				ret		
 
 
 @@pen_xy:
 	push	dx				; Read CRT register offset al
-F720				L$274:
-F720  52				push		dx
+F722				L$274:
+F722  52				push		dx
 
 	mov	dx, [ds:63h]			;   get active CRT port
-F721  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F723  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	xchg	al, ah
-F725  86 E0				xchg		al,ah
+F727  86 E0				xchg		al,ah
 
 	out	dx, al				; Send initialization byte
-F727  EE				out		dx,al
+F729  EE				out		dx,al
 
 	inc	dl				;   increment
-F728  FE C2				inc		dl
+F72A  FE C2				inc		dl
 
 	in	al, dx				; Read pen position byte back
-F72A  EC				in		al,dx
+F72C  EC				in		al,dx
 
 	pop	dx
-F72B  5A				pop		dx
+F72D  5A				pop		dx
 
 	ret
-F72C  C3				ret		
+F72E  C3				ret		
 
 
 endp	pen_pos
@@ -37975,44 +37979,44 @@ endp	pen_pos
 proc	text_rc_col	near
 
 	mov	bh, 0				; Convert Row, Col, Page -> Col
-F72D				text_rc_col:
-F72D  B7 00				mov		bh,0x00
+F72F				text_rc_col:
+F72F  B7 00				mov		bh,0x00
 
 	shl	bx, 1				;   two bytes/column
-F72F  D1 E3				shl		bx,0x01
+F731  D1 E3				shl		bx,0x01
 
 	mov	ax, [bx+50h]			; Get page number in ax
-F731  8B 47 50				mov		ax,word ptr 0x50[bx]
+F733  8B 47 50				mov		ax,word ptr 0x50[bx]
 
 						;   join common code
 rc_to_col:
 	push	bx				; Map (ah=row, al=col) to col
-F734				L$275:
-F734  53				push		bx
+F736				L$275:
+F736  53				push		bx
 
 	mov	bl, al
-F735  8A D8				mov		bl,al
+F737  8A D8				mov		bl,al
 
 	mov	al, ah
-F737  8A C4				mov		al,ah
+F739  8A C4				mov		al,ah
 
 	mul	[byte ds:4Ah]			; Multiply Row x (Row/Column)
-F739  F6 26 4A 00			mul		byte ptr ds:[0x4a]
+F73B  F6 26 4A 00			mul		byte ptr ds:[0x4a]
 
 	mov	bh, 0
-F73D  B7 00				mov		bh,0x00
+F73F  B7 00				mov		bh,0x00
 
 	add	ax, bx				;   add in existing col
-F73F  03 C3				add		ax,bx
+F741  03 C3				add		ax,bx
 
 	shl	ax, 1				;   times 2 because 2 bytes/col
-F741  D1 E0				shl		ax,0x01
+F743  D1 E0				shl		ax,0x01
 
 	pop	bx
-F743  5B				pop		bx
+F745  5B				pop		bx
 
 	ret
-F744  C3				ret		
+F746  C3				ret		
 
 
 endp	text_rc_col
@@ -38024,35 +38028,35 @@ endp	text_rc_col
 proc	gfx_rc_col	near
 
 	push	bx				; Convert (row, col) -> col
-F745				gfx_rc_col:
-F745  53				push		bx
+F747				gfx_rc_col:
+F747  53				push		bx
 
 	mov	bl, al				;   save column
-F746  8A D8				mov		bl,al
+F748  8A D8				mov		bl,al
 
 	mov	al, ah				;   get row
-F748  8A C4				mov		al,ah
+F74A  8A C4				mov		al,ah
 
 	mul	[byte ds:4Ah]			; Multiply by columns/row
-F74A  F6 26 4A 00			mul		byte ptr ds:[0x4a]
-
-	shl	ax, 1
-F74E  D1 E0				shl		ax,0x01
+F74C  F6 26 4A 00			mul		byte ptr ds:[0x4a]
 
 	shl	ax, 1
 F750  D1 E0				shl		ax,0x01
 
+	shl	ax, 1
+F752  D1 E0				shl		ax,0x01
+
 	mov	bh, 0
-F752  B7 00				mov		bh,0x00
+F754  B7 00				mov		bh,0x00
 
 	add	ax, bx				; Add in columns
-F754  03 C3				add		ax,bx
+F756  03 C3				add		ax,bx
 
 	pop	bx
-F756  5B				pop		bx
+F758  5B				pop		bx
 
 	ret
-F757  C3				ret		
+F759  C3				ret		
 
 
 endp	gfx_rc_col
@@ -38064,79 +38068,79 @@ endp	gfx_rc_col
 proc	set_cursor	near
 
 	shr	bl, 1				; Sets 6845 cursor position
-F758				set_cursor:
-F758  D0 EB				shr		bl,0x01
+F75A				set_cursor:
+F75A  D0 EB				shr		bl,0x01
 
 	cmp	[ds:62h], bl			;   is this page visible?
-F75A  38 1E 62 00			cmp		byte ptr ds:[0x62],bl
+F75C  38 1E 62 00			cmp		byte ptr ds:[0x62],bl
 
 	jnz	@@done				; No, do nothing in hardware
-F75E  75 24				jne		L$279
+F760  75 24				jne		L$279
 
 
 move_cursor:
 	call	text_rc_col			; Map row, col, page to col
-F760				L$276:
-F760  E8 CA FF				call		text_rc_col
+F762				L$276:
+F762  E8 CA FF				call		text_rc_col
 
 	add	ax, [ds:4Eh]			;   + byte offset, regen register
-F763  03 06 4E 00			add		ax,word ptr ds:[0x4e]
+F765  03 06 4E 00			add		ax,word ptr ds:[0x4e]
 
 	shr	ax, 1
-F767  D1 E8				shr		ax,0x01
+F769  D1 E8				shr		ax,0x01
 
 	mov	cx, ax
-F769  8B C8				mov		cx,ax
+F76B  8B C8				mov		cx,ax
 
 	mov	ah, 0Eh 			; Tell 6845 video controller
-F76B  B4 0E				mov		ah,0x0e
+F76D  B4 0E				mov		ah,0x0e
 
 						;   to position the cursor
 out_6845:
 	mov	al, ch				; Send ch, cl through CRT register ah
-F76D				L$277:
-F76D  8A C5				mov		al,ch
+F76F				L$277:
+F76F  8A C5				mov		al,ch
 
 	call	send_ax				;   send ch
-F76F  E8 04 00				call		L$278
+F771  E8 04 00				call		L$278
 
 	inc	ah				;   increment
-F772  FE C4				inc		ah
+F774  FE C4				inc		ah
 
 	mov	al, cl				;   send cl
-F774  8A C1				mov		al,cl
+F776  8A C1				mov		al,cl
 
 
 send_ax:
 	push	dx
-F776				L$278:
-F776  52				push		dx
+F778				L$278:
+F778  52				push		dx
 
 	mov	dx, [ds:63h]			; Load active video port
-F777  8B 16 63 00			mov		dx,word ptr ds:[0x63]
+F779  8B 16 63 00			mov		dx,word ptr ds:[0x63]
 
 	xchg	al, ah
-F77B  86 E0				xchg		al,ah
+F77D  86 E0				xchg		al,ah
 
 	out	dx, al				; Send high order
-F77D  EE				out		dx,al
+F77F  EE				out		dx,al
 
 	xchg	al, ah
-F77E  86 E0				xchg		al,ah
+F780  86 E0				xchg		al,ah
 
 	inc	dl
-F780  FE C2				inc		dl
+F782  FE C2				inc		dl
 
 	out	dx, al				;   low order
-F782  EE				out		dx,al
+F784  EE				out		dx,al
 
 	pop	dx
-F783  5A				pop		dx
+F785  5A				pop		dx
 
 
 @@done: ret
-F784				L$279:
-F784  C3				ret		
+F786				L$279:
+F786  C3				ret		
 
 
 endp	set_cursor
@@ -38148,43 +38152,43 @@ endp	set_cursor
 proc	video_init	near
 
 	mov	ah, [ds:10h]			; Get equipment byte
-F785				video_init:
-F785  8A 26 10 00			mov		ah,byte ptr ds:[0x10]
+F787				video_init:
+F787  8A 26 10 00			mov		ah,byte ptr ds:[0x10]
 
 	and	ah, 00110000b			;   extract CRT
-F789  80 E4 30				and		ah,0x30
+F78B  80 E4 30				and		ah,0x30
 
 	mov	al, 0				;   null low
-F78C  B0 00				mov		al,0x00
+F78E  B0 00				mov		al,0x00
 
 	cmp	ah, 00110000b			; Monochrome?
-F78E  80 FC 30				cmp		ah,0x30
+F790  80 FC 30				cmp		ah,0x30
 
 	jz	@@init				;   yes
-F791  74 09				je		L$280
+F793  74 09				je		L$280
 
 	mov	al, 1				; CGA 40 x 25?
-F793  B0 01				mov		al,0x01
+F795  B0 01				mov		al,0x01
 
 	cmp	ah, 00010000b			;   yes
-F795  80 FC 10				cmp		ah,0x10
+F797  80 FC 10				cmp		ah,0x10
 
 	jz	@@init				; CGA 80 x 25?
-F798  74 02				je		L$280
+F79A  74 02				je		L$280
 
 	mov	al, 3				;   yes
-F79A  B0 03				mov		al,0x03
+F79C  B0 03				mov		al,0x03
 
 @@init:
 	mov	ah, 0				; Setup subfunction
-F79C				L$280:
-F79C  B4 00				mov		ah,0x00
+F79E				L$280:
+F79E  B4 00				mov		ah,0x00
 
 	int	10h				;   to video
-F79E  CD 10				int		0x10
+F7A0  CD 10				int		0x10
 
 	ret
-F7A0  C3				ret		
+F7A2  C3				ret		
 
 
 endp	video_init
@@ -38196,81 +38200,81 @@ endp	video_init
 proc	beep	near
 
 	push	ax
-F7A1				beep:
-F7A1  50				push		ax
+F7A3				beep:
+F7A3  50				push		ax
 
 	push	cx
-F7A2  51				push		cx
+F7A4  51				push		cx
 
 	mov	al, 10110110b			; Timer IC 8253 square waves
-F7A3  B0 B6				mov		al,0xb6
+F7A5  B0 B6				mov		al,0xb6
 
 	out	43h, al 			;   channel 2, speaker
-F7A5  E6 43				out		0x43,al
+F7A7  E6 43				out		0x43,al
 
 	mov	ax, 528h			; Get countdown constant word
-F7A7  B8 28 05				mov		ax,0x0528
+F7A9  B8 28 05				mov		ax,0x0528
 
 	out	42h, al 			;   send low order
-F7AA  E6 42				out		0x42,al
+F7AC  E6 42				out		0x42,al
 
 	mov	al, ah				;   load high order
-F7AC  8A C4				mov		al,ah
+F7AE  8A C4				mov		al,ah
 
 	out	42h, al 			;   send high order
-F7AE  E6 42				out		0x42,al
+F7B0  E6 42				out		0x42,al
 
 	in	al, 61h 			; Read IC 8255 machine status
-F7B0  E4 61				in		al,0x61
+F7B2  E4 61				in		al,0x61
 
 	push	ax
-F7B2  50				push		ax
+F7B4  50				push		ax
 
 	or	al, 00000011b
-F7B3  0C 03				or		al,0x03
+F7B5  0C 03				or		al,0x03
 
 	out	61h, al 			; Turn speaker on
-F7B5  E6 61				out		0x61,al
+F7B7  E6 61				out		0x61,al
 
 	xor	cx, cx
-F7B7  33 C9				xor		cx,cx
+F7B9  33 C9				xor		cx,cx
 
 @@delay:
 	loop	@@delay
-F7B9				L$281:
-F7B9  E2 FE				loop		L$281
+F7BB				L$281:
+F7BB  E2 FE				loop		L$281
 
 	dec	bl
-F7BB  FE CB				dec		bl
+F7BD  FE CB				dec		bl
 
 	jnz	@@delay
-F7BD  75 FA				jne		L$281
+F7BF  75 FA				jne		L$281
 
 	pop	ax
-F7BF  58				pop		ax
+F7C1  58				pop		ax
 
 	and al, 11111100b
-F7C0  24 FC				and		al,0xfc
+F7C2  24 FC				and		al,0xfc
 
 	out	61h, al 			; Turn speaker off
-F7C2  E6 61				out		0x61,al
+F7C4  E6 61				out		0x61,al
 
 	pop	cx
-F7C4  59				pop		cx
+F7C6  59				pop		cx
 
 	pop	ax
-F7C5  58				pop		ax
+F7C7  58				pop		ax
 
 	ret
-F7C6  C3				ret		
-F7C7  C3 20 4D 6F 6E 6F 2F 48 65 72 63 75 6C 65 73 20 . Mono/Hercules 
-F7D7  47 72 61 70 68 69 63 73 00 C3 20 43 6C 6F 63 6B Graphics.. Clock
-F7E7  00 54 65 73 74 69 6E 67 20 52 41 4D 3A 20 20 20 .Testing RAM:   
-F7F7  20 4B 20 4F 4B 00 53 79 73 74 65 6D 20 45 72 72  K OK.System Err
-F807  6F 72 3A 20 00 50 61 72 69 74 79 20 65 72 72 6F or: .Parity erro
-F817  72 20 61 74 3A 20 3F 3F 3F 3F 3F 00 0D 0A 43 6F r at: ?????...Co
-F827  6E 74 69 6E 75 65 3F 20 00 90 90 90 90 90 90 90 ntinue? ........
-F837  90 90 90 90 90 90 90 90 90 90                   ..........
+F7C8  C3				ret		
+F7C9  C3 20 4D 6F 6E 6F 2F 48 65 72 63 75 6C 65 73 20 . Mono/Hercules 
+F7D9  47 72 61 70 68 69 63 73 00 C3 20 43 6C 6F 63 6B Graphics.. Clock
+F7E9  00 54 65 73 74 69 6E 67 20 52 41 4D 3A 20 20 20 .Testing RAM:   
+F7F9  20 4B 20 4F 4B 00 53 79 73 74 65 6D 20 45 72 72  K OK.System Err
+F809  6F 72 3A 20 00 50 61 72 69 74 79 20 65 72 72 6F or: .Parity erro
+F819  72 20 61 74 3A 20 3F 3F 3F 3F 3F 00 0D 0A 43 6F r at: ?????...Co
+F829  6E 74 69 6E 75 65 3F 20 00 90 90 90 90 90 90 90 ntinue? ........
+F839  90 90 90 90 90 90 90 90                         ........
 
 
 endp	beep
@@ -38428,7 +38432,7 @@ F871  B8 40 00				mov		ax,0x0040
 F874  8E D8				mov		ds,ax
 
 	call	video_init			;   clear/init screen
-F876  E8 0C FF				call		video_init
+F876  E8 0E FF				call		video_init
 
 	push	ds
 F879  1E				push		ds
@@ -38440,7 +38444,7 @@ F87A  0E				push		cs
 F87B  1F				pop		ds
 
 	mov	si, offset str_parity_err	; si --> Parity message
-F87C  BE 0C F8				mov		si,offset L$1-0x7f4
+F87C  BE 0E F8				mov		si,offset L$1-0x7f2
 
 	call	print				;   print
 F87F  E8 57 EC				call		print
@@ -38582,7 +38586,7 @@ F8D1  0E				push		cs
 F8D2  1F				pop		ds
 
 	mov	si, offset str_continue		; Continue ?
-F8D3  BE 23 F8				mov		si,offset L$1-0x7dd
+F8D3  BE 25 F8				mov		si,offset L$1-0x7db
 
 	call	print				;   ask the user
 F8D6  E8 00 EC				call		print

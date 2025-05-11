@@ -59,9 +59,10 @@ module top(
     output sd_di,
     output sd_clk,
     output sd_cs,
-    
+
     // misc
-    output led_io
+    output led_io,
+    output pit_spk
 );
 
   //
@@ -131,7 +132,8 @@ module top(
                               ph_sel ?       ph_out :
                               sd_sel ?  sd_latch_rx :
                         keyboard_sel ? keyboard_out :
-                                            sram_d;
+                             pit_sel ? pit_data_out :
+                                             sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
@@ -243,13 +245,32 @@ module top(
   // PIT timer
   //
 
-  wire irq0;
 
-  pit u_pit(
-    .iClk (pll_clk10),
-    .iRst (rst),
-    .oIrq0(irq0) // ~18.2065hz
+  wire pitClkEn;
+  pitClock uPitClock(
+    .iClk     (pll_clk10),
+    .oClkEnPit(pitClkEn)  // 1.193182Mhz
   );
+
+  wire       irq0;
+  wire       pit_channel_2;
+  wire [7:0] pit_data_out;
+  wire       pit_sel;
+  pit2 u_pit(
+    .iClk  (pll_clk10),
+    .iClkEn(pitClkEn),  // 1.193182Mhz
+    .iData (cpu_data_out),
+    .iAddr (cpu_addr),
+    .iWr   (cpu_io_wr),
+    .iRd   (cpu_io_rd),
+    .iGate2(spk_gate),  // pit spk enable
+    .oOut0 (irq0),
+    .oOut2 (pit_channel_2),
+    .oData (pit_data_out),
+    .oSel  (pit_sel)
+  );
+
+  assign pit_spk = pit_channel_2 & spk_enable;
 
   //
   // keyboard
@@ -258,30 +279,36 @@ module top(
   wire       irq1;
   wire [7:0] keyboard_out;
   wire       keyboard_sel;
+  wire       spk_gate;
+  wire       spk_enable;
 
   ps2_keyboard u_ps2_keyboard(
-      /*input        */.iClk   (pll_clk10),
-      /*input [19:0] */.iAddr  (cpu_addr),
-      /*input        */.iRd    (cpu_io_rd),
-      /*output       */.oSel   (keyboard_sel),
-      /*output [7:0] */.oData  (keyboard_out),
-      /*output       */.oIrq   (irq1),
-      /*input        */.iPs2Clk(ps2_mclk),
-      /*input        */.iPs2Dat(ps2_mdat)
+      .iClk      (pll_clk10),
+      .iAddr     (cpu_addr),
+      .iRd       (cpu_io_rd),
+      .iWr       (cpu_io_wr),
+      .iData     (cpu_data_out),
+      .oSel      (keyboard_sel),
+      .oData     (keyboard_out),
+      .oIrq      (irq1),
+      .oSpkGate  (spk_gate),
+      .oSpkEnable(spk_enable),
+      .iPs2Clk   (ps2_mclk),
+      .iPs2Dat   (ps2_mdat)
   );
 
   //
   // PMOD
   //
   assign pmod = {
-    /*6*/keyboard_out[6],
-    /*4*/keyboard_out[4],
-    /*2*/keyboard_out[2],
-    /*0*/keyboard_out[0],
-    /*7*/keyboard_out[7],
-    /*5*/keyboard_out[5],
-    /*3*/keyboard_out[3],
-    /*1*/keyboard_out[1]
+    /*6*/1'b0,
+    /*4*/spk_enable,
+    /*2*/pit_channel_2,
+    /*0*/pitClkEn,
+    /*7*/1'b0,
+    /*5*/1'b0,
+    /*3*/spk_gate,
+    /*1*/irq0
   };
 
   //
@@ -289,19 +316,19 @@ module top(
   //
 
   assign led_io  = ~sd_busy;
-  
+
   wire [7:0] sd_rx;
   wire       sd_valid;
   wire       sd_busy;
   reg        sd_send = 0;
   reg        sd_sel  = 0;
   reg        spi_cs  = 1;
-  
+
   assign sd_cs = spi_cs;
-  
+
   reg [7:0] sd_latch_rx = 0;
   reg [7:0] sd_latch_tx = 0;
-  
+
   spiMaster uSpiMaster(
     /*input        */.iClk   (pll_clk10),
     /*input  [3:0] */.iClkDiv(4'd15),
@@ -315,7 +342,7 @@ module top(
     /*input        */.iMiso  (sd_do),
     /*output reg   */.oSck   (sd_clk)
   );
-  
+
   always @(posedge pll_clk10) begin
     sd_send <= 0;
     sd_sel  <= 0;
@@ -341,11 +368,11 @@ module top(
   //
   // Disk ROM
   //
-  
+
   reg [7:0] disk_rom[ 2048 ];
   reg       disk_sel = 0;
   reg [7:0] disk_out = 0;
-  
+
   initial $readmemh("roms/diskrom.hex", disk_rom);
 
   always @(posedge pll_clk10) begin

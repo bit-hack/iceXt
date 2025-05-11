@@ -1,4 +1,5 @@
 pll/pll.v
+pll/clocks.v
 utils/uartRx.v
 utils/uartTx.v
 utils/sevenSeg.v

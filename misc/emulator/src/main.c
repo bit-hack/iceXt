@@ -67,6 +67,14 @@ void port_write(uint32_t port, uint8_t value) {
     printf("DEBUG:%u\n", value);
   }
 
+  if ((port & ~0x03) == 0x40) {
+    printf("PIT %02x <- %02x\n", port, value);
+  }
+
+  if (port == 0xfe) {
+    printf("video mode change %x\n", value);
+  }
+
   io[port & 0xffff] = value;
 }
 

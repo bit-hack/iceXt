@@ -37,9 +37,14 @@ module pic(
     isr[1] ? 8'd9 :
              8'd0;
 
+  wire [1:0] irq  = { iIrq1, iIrq0 };
+  wire [1:0] irqe = (irq ^ irqd) & irq;   // IRQ positive edges
+  reg  [1:0] irqd;                        // IRQ delay
+
   always @(posedge iClk) begin
 
-    sel <= 0;
+    sel  <= 0;
+    irqd <= irq;
 
     if (iIntAck) begin
       // clear before latching new interrupt
@@ -49,7 +54,7 @@ module pic(
     end
 
     // latch new state and clear ack'd state
-    irr <= {iIrq1, iIrq0} | (irr & ~isr);
+    irr <= irqe | (irr & ~isr);
 
     // handle resets
     if (iRst) begin

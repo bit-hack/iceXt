@@ -15,17 +15,27 @@ module top(
     input         sw_rst,
     output        serial_tx,
     input         serial_rx,
+
     output [ 7:0] pmod,
+`ifdef DISABLED
     input         sd_do,
     output        sd_di,
     output        sd_clk,
     output        sd_cs,
     output        led_io,
+`endif
     output        pit_spk
 );
 
-   assign led_io  = ~sd_clk;
-   assign pit_spk = ~sd_clk;
+  //
+  //
+  //
+
+  wire pitClkEn;
+  pitClock uPitClock(
+    /*input     */.iClk     (pll_clk10),
+    /*output reg*/.oClkEnPit(pitClkEn)
+  );
 
   //
   // clock pll
@@ -52,6 +62,47 @@ module top(
     /*output       */.oBusy ()
   );
 
+  localparam WIDTH = 20;
+  reg [WIDTH-1:0] shift = 0;
+  reg wr = 0;
+  always @(posedge pll_clk10) begin
+    wr <= 0;
+    if (uart_valid) begin
+      shift <= { shift[WIDTH-8:0], uart_rx[6:0] };
+      wr <= uart_rx[7];
+    end
+  end
+
+  wire [11:0] port = shift[19:8];
+  wire [ 7:0] data = shift[ 7:0];
+  wire pitChan0;
+  wire pitChan2;
+  pit2 uPit(
+    /*input        */.iClk  (pll_clk10),
+    /*input        */.iClkEn(pitClkEn),  // 1.193182Mhz
+    /*input [7:0]  */.iData (data),
+    /*input [11:0] */.iAddr (port),
+    /*input        */.iWr   (wr),
+    /*input        */.iRd   (1'b0),
+    /*input        */.iGate2(port61gate),  // pit spk enable
+    /*output       */.oOut0 (pitChan0),
+    /*output       */.oOut2 (pitChan2),
+    /*output [7:0] */.oData (),
+    /*output reg   */.oSel  ()
+  );
+
+  assign pit_spk = port61enable & pitChan2;
+
+  wire port61gate   = port61[0];
+  wire port61enable = port61[1];
+  reg [7:0] port61 = 0;
+  always @(posedge pll_clk10) begin
+    if (port == 12'h61) begin
+      port61 <= data;
+    end
+  end
+
+`ifdef DISABLED
   reg [13:0] shift = 0;
   reg        send  = 0;
   reg        cs    = 0;
@@ -94,15 +145,16 @@ module top(
   );
 
   uartTx uUartTx(
-    /*input            */.iClk  (pll_clk10),  
-    /*input            */.iRst  (0),  
-    /*input      [7:0] */.iData (spi_rx), 
+    /*input            */.iClk  (pll_clk10),
+    /*input            */.iRst  (0),
+    /*input      [7:0] */.iData (spi_rx),
     /*input            */.iStart(spi_valid),
-    /*output reg       */.oTx   (serial_tx),   
-    /*output           */.oBusy (), 
+    /*output reg       */.oTx   (serial_tx),
+    /*output           */.oBusy (),
     /*output           */.oReady(),
-    /*output reg       */.oTaken() 
+    /*output reg       */.oTaken()
   );
+`endif  // DISABLED
 
   //
   // PMOD
@@ -110,12 +162,12 @@ module top(
   assign pmod = {
     /*6*/1'b0,
     /*4*/1'b0,
-    /*2*/spi_miso,
-    /*0*/spi_sck,
+    /*2*/pitChan2,
+    /*0*/pitClkEn,
     /*7*/1'b0,
     /*5*/1'b0,
-    /*3*/spi_mosi,
-    /*1*/cs
+    /*3*/1'b0,
+    /*1*/pitChan0
   };
 
 endmodule
