@@ -463,6 +463,8 @@ static void interrupt(uint32_t int_num)
     sregs[CS] = dest_seg;
 
     TF = IF = 0; /* Turn of trap and interrupts... */
+
+    int_notify(int_num);
 }
 
 static void do_retf(void)

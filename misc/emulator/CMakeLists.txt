@@ -10,8 +10,6 @@ add_executable(iceXtEmu
   src/main.c
   src/disk.c
   src/disk.h
-  src/serial.c
-  src/serial.h
 )
 
 add_subdirectory(src/udis86)

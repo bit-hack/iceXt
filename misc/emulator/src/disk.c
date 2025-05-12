@@ -4,7 +4,10 @@
 
 #include "disk.h"
 #include "cpu.h"
+
+#ifdef USE_SERIAL_SD
 #include "serial.h"
+#endif  // USE_SERIAL_SD
 
 
 static FILE* disk;
@@ -19,12 +22,15 @@ static uint32_t sector;
 static uint32_t read_count = 0;
 static bool reading = false;
 
+#ifdef USE_SERIAL_SD
 static serial_t* serial;
+#endif  //USE_SERIAL_SD
+
 static uint8_t _spi_cs;
 
 static uint8_t rx_buf;
 
-
+#ifdef USE_SERIAL_SD
 static uint8_t xfer(uint8_t tx, uint8_t cs) {
 
   int ntx, nrx;
@@ -54,6 +60,8 @@ static void spi_send(uint8_t tx) {
 static uint8_t spi_recv(void) {
   return rx_buf;
 }
+#endif  // USE_SERIAL_SD
+
 
 bool disk_load(const char* path) {
   disk = fopen(path, "rb");
@@ -61,17 +69,17 @@ bool disk_load(const char* path) {
     return false;
   }
 
-#if 0
+#ifdef USE_SERIAL_SD
   serial = serial_open(14, 115200);
   if (!serial) {
     return false;
   }
-#endif
+#endif  // USE_SERIAL_SD
 
   return true;
 }
 
-#if 0
+#ifdef USE_SERIAL_SD
 void disk_spi_ctrl(uint8_t tx) {
   _spi_cs = tx & 1;
 }
@@ -83,7 +91,6 @@ void disk_spi_write(uint8_t tx) {
 uint8_t disk_spi_read() {
   return spi_recv();
 }
-
 #else
 void disk_spi_ctrl(uint8_t tx) {
   spi_cs = tx & 1;

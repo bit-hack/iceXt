@@ -12,6 +12,7 @@ org 0
 %define PORT_DEBUG    0xb0
 %define PORT_SPI_DATA 0xb8
 %define PORT_SPI_CTRL 0xb9
+%define PORT_CLICK    0xba
 
 %define SD_DUMMY_CLOCKS 10
 %define SD_SEND_DELAY   20
@@ -58,7 +59,7 @@ org 0
 %macro DEBUG 1
   push ax
   mov ax, %1
-  out PORT_DEBUG, ax
+  out PORT_DEBUG, al
   pop ax
 %endmacro
 
@@ -270,6 +271,11 @@ sd_init:
 sd_read_sector:
 
   ;
+  ; click generator
+  ;
+  out PORT_CLICK, al
+
+  ;
   ; send CMD17
   ;
   SD_SEND (0x40|17)
@@ -411,14 +417,33 @@ int13_02:
   jmp int13_exit
 
 ;------------------------------------------------------------------------------
+disk_base_table:
+	db	11001111b
+	db	2
+	db	25h
+	db	2           ; 2 - 512 bytes
+	db	17          ; sectors per track (last sector number)
+	db	2Ah
+	db	0FFh
+	db	50h
+	db	0F6h
+	db	19h
+	db	4
+
+;------------------------------------------------------------------------------
 int13_08:
+  mov ax, cs
+  mov es, ax
+  mov di, disk_base_table
   pop ax
   pop bx
   pop cx
   pop dx
-  mov ax, 0
-  mov dl, 1
-  mov bx, 0
+  mov bl, 4       ; 1.44Mb disk
+  mov ch, 80      ; cylinders
+  mov cl, 18      ; sectors
+  mov dh, 1       ; sides (zero based)
+  mov dl, 1       ; number of drives attached
   mov ah, ERR_SUCCESS
   clc             ; CF = 0
   sti

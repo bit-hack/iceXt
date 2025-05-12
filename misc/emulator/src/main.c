@@ -15,12 +15,26 @@ uint8_t memory[1024 * 1024];
 uint8_t io    [1024 * 64];
 uint8_t font[];
 
+uint8_t video_mode = 3;
+
 
 uint8_t keyScanCode(int in);
 
 
 FILE* disk = NULL;
 
+
+void int_notify(uint8_t num) {
+
+  if (num == 0x10) {
+    if (cpu_get_AH() == 0) {
+      // video change mode
+      uint8_t mode = cpu_get_AL();
+      printf("video change mode: %u\n", mode);
+      video_mode = mode;
+    }
+  }
+}
 
 uint8_t port_read(uint32_t port) {
 //  printf("PORT READ: %03x\n", port);
@@ -65,6 +79,15 @@ void port_write(uint32_t port, uint8_t value) {
   }
   if (port == 0xb0) {
     printf("DEBUG:%u\n", value);
+  }
+
+  if (port == 0x20 || port == 0x21) {
+    if (port == 0x20 && value == 0x20) {
+      // EOI
+    }
+    else {
+      printf("PIC %02x <- %02x\n", port, value);
+    }
   }
 
   if ((port & ~0x03) == 0x40) {
@@ -147,6 +170,27 @@ static bool load_bin(uint32_t addr, const char* path) {
   return true;
 }
 
+static void render_ega_d(SDL_Surface* screen) {
+  SDL_FillRect(screen, NULL, 0x101010);
+
+  uint32_t* dst = screen->pixels;
+
+  uint32_t src = 0xA0000;
+
+  for (uint32_t y = 0; y < 400; ++y) {
+
+
+
+    for (uint32_t x = 0; x < 640; ++x) {
+
+      dst[x] = memory[(src + (x/8)) & 0xfffff];
+    }
+
+    src += 320 / 8;
+    dst += 640;
+  }
+}
+
 static void render_mda(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
 
@@ -189,9 +233,8 @@ int main(int argc, char** args) {
 
   const char* biosPath = argc >= 2 ? args[1] : "C:\\riscv\\iceXt\\misc\\BIOS\\pcxtbios.bin";
   const char* romPath  = argc >= 3 ? args[2] : "C:\\riscv\\iceXt\\misc\\diskrom\\bin\\diskrom.hex";
-  const char* diskPath = argc >= 4 ? args[3] : "C:\\riscv\\iceXt\\misc\\dos-boot.img";
+  const char* diskPath = argc >= 4 ? args[3] : "C:\\riscv\\iceXt\\misc\\dos-boot-2.img";
 
-  //if (!load_hex(memory, 0xfe000, path, 1024 * 8)) {
   if (!load_bin(0xfe000, biosPath)) {
     fprintf(stderr, "Unable to load BIOS!\n");
     return 1;
@@ -245,7 +288,14 @@ int main(int argc, char** args) {
       }
     }
 
-    render_mda(screen);
+    switch (video_mode) {
+    case 0xd:
+      render_ega_d(screen);
+      break;
+    default:
+      render_mda(screen);
+      break;
+    }
     SDL_Flip(screen);
   }
 
