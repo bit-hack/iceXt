@@ -491,235 +491,234 @@
    273                                    ;
    274                                    ; click generator
    275                                    ;
-   276                                  
-   277 000001FE E6BA                      out PORT_CLICK, al
-   278                                  
-   279                                    ;
-   280                                    ; send CMD17
-   281                                    ;
-   282                                    SD_SEND (0x40|17)
+   276 000001FE E6BA                      out PORT_CLICK, al
+   277                                  
+   278                                    ;
+   279                                    ; send CMD17
+   280                                    ;
+   281                                    SD_SEND (0x40|17)
     26 00000200 50                  <1>  push ax
     27 00000201 B051                <1>  mov al, %1
     28 00000203 E828FE              <1>  call sd_send
     29 00000206 58                  <1>  pop ax
-   283                                    SD_SEND 0
+   282                                    SD_SEND 0
     26 00000207 50                  <1>  push ax
     27 00000208 B000                <1>  mov al, %1
     28 0000020A E821FE              <1>  call sd_send
     29 0000020D 58                  <1>  pop ax
-   284                                    SD_SEND 0
+   283                                    SD_SEND 0
     26 0000020E 50                  <1>  push ax
     27 0000020F B000                <1>  mov al, %1
     28 00000211 E81AFE              <1>  call sd_send
     29 00000214 58                  <1>  pop ax
-   285                                    SD_SEND ah
+   284                                    SD_SEND ah
     26 00000215 50                  <1>  push ax
     27 00000216 88E0                <1>  mov al, %1
     28 00000218 E813FE              <1>  call sd_send
     29 0000021B 58                  <1>  pop ax
-   286                                    SD_SEND al
+   285                                    SD_SEND al
     26 0000021C 50                  <1>  push ax
     27 0000021D 88C0                <1>  mov al, %1
     28 0000021F E80CFE              <1>  call sd_send
     29 00000222 58                  <1>  pop ax
-   287                                    SD_SEND (0x01|0xcc)
+   286                                    SD_SEND (0x01|0xcc)
     26 00000223 50                  <1>  push ax
     27 00000224 B0CD                <1>  mov al, %1
     28 00000226 E805FE              <1>  call sd_send
     29 00000229 58                  <1>  pop ax
-   288                                  
-   289 0000022A 51                        push cx
-   290 0000022B B90800                    mov cx, 8
-   291                                  .cmd_17_response:
-   292                                    SD_RECV
+   287                                  
+   288 0000022A 51                        push cx
+   289 0000022B B90800                    mov cx, 8
+   290                                  .cmd_17_response:
+   291                                    SD_RECV
     49 0000022E E808FE              <1>  call sd_recv
-   293 00000231 84C0                      test al, al
-   294 00000233 7404                      jz .cmd_17_done
-   295 00000235 E2F7                      loop .cmd_17_response
-   296 00000237 EB1E                      jmp .fail
-   297                                  .cmd_17_done:
-   298                                  
-   299                                    ; wait for start of block byte
-   300 00000239 B9FF00                    mov cx, 0xff
-   301                                  .wait_start:
-   302                                    SD_RECV
+   292 00000231 84C0                      test al, al
+   293 00000233 7404                      jz .cmd_17_done
+   294 00000235 E2F7                      loop .cmd_17_response
+   295 00000237 EB1E                      jmp .fail
+   296                                  .cmd_17_done:
+   297                                  
+   298                                    ; wait for start of block byte
+   299 00000239 B9FF00                    mov cx, 0xff
+   300                                  .wait_start:
+   301                                    SD_RECV
     49 0000023C E8FAFD              <1>  call sd_recv
-   303 0000023F 3CFE                      cmp al, 0xfe
-   304 00000241 7404                      je .recv_start
-   305 00000243 E2F7                      loop .wait_start
-   306 00000245 EB10                      jmp .fail
-   307                                  .recv_start:
-   308                                  
-   309                                    ; read a 512byte block
-   310 00000247 B90002                    mov cx, 512
-   311                                  .recv_sector:
-   312                                    SD_RECV
+   302 0000023F 3CFE                      cmp al, 0xfe
+   303 00000241 7404                      je .recv_start
+   304 00000243 E2F7                      loop .wait_start
+   305 00000245 EB10                      jmp .fail
+   306                                  .recv_start:
+   307                                  
+   308                                    ; read a 512byte block
+   309 00000247 B90002                    mov cx, 512
+   310                                  .recv_sector:
+   311                                    SD_RECV
     49 0000024A E8ECFD              <1>  call sd_recv
-   313 0000024D 268807                    mov es:[bx], al
-   314 00000250 43                        inc bx
-   315 00000251 E2F7                      loop .recv_sector
-   316                                  
-   317                                  .success:
-   318 00000253 59                        pop cx
-   319 00000254 B001                      mov al, 1
-   320 00000256 C3                        ret
-   321                                  
-   322                                  .fail:
-   323 00000257 59                        pop cx
-   324 00000258 B000                      mov al, 0
-   325 0000025A C3                        ret
-   326                                  
-   327                                  ;------------------------------------------------------------------------------
-   328                                  ;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
-   329                                  ;   ch    - cylinder  (80)
-   330                                  ;   cl    - sector    (18)
-   331                                  ;   dh    - head      (2)
-   332                                  chs_to_lba:
-   333 0000025B 53                        push bx
-   334 0000025C 52                        push dx
-   335 0000025D 51                        push cx
-   336 0000025E 31C0                      xor ax, ax
-   337 00000260 88E8                      mov al, ch
-   338 00000262 01C0                      add ax, ax    ; acum = cylinder * 2
-   339 00000264 30ED                      xor ch, ch    ; ch is no longer needed
-   340 00000266 88F2                      mov dl, dh
-   341 00000268 30F6                      xor dh, dh    ; dx  = head
-   342 0000026A 01D0                      add ax, dx    ; accum += head
-   343 0000026C D1E0                      shl ax, 1
-   344 0000026E 89C3                      mov bx, ax    ; bx = accum * 2
-   345 00000270 D1E0                      shl ax, 1
-   346 00000272 D1E0                      shl ax, 1
-   347 00000274 D1E0                      shl ax, 1
-   348 00000276 01D8                      add ax, bx    ; accum *= 18
-   349 00000278 49                        dec cx
-   350 00000279 01C8                      add ax, cx    ; accum += (sector - 1)
-   351 0000027B 59                        pop cx
-   352 0000027C 5A                        pop dx
-   353 0000027D 5B                        pop bx
-   354 0000027E C3                        ret
-   355                                  
-   356                                  ;------------------------------------------------------------------------------
-   357                                  int13:
-   358 0000027F FA                        cli
-   359                                  
-   360 00000280 52                        push dx
-   361 00000281 51                        push cx
-   362 00000282 53                        push bx
-   363 00000283 50                        push ax
-   364                                  
-   365                                    ; dispatch to specific handler
-   366 00000284 80FC02                    cmp ah, 0x02
-   367 00000287 7419                      je int13_02
-   368 00000289 80FC00                    cmp ah, 0x00
-   369 0000028C 740F                      je int13_00
-   370 0000028E 80FC08                    cmp ah, 0x08
-   371 00000291 743A                      je int13_08
-   372 00000293 80FC15                    cmp ah, 0x15
-   373 00000296 744F                      je int13_15
-   374                                  
-   375 00000298 B400                      mov ah, ERR_SUCCESS
-   376 0000029A F8                        clc             ; CF = 0
-   377 0000029B EB53                      jmp int13_exit
-   378                                  
-   379                                  ;------------------------------------------------------------------------------
-   380                                  int13_00:
-   381 0000029D B400                      mov ah, ERR_SUCCESS
-   382 0000029F F8                        clc             ; CF = 0
-   383 000002A0 EB4E                      jmp int13_exit
-   384                                  
-   385                                  ;------------------------------------------------------------------------------
-   386                                  ; Read Sectors From Drive
-   387                                  ;   al    - sectors to read
-   388                                  ;   ch    - cylinder
-   389                                  ;   cl    - sector
-   390                                  ;   dh    - head
-   391                                  ;   dl    - drive
-   392                                  ;   es:bx - buffer
-   393                                  int13_02:
-   394 000002A2 50                        push ax
-   395 000002A3 E8B5FF                    call chs_to_lba
-   396 000002A6 59                        pop cx
-   397 000002A7 30ED                      xor ch, ch
-   398 000002A9 51                        push cx
-   399                                  
-   400                                  .int13_02_read_sector:
-   401 000002AA 50                        push ax                 ; preserve sector number
-   402 000002AB E850FF                    call sd_read_sector
-   403 000002AE 84C0                      test al, al
-   404 000002B0 740A                      jz .int13_02_fail
-   405 000002B2 58                        pop ax                  ; restore sector number
-   406 000002B3 40                        inc ax                  ; advance to the next sector
-   407 000002B4 E2F4                      loop .int13_02_read_sector
-   408                                  
-   409 000002B6 58                        pop ax                  ; al = sectors read
-   410 000002B7 B400                      mov ah, ERR_SUCCESS
-   411 000002B9 F8                        clc                     ; CF = 0
-   412 000002BA EB34                      jmp int13_exit
-   413                                  
-   414                                  .int13_02_fail:
-   415 000002BC 59                        pop cx                  ; cx was left on the stack so pop it
-   416 000002BD B4AA                      mov ah, ERR_NOT_READY
-   417 000002BF F9                        stc
-   418 000002C0 EB2E                      jmp int13_exit
-   419                                  
-   420                                  ;------------------------------------------------------------------------------
-   421                                  disk_base_table:
-   422 000002C2 CF                      	db	11001111b
-   423 000002C3 02                      	db	2
-   424 000002C4 25                      	db	25h
-   425 000002C5 02                      	db	2           ; 2 - 512 bytes
-   426 000002C6 11                      	db	17          ; sectors per track (last sector number)
-   427 000002C7 2A                      	db	2Ah
-   428 000002C8 FF                      	db	0FFh
-   429 000002C9 50                      	db	50h
-   430 000002CA F6                      	db	0F6h
-   431 000002CB 19                      	db	19h
-   432 000002CC 04                      	db	4
-   433                                  
-   434                                  ;------------------------------------------------------------------------------
-   435                                  int13_08:
-   436 000002CD 8CC8                      mov ax, cs
-   437 000002CF 8EC0                      mov es, ax
-   438 000002D1 BF[C202]                  mov di, disk_base_table
-   439 000002D4 58                        pop ax
-   440 000002D5 5B                        pop bx
-   441 000002D6 59                        pop cx
-   442 000002D7 5A                        pop dx
-   443 000002D8 B304                      mov bl, 4       ; 1.44Mb disk
-   444 000002DA B550                      mov ch, 80      ; cylinders
-   445 000002DC B112                      mov cl, 18      ; sectors
-   446 000002DE B601                      mov dh, 1       ; sides (zero based)
-   447 000002E0 B201                      mov dl, 1       ; number of drives attached
-   448 000002E2 B400                      mov ah, ERR_SUCCESS
-   449 000002E4 F8                        clc             ; CF = 0
-   450 000002E5 FB                        sti
-   451 000002E6 CF                        iret
-   452                                  
-   453                                  ;------------------------------------------------------------------------------
-   454                                  int13_15:
-   455 000002E7 58                        pop ax
-   456 000002E8 5B                        pop bx
-   457 000002E9 59                        pop cx
-   458 000002EA 5A                        pop dx
-   459 000002EB B401                      mov ah, 1       ; diskette no change detection present
-   460 000002ED F8                        clc             ; CF = 0
-   461 000002EE FB                        sti
-   462 000002EF CF                        iret
-   463                                  
-   464                                  ;------------------------------------------------------------------------------
-   465                                  int13_exit:
-   466                                  
-   467                                    ; fix return code as some functions need to return values
-   468                                    ;
-   469                                    ; 02 need to return in AL
-   470                                    ; AH has status code
-   471                                    ; can we move the value to the stack before it gets popd?
-   472                                  
-   473 000002F0 88E7                      mov bh, ah
-   474 000002F2 58                        pop ax
-   475 000002F3 88FC                      mov ah, bh
-   476 000002F5 5B                        pop bx
-   477 000002F6 59                        pop cx
-   478 000002F7 5A                        pop dx
-   479 000002F8 FB                        sti
-   480 000002F9 CF                        iret
+   312 0000024D 268807                    mov es:[bx], al
+   313 00000250 43                        inc bx
+   314 00000251 E2F7                      loop .recv_sector
+   315                                  
+   316                                  .success:
+   317 00000253 59                        pop cx
+   318 00000254 B001                      mov al, 1
+   319 00000256 C3                        ret
+   320                                  
+   321                                  .fail:
+   322 00000257 59                        pop cx
+   323 00000258 B000                      mov al, 0
+   324 0000025A C3                        ret
+   325                                  
+   326                                  ;------------------------------------------------------------------------------
+   327                                  ;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+   328                                  ;   ch    - cylinder  (80)
+   329                                  ;   cl    - sector    (18)
+   330                                  ;   dh    - head      (2)
+   331                                  chs_to_lba:
+   332 0000025B 53                        push bx
+   333 0000025C 52                        push dx
+   334 0000025D 51                        push cx
+   335 0000025E 31C0                      xor ax, ax
+   336 00000260 88E8                      mov al, ch
+   337 00000262 01C0                      add ax, ax    ; acum = cylinder * 2
+   338 00000264 30ED                      xor ch, ch    ; ch is no longer needed
+   339 00000266 88F2                      mov dl, dh
+   340 00000268 30F6                      xor dh, dh    ; dx  = head
+   341 0000026A 01D0                      add ax, dx    ; accum += head
+   342 0000026C D1E0                      shl ax, 1
+   343 0000026E 89C3                      mov bx, ax    ; bx = accum * 2
+   344 00000270 D1E0                      shl ax, 1
+   345 00000272 D1E0                      shl ax, 1
+   346 00000274 D1E0                      shl ax, 1
+   347 00000276 01D8                      add ax, bx    ; accum *= 18
+   348 00000278 49                        dec cx
+   349 00000279 01C8                      add ax, cx    ; accum += (sector - 1)
+   350 0000027B 59                        pop cx
+   351 0000027C 5A                        pop dx
+   352 0000027D 5B                        pop bx
+   353 0000027E C3                        ret
+   354                                  
+   355                                  ;------------------------------------------------------------------------------
+   356                                  int13:
+   357 0000027F FA                        cli
+   358                                  
+   359 00000280 52                        push dx
+   360 00000281 51                        push cx
+   361 00000282 53                        push bx
+   362 00000283 50                        push ax
+   363                                  
+   364                                    ; dispatch to specific handler
+   365 00000284 80FC02                    cmp ah, 0x02
+   366 00000287 7419                      je int13_02
+   367 00000289 80FC00                    cmp ah, 0x00
+   368 0000028C 740F                      je int13_00
+   369 0000028E 80FC08                    cmp ah, 0x08
+   370 00000291 743A                      je int13_08
+   371 00000293 80FC15                    cmp ah, 0x15
+   372 00000296 744F                      je int13_15
+   373                                  
+   374 00000298 B400                      mov ah, ERR_SUCCESS
+   375 0000029A F8                        clc             ; CF = 0
+   376 0000029B EB53                      jmp int13_exit
+   377                                  
+   378                                  ;------------------------------------------------------------------------------
+   379                                  int13_00:
+   380 0000029D B400                      mov ah, ERR_SUCCESS
+   381 0000029F F8                        clc             ; CF = 0
+   382 000002A0 EB4E                      jmp int13_exit
+   383                                  
+   384                                  ;------------------------------------------------------------------------------
+   385                                  ; Read Sectors From Drive
+   386                                  ;   al    - sectors to read
+   387                                  ;   ch    - cylinder
+   388                                  ;   cl    - sector
+   389                                  ;   dh    - head
+   390                                  ;   dl    - drive
+   391                                  ;   es:bx - buffer
+   392                                  int13_02:
+   393 000002A2 50                        push ax
+   394 000002A3 E8B5FF                    call chs_to_lba
+   395 000002A6 59                        pop cx
+   396 000002A7 30ED                      xor ch, ch
+   397 000002A9 51                        push cx
+   398                                  
+   399                                  .int13_02_read_sector:
+   400 000002AA 50                        push ax                 ; preserve sector number
+   401 000002AB E850FF                    call sd_read_sector
+   402 000002AE 84C0                      test al, al
+   403 000002B0 740A                      jz .int13_02_fail
+   404 000002B2 58                        pop ax                  ; restore sector number
+   405 000002B3 40                        inc ax                  ; advance to the next sector
+   406 000002B4 E2F4                      loop .int13_02_read_sector
+   407                                  
+   408 000002B6 58                        pop ax                  ; al = sectors read
+   409 000002B7 B400                      mov ah, ERR_SUCCESS
+   410 000002B9 F8                        clc                     ; CF = 0
+   411 000002BA EB34                      jmp int13_exit
+   412                                  
+   413                                  .int13_02_fail:
+   414 000002BC 59                        pop cx                  ; cx was left on the stack so pop it
+   415 000002BD B4AA                      mov ah, ERR_NOT_READY
+   416 000002BF F9                        stc
+   417 000002C0 EB2E                      jmp int13_exit
+   418                                  
+   419                                  ;------------------------------------------------------------------------------
+   420                                  disk_base_table:
+   421 000002C2 CF                      	db	11001111b
+   422 000002C3 02                      	db	2
+   423 000002C4 25                      	db	25h
+   424 000002C5 02                      	db	2           ; 2 - 512 bytes
+   425 000002C6 11                      	db	17          ; sectors per track (last sector number)
+   426 000002C7 2A                      	db	2Ah
+   427 000002C8 FF                      	db	0FFh
+   428 000002C9 50                      	db	50h
+   429 000002CA F6                      	db	0F6h
+   430 000002CB 19                      	db	19h
+   431 000002CC 04                      	db	4
+   432                                  
+   433                                  ;------------------------------------------------------------------------------
+   434                                  int13_08:
+   435 000002CD 8CC8                      mov ax, cs
+   436 000002CF 8EC0                      mov es, ax
+   437 000002D1 BF[C202]                  mov di, disk_base_table
+   438 000002D4 58                        pop ax
+   439 000002D5 5B                        pop bx
+   440 000002D6 59                        pop cx
+   441 000002D7 5A                        pop dx
+   442 000002D8 B304                      mov bl, 4       ; 1.44Mb disk
+   443 000002DA B550                      mov ch, 80      ; cylinders
+   444 000002DC B112                      mov cl, 18      ; sectors
+   445 000002DE B601                      mov dh, 1       ; sides (zero based)
+   446 000002E0 B201                      mov dl, 1       ; number of drives attached
+   447 000002E2 B400                      mov ah, ERR_SUCCESS
+   448 000002E4 F8                        clc             ; CF = 0
+   449 000002E5 FB                        sti
+   450 000002E6 CF                        iret
+   451                                  
+   452                                  ;------------------------------------------------------------------------------
+   453                                  int13_15:
+   454 000002E7 58                        pop ax
+   455 000002E8 5B                        pop bx
+   456 000002E9 59                        pop cx
+   457 000002EA 5A                        pop dx
+   458 000002EB B401                      mov ah, 1       ; diskette no change detection present
+   459 000002ED F8                        clc             ; CF = 0
+   460 000002EE FB                        sti
+   461 000002EF CF                        iret
+   462                                  
+   463                                  ;------------------------------------------------------------------------------
+   464                                  int13_exit:
+   465                                  
+   466                                    ; fix return code as some functions need to return values
+   467                                    ;
+   468                                    ; 02 need to return in AL
+   469                                    ; AH has status code
+   470                                    ; can we move the value to the stack before it gets popd?
+   471                                  
+   472 000002F0 88E7                      mov bh, ah
+   473 000002F2 58                        pop ax
+   474 000002F3 88FC                      mov ah, bh
+   475 000002F5 5B                        pop bx
+   476 000002F6 59                        pop cx
+   477 000002F7 5A                        pop dx
+   478 000002F8 FB                        sti
+   479 000002F9 CF                        iret

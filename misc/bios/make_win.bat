@@ -84,4 +84,6 @@ set floppy=
 set ide=
 set basic=
 
+python tohex.py pcxtbios.bin pcxtbios.hex
+
 pause

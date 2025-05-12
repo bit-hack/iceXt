@@ -10,7 +10,7 @@
 `include "../config.vh"
 
 
-module bios(
+module biosRom(
   input        iClk,
   input [19:0] iAddr,
   input        iRd,
@@ -18,22 +18,22 @@ module bios(
   output [7:0] oData
 );
 
-  reg       bios_sel = 0;
-  reg [7:0] bios_rom[8192];
-  reg [7:0] bios_out = 0;
+  reg [7:0] rom_data[8192];
+  reg       rom_sel = 0;
+  reg [7:0] rom_out = 0;
 
-  initial $readmemh("roms/pcxtbios.hex", bios_rom);
+  initial $readmemh("roms/pcxtbios.hex", rom_data);
 
   always @(posedge iClk) begin
-    bios_sel <= 0;
+    rom_sel <= 0;
     if (iRd) begin
       // [FE000 ... FFFFF]
-      bios_sel <= iAddr[19:13] == 7'b1111111;
-      bios_out <= bios_rom[ iAddr[12:0] ];
+      rom_sel <= iAddr[19:13] == 7'b1111111;
+      rom_out <= rom_data[ iAddr[12:0] ];
     end
   end
 
-  assign oData = bios_out;
-  assign oSel  = bios_sel;
+  assign oData = rom_out;
+  assign oSel  = rom_sel;
 
 endmodule

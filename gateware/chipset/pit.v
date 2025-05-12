@@ -76,19 +76,34 @@ module pit_counter (
 
   parameter INDEX = 2'b0;
 
-  reg [15:0] reload  = 16'h0020;  // reload value
-  reg [15:0] counter = 16'h0020;  // current counter value
-  reg [15:0] latch   = 0;         // read latch register
-  reg [ 1:0] freeze  = 0;         // latch byte freeze
-  reg [ 2:0] mode    = 0;         // counter mode
-  reg [ 1:0] lut     = 0;         // register index lut
+  reg [15:0] reload    = 16'h0020;  // reload value
+  reg [15:0] counter   = 16'h0020;  // current counter value
+  reg [15:0] latch     = 0;         // read latch register
+  reg [ 1:0] freeze    = 0;         // latch byte freeze
+  reg [ 2:0] mode      = 0;         // counter mode
+  reg [ 1:0] lut       = 0;         // register index lut
+  reg [ 1:0] to_reload = 2'b00;
 
+  wire is_mode_0   = (mode[2:0] == 3'b000);
+  wire is_mode_2   = (mode[2:0] == 3'b010);
   wire is_mode_3   = (mode[1:0] == 2'b11);
-  wire is_terminal = is_mode_3 ? (counter[15:1] == 15'd0) : 1'b0;
+
+  wire is_terminal = is_mode_3 ? (counter[15:1] == 15'd0) :
+                                 (counter       == 16'd0);
+  reg reloaded  = 0;           // reload counter fully written
+  reg reloading = |to_reload;  // reload counter writes pending
 
   always @(posedge iClk) begin
 
-    oData <= 8'd0;
+    oData    <= 8'd0;
+    reloaded <= 1'b0;
+
+    //
+    // latch logic
+    //
+
+    latch[15:8] <= freeze[1] ? latch[15:8] : counter[15:8];
+    latch[ 7:0] <= freeze[0] ? latch[ 7:0] : counter[ 7:0];
 
     //
     // counter logic
@@ -96,10 +111,18 @@ module pit_counter (
 
     if (iClkEn) begin
 
-      latch[15:8] <= freeze[1] ? latch[15:8] : counter[15:8];
-      latch[ 7:0] <= freeze[0] ? latch[ 7:0] : counter[ 7:0];
-
       case(1'b1)
+
+      (is_mode_0 & iGate & !reloading): begin
+        counter <= reloaded ? reload : (counter - |counter);
+        oOut    <= reloaded ? 1'b0   : is_terminal;
+      end
+
+      (is_mode_2 & iGate): begin
+        counter <= is_terminal ? reload : (counter - 16'd1);
+        oOut    <= counter != 16'd1;
+      end
+
       (is_mode_3 & iGate): begin
         counter <= (is_terminal ? reload : counter) - ((counter[0] & oOut) ? 16'd1 : 16'd2);
         oOut    <=  is_terminal ? ~oOut : oOut;
@@ -115,9 +138,16 @@ module pit_counter (
 
       // write to reload register CRm and CRl
       if (iAddr == INDEX) begin
-        reload <= { (lut[0]==1) ? iData : reload[15:8],
-                    (lut[0]==0) ? iData : reload[ 7:0] };
-        lut    <= { lut[0], lut[1] };
+        // write into reload counter
+        reload    <= { (lut[0]==1) ? iData : reload[15:8],
+                       (lut[0]==0) ? iData : reload[ 7:0] };
+        // mark bit as written
+        to_reload <= { (lut[0]==1) ? 0 : to_reload[1],
+                       (lut[0]==0) ? 0 : to_reload[0] };
+        // flip the byte we write to
+        lut <= { lut[0], lut[1] };
+        // set if we just set the last bit
+        reloaded <= (to_reload[1] ^ to_reload[0]);
       end
 
       // write to control register
@@ -130,9 +160,9 @@ module pit_counter (
             freeze <= 2'b11;
             lut    <= (lut == 2'b01) ? 2'b10 : lut;  // restore order
           end
-          2'b01: lut <= 2'b00;  // LSB
-          2'b10: lut <= 2'b11;  // MSB
-          2'b11: lut <= 2'b10;  // LSB/MSB
+          2'b01: { lut, to_reload } <= { 2'b00, 2'b01 };  // LSB
+          2'b10: { lut, to_reload } <= { 2'b11, 2'b10 };  // MSB
+          2'b11: { lut, to_reload } <= { 2'b10, 2'b11 };  // LSB/MSB
           endcase
 
           // update counter mode

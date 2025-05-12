@@ -91,49 +91,45 @@ module top(
   );
 
   //
-  // BIOS
+  // BIOS ROM
   //
 
-  wire       bios_sel;
-  wire [7:0] bios_out;
-  bios u_bios(
+  wire [7:0] bios_rom_out;
+  wire       bios_rom_sel;
+  biosRom u_biosrom(
     .iClk (pll_clk10),
     .iAddr(cpu_addr),
     .iRd  (cpu_mem_rd),
-    .oSel (bios_sel),
-    .oData(bios_out)
+    .oSel (bios_rom_sel),
+    .oData(bios_rom_out)
   );
 
   //
-  // port hack
+  // disk ROM
   //
-  // the bios scroll routine tries to wait for vertical retrace by accessing
-  // the CGA status register 0x3DA.
-  // the routine reads the wrong bit when checking for vertical retrace.
 
-  reg       ph_sel = 0;
-  reg [7:0] ph_out = 0;
-
-  always @(posedge pll_clk10) begin
-    ph_sel <= 0;
-    ph_out <= 8'hff;
-    if (cpu_io_rd && cpu_addr[11:0] == 12'h3da) begin
-      ph_sel <= 1;
-    end
-  end
+  wire [7:0] disk_rom_out;
+  wire       disk_rom_sel;
+  diskRom u_diskrom(
+    .iClk (pll_clk10),
+    .iAddr(cpu_addr),
+    .iRd  (cpu_mem_rd),
+    .oSel (disk_rom_sel),
+    .oData(disk_rom_out)
+  );
 
   //
   // internal CPU bus
   //
 
-  wire [ 7:0] cpu_data_in = bios_sel ?     bios_out :
-                            disk_sel ?     disk_out :
-                             pic_sel ?      pic_out :
-                              ph_sel ?       ph_out :
-                              sd_sel ?  sd_latch_rx :
-                        keyboard_sel ? keyboard_out :
-                             pit_sel ? pit_data_out :
-                                             sram_d;
+  wire [ 7:0] cpu_data_in =
+      bios_rom_sel ? bios_rom_out :
+      disk_rom_sel ? disk_rom_out :
+           pic_sel ?      pic_out :
+            sd_sel ?       sd_out :
+      keyboard_sel ? keyboard_out :
+           pit_sel ? pit_data_out :
+                           sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
   wire        cpu_mem_wr;
@@ -247,7 +243,7 @@ module top(
 
 
   wire pitClkEn;
-  pitClock uPitClock(
+  pitClock u_pit_clock(
     .iClk     (pll_clk10),
     .oClkEnPit(pitClkEn)  // 1.193182Mhz
   );
@@ -270,7 +266,7 @@ module top(
     .oSel  (pit_sel)
   );
 
-  assign pit_spk = pit_channel_2 & spk_enable;
+  assign pit_spk = (pit_channel_2 & spk_enable) ^ sd_click;
 
   //
   // keyboard
@@ -298,6 +294,29 @@ module top(
   );
 
   //
+  // SD Card
+  //
+
+  wire [7:0] sd_out;
+  wire       sd_sel;
+  wire       sd_click;
+  sdCard u_sdcard(
+    .iClk   (pll_clk10),
+    .iAddr  (cpu_addr),
+    .iWr    (cpu_io_wr),
+    .iRd    (cpu_io_rd),
+    .iData  (cpu_data_out),
+    .oData  (sd_out),
+    .oSel   (sd_sel),
+    .iSdMiso(sd_do),
+    .oSdMosi(sd_di),
+    .oSdSck (sd_clk),
+    .oSdCs  (sd_cs),
+    .oBusy  (led_io),
+    .oClick (sd_click)
+  );
+
+  //
   // PMOD
   //
   assign pmod = {
@@ -310,78 +329,5 @@ module top(
     /*3*/spk_gate,
     /*1*/irq0
   };
-
-  //
-  // SD Card
-  //
-
-  assign led_io  = ~sd_busy;
-
-  wire [7:0] sd_rx;
-  wire       sd_valid;
-  wire       sd_busy;
-  reg        sd_send = 0;
-  reg        sd_sel  = 0;
-  reg        spi_cs  = 1;
-
-  assign sd_cs = spi_cs;
-
-  reg [7:0] sd_latch_rx = 0;
-  reg [7:0] sd_latch_tx = 0;
-
-  spiMaster uSpiMaster(
-    /*input        */.iClk   (pll_clk10),
-    /*input  [3:0] */.iClkDiv(4'd15),
-    /*input        */.iSend  (sd_send),
-    /*input  [7:0] */.iData  (sd_latch_tx),
-    /*output [7:0] */.oData  (sd_rx),
-    /*output reg   */.oAvail (sd_valid),
-    /*output reg   */.oTaken (),
-    /*output       */.oBusy  (sd_busy),
-    /*output       */.oMosi  (sd_di),
-    /*input        */.iMiso  (sd_do),
-    /*output reg   */.oSck   (sd_clk)
-  );
-
-  always @(posedge pll_clk10) begin
-    sd_send <= 0;
-    sd_sel  <= 0;
-    if (sd_valid) begin
-      sd_latch_rx <= sd_rx;
-    end
-    if (cpu_io_wr) begin
-      if (cpu_addr[11:0] == 12'h0b9) begin
-        spi_cs <= cpu_data_out[0];
-      end
-      if (cpu_addr[11:0] == 12'h0b8) begin
-        sd_send     <= 1;
-        sd_latch_tx <= cpu_data_out;
-      end
-    end
-    if (cpu_io_rd) begin
-      if (cpu_addr[11:0] == 12'h0b8) begin
-        sd_sel <= 1;
-      end
-    end
-  end
-
-  //
-  // Disk ROM
-  //
-
-  reg [7:0] disk_rom[ 2048 ];
-  reg       disk_sel = 0;
-  reg [7:0] disk_out = 0;
-
-  initial $readmemh("roms/diskrom.hex", disk_rom);
-
-  always @(posedge pll_clk10) begin
-    disk_sel <= 0;
-    if (cpu_mem_rd) begin
-      // [C8000 ... C87FF]              ....----.
-      disk_sel <= cpu_addr[19:11] == 9'b110010000;
-      disk_out <= disk_rom[ cpu_addr[10:0] ];
-    end
-  end
 
 endmodule
