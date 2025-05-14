@@ -9,19 +9,14 @@
 
 #include "cpu.h"
 #include "disk.h"
+#include "display.h"
 
 
 uint8_t memory[1024 * 1024];
 uint8_t io    [1024 * 64];
-uint8_t font[];
-
-uint8_t video_mode = 3;
 
 
-uint8_t keyScanCode(int in);
-
-
-FILE* disk = NULL;
+static uint8_t keyScanCode(int in);
 
 
 void int_notify(uint8_t num) {
@@ -30,8 +25,7 @@ void int_notify(uint8_t num) {
     if (cpu_get_AH() == 0) {
       // video change mode
       uint8_t mode = cpu_get_AL();
-      printf("video change mode: %u\n", mode);
-      video_mode = mode;
+      display_set_mode(mode);
     }
   }
 }
@@ -86,18 +80,19 @@ void port_write(uint32_t port, uint8_t value) {
       // EOI
     }
     else {
-      printf("PIC %02x <- %02x\n", port, value);
+      //printf("PIC %02x <- %02x\n", port, value);
     }
   }
 
   if ((port & ~0x03) == 0x40) {
-    printf("PIT %02x <- %02x\n", port, value);
+    //printf("PIT %02x <- %02x\n", port, value);
   }
 
   if (port == 0xfe) {
-    printf("video mode change %x\n", value);
+    //printf("video mode change %x\n", value);
   }
 
+  display_io_write(port & 0xfff, value);
   io[port & 0xffff] = value;
 }
 
@@ -109,6 +104,7 @@ uint8_t mem_read(uint32_t addr) {
 void mem_write(uint32_t addr, uint8_t data) {
   addr &= 0xfffff;
   memory[addr] = data;
+  display_mem_write(addr, data);
 }
 
 static bool load_hex(uint8_t *dst, uint32_t addr, const char* path, uint32_t max) {
@@ -168,55 +164,6 @@ static bool load_bin(uint32_t addr, const char* path) {
 
   fclose(fd);
   return true;
-}
-
-static void render_ega_d(SDL_Surface* screen) {
-  SDL_FillRect(screen, NULL, 0x101010);
-
-  uint32_t* dst = screen->pixels;
-
-  uint32_t src = 0xA0000;
-
-  for (uint32_t y = 0; y < 400; ++y) {
-
-
-
-    for (uint32_t x = 0; x < 640; ++x) {
-
-      dst[x] = memory[(src + (x/8)) & 0xfffff];
-    }
-
-    src += 320 / 8;
-    dst += 640;
-  }
-}
-
-static void render_mda(SDL_Surface* screen) {
-  SDL_FillRect(screen, NULL, 0x101010);
-
-  uint32_t* dst = screen->pixels;
-
-  for (uint32_t y = 0; y < 400; ++y) {
-
-    uint32_t addrx = 0xB8000 + (y / 16) * (80 * 2);
-    uint32_t cy = (y / 2) % 8;
-
-    for (uint32_t x = 0; x < 640; ++x) {
-
-      uint32_t addr = addrx + (x / 8) * 2;
-      uint32_t cx = x % 8;
-
-      uint8_t ch = memory[addr + 0];
-      uint8_t at = memory[addr + 1];
-
-      uint8_t font_row = font[ch * 8 + cy];
-      uint8_t font_bit = font_row & (1 << cx);
-
-      dst[x] = font_bit ? 0x93a1a8 : 0x101010;
-    }
-
-    dst += screen->pitch / 4;
-  }
 }
 
 int main(int argc, char** args) {
@@ -288,14 +235,7 @@ int main(int argc, char** args) {
       }
     }
 
-    switch (video_mode) {
-    case 0xd:
-      render_ega_d(screen);
-      break;
-    default:
-      render_mda(screen);
-      break;
-    }
+    display_draw(screen);
     SDL_Flip(screen);
   }
 
@@ -303,7 +243,7 @@ int main(int argc, char** args) {
   return 0;
 }
 
-uint8_t keyScanCode(int in) {
+static uint8_t keyScanCode(int in) {
   switch (in) {
   case SDLK_ESCAPE:          return 0x01;
   case SDLK_1:               return 0x02;
