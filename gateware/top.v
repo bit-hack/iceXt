@@ -11,8 +11,8 @@
 
 
 module top(
-    input         clk25,
-    input         sw_rst,
+    input clk25,
+    input sw_rst,
 
     // external cpu interface
     input  [11:0] ex_cpu_ah,
@@ -293,18 +293,18 @@ module top(
   wire       spk_enable;
 
   ps2_keyboard u_ps2_keyboard(
-      .iClk      (pll_clk10),
-      .iAddr     (cpu_addr),
-      .iRd       (cpu_io_rd),
-      .iWr       (cpu_io_wr),
-      .iData     (cpu_data_out),
-      .oSel      (keyboard_sel),
-      .oData     (keyboard_out),
-      .oIrq      (irq1),
-      .oSpkGate  (spk_gate),
-      .oSpkEnable(spk_enable),
-      .iPs2Clk   (ps2_mclk),
-      .iPs2Dat   (ps2_mdat)
+    .iClk      (pll_clk10),
+    .iAddr     (cpu_addr),
+    .iRd       (cpu_io_rd),
+    .iWr       (cpu_io_wr),
+    .iData     (cpu_data_out),
+    .oSel      (keyboard_sel),
+    .oData     (keyboard_out),
+    .oIrq      (irq1),
+    .oSpkGate  (spk_gate),
+    .oSpkEnable(spk_enable),
+    .iPs2Clk   (ps2_mclk),
+    .iPs2Dat   (ps2_mdat)
   );
 
   //
