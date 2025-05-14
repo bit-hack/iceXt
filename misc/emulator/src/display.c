@@ -27,8 +27,29 @@ static uint8_t reg3D8 = 0;  // Mode control register
 static uint8_t reg3D9 = 0;  // Color control register
 
 
+static void dump_vram() {
+
+  FILE* fd = fopen("vram.hex", "w");
+
+  for (uint32_t i = 0; i < 0x4000; i += 2) {
+
+    uint32_t src = 0xB8000 + i;
+
+    uint8_t b0 = vram[src + 0];
+    uint8_t b1 = vram[src + 1];
+
+    fprintf(fd, "%02x%02x\n", b1, b0);
+  }
+
+  fclose(fd);
+}
+
 static void render_mode_4(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
+
+  if (false) {
+    dump_vram();
+  }
 
   const uint32_t palette[] = {
 
@@ -112,18 +133,18 @@ void display_mem_write(uint32_t addr, uint8_t data) {
 void display_io_write(uint32_t port, uint8_t data) {
   switch (port) {
   case 0x3d8:
-    printf("%03x <= %02x\n", port, data);
+//    printf("%03x <= %02x\n", port, data);
     reg3D8 = data;
     break;
   case 0x3d9:
-    printf("%03x <= %02x\n", port, data);
+//    printf("%03x <= %02x\n", port, data);
     reg3D9 = data;
     break;
   case 0x3D4:
-    printf("%03x <= %02x\n", port, data);
+//    printf("%03x <= %02x\n", port, data);
     break;
   case 0x3D5:
-    printf("%03x <= %02x\n", port, data);
+//    printf("%03x <= %02x\n", port, data);
     break;
   }
 }
