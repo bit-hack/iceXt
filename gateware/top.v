@@ -72,6 +72,7 @@ module top(
   wire pll_clk10;
   wire pll_clk25;
   wire pll_locked;
+
   pll u_pll(
     .clkin  (clk25),     // 25 MHz
     .clkout0(pll_clk10), // 10 MHz
@@ -84,6 +85,7 @@ module top(
   //
 
   wire rst;
+
   reset u_reset (
     .iClk  (pll_clk10),
     .iReset(~sw_rst | ~pll_locked),
@@ -96,6 +98,7 @@ module top(
 
   wire [7:0] bios_rom_out;
   wire       bios_rom_sel;
+
   biosRom u_biosrom(
     .iClk (pll_clk10),
     .iAddr(cpu_addr),
@@ -110,6 +113,7 @@ module top(
 
   wire [7:0] disk_rom_out;
   wire       disk_rom_sel;
+
   diskRom u_diskrom(
     .iClk (pll_clk10),
     .iAddr(cpu_addr),
@@ -129,6 +133,7 @@ module top(
             sd_sel ?       sd_out :
       keyboard_sel ? keyboard_out :
            pit_sel ? pit_data_out :
+           cga_sel ?      cga_out :
                            sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
@@ -184,19 +189,27 @@ module top(
   assign ex_cpu_ad    = ex_cpu_data_dir ? ex_cpu_data_out : 8'bzzzzzzzz;
 
   //
-  // VGA interface
+  // CGA interface
   //
-  video_mda u_video_mda(
-    .iClk  (pll_clk10),
-    .iClk25(pll_clk25),
-    .iAddr (cpu_addr),
-    .iData (cpu_data_out),
-    .iWr   (cpu_mem_wr),
-    .oVgaR (vga_r),
-    .oVgaG (vga_g),
-    .oVgaB (vga_b),
-    .oVgaHs(vga_hs),
-    .oVgaVs(vga_vs)
+
+  wire [7:0] cga_out;
+  wire       cga_sel;
+
+  video_cga u_video_cga(
+    .iClk   (pll_clk10),
+    .iClk25 (pll_clk25),
+    .iAddr  (cpu_addr),
+    .iWrData(cpu_data_out),
+    .iWrMem (cpu_mem_wr), 
+    .iWrIo  (cpu_io_wr),
+    .iRdIo  (cpu_io_rd),
+    .oRdData(cga_out),
+    .oSel   (cga_sel),   
+    .oVgaR  (vga_r),
+    .oVgaG  (vga_g),
+    .oVgaB  (vga_b),
+    .oVgaHs (vga_hs),
+    .oVgaVs (vga_vs)
   );
 
   //
@@ -241,8 +254,8 @@ module top(
   // PIT timer
   //
 
-
   wire pitClkEn;
+
   pitClock u_pit_clock(
     .iClk     (pll_clk10),
     .oClkEnPit(pitClkEn)  // 1.193182Mhz
@@ -252,6 +265,7 @@ module top(
   wire       pit_channel_2;
   wire [7:0] pit_data_out;
   wire       pit_sel;
+
   pit2 u_pit(
     .iClk  (pll_clk10),
     .iClkEn(pitClkEn),  // 1.193182Mhz
@@ -300,6 +314,7 @@ module top(
   wire [7:0] sd_out;
   wire       sd_sel;
   wire       sd_click;
+
   sdCard u_sdcard(
     .iClk   (pll_clk10),
     .iAddr  (cpu_addr),

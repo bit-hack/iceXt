@@ -33,9 +33,9 @@ void int_notify(uint8_t num) {
 uint8_t port_read(uint32_t port) {
 //  printf("PORT READ: %03x\n", port);
 
-  if (port == 0x3DA) {
-    return 0xff;  // weird this is required!
-  }
+  //if (port == 0x3DA) {
+  //  return 0xff;  // weird this is required!
+  //}
 
   if (port == 0xb8) {
     return disk_spi_read();

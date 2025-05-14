@@ -35,10 +35,10 @@ static void dump_vram() {
 
     uint32_t src = 0xB8000 + i;
 
-    uint8_t b0 = vram[src + 0];
-    uint8_t b1 = vram[src + 1];
+    uint8_t b0 = vram[src + 0];  // chr
+    uint8_t b1 = vram[src + 1];  // atr
 
-    fprintf(fd, "%02x%02x\n", b1, b0);
+    fprintf(fd, "%02x%02x\n", b0, b1);
   }
 
   fclose(fd);

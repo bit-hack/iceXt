@@ -14,8 +14,8 @@ module video_crtc(
     output      [11:0] oAddr,      // character address [000.FFF] 8x8
     output      [ 2:0] oRA,        // row address [0..7]
     output      [ 3:0] oDA,        // dot address [0..15]
-    output reg         oVgaVs,     // vertical sync
     output reg         oVgaHs,     // horizontal sync
+    output reg         oVgaVs,     // vertical sync
     output             oVgaBlank   // vga blanking period
 );
 
@@ -26,7 +26,7 @@ module video_crtc(
   localparam xsynce = 96 + xsyncs;  // sync pulse
   localparam xmax   = 799;          // whole line
 
-  localparam yvis   = 439;          // visible area
+  localparam yvis   = 399;          // visible area
   localparam ysyncs = 12 + yvis;    // front porch
   localparam ysynce = 2  + ysyncs;  // sync pulse
   localparam ymax   = 448;          // whole line
@@ -35,7 +35,7 @@ module video_crtc(
   reg yblank = 0;
 
   reg [ 9:0] xcounter = 0;
-  reg [ 8:0] ycounter = 0;
+  reg [ 9:0] ycounter = 0;
   reg [11:0] yaddr    = 0;  // start of scanline memory address
 
   wire cmp_xvis    = (xcounter == xvis);     // front porch start
@@ -54,6 +54,17 @@ module video_crtc(
   assign oAddr     = yaddr + xcounter[9:3]; // 8x8 pixels granularity
 
   always @(posedge iClk25) begin
+    if (cmp_xmax) begin
+      if (ycounter[3:0] == {iGlyphMaxY, 1'b1}) begin
+        yaddr <= yaddr + 12'd80;
+      end
+      if (cmp_ymax) begin
+        yaddr <= 0;
+      end
+    end
+  end
+
+  always @(posedge iClk25) begin
     xcounter <= xcounter + 10'd1;
     oVgaHs <= cmp_xsyncs ? 0 :  // negative pulse
               cmp_xsynce ? 1 :
@@ -70,17 +81,14 @@ module video_crtc(
     if (cmp_xmax) begin
       xblank   <= 0;
       xcounter <= 0;
-      ycounter <= ycounter + 9'd1;
-      if (oRA == iGlyphMaxY) begin
-        yaddr  <= yaddr + 12'd80;
+      ycounter <= ycounter + 10'd1;
+      if (cmp_ymax) begin
+        yblank   <= 0;
+        ycounter <= 0;
       end
     end
-    if (cmp_ymax) begin
-      yblank   <= 0;
-      ycounter <= 0;
-      yaddr    <= 0;
-    end
   end
+
 endmodule
 
 
@@ -98,6 +106,9 @@ module video_ram(
     output reg [15:0] oRdData
 );
 
+  // 0    1    2    3    ...
+  // <chr><atr><chr><atr>...
+
   // note: arrange so gfx mode pixels are linear
   //  7:0 - attribute
   // 15:8 - character
@@ -109,12 +120,12 @@ module video_ram(
   //
   always @(posedge iClk) begin
     // high byte write
-    if (iWr & (iWrAddr[0] == 0) begin
+    if (iWr & (iWrAddr[0] == 0)) begin
       RAM[ iWrAddr[13:1] ][15:8] <= iWrData;
     end
     // low byte write
-    if (iWr & (iWrAddr[0] == 1) begin
-      RAM[ iWrAddr[13:1] ][ 7:8] <= iWrData;
+    if (iWr & (iWrAddr[0] == 1)) begin
+      RAM[ iWrAddr[13:1] ][ 7:0] <= iWrData;
     end
   end
 
@@ -124,29 +135,29 @@ module video_ram(
   always @(posedge iClk25) begin
     oRdData <= RAM[ iRdAddr[ 13:1 ] ];
   end
-    
+
 endmodule
 
 
 module video_cga(
-    input        iClk,      // cpu domain clock
-    input        iClk25,    // vga domain clock
+    input            iClk,      // cpu domain clock
+    input            iClk25,    // vga domain clock
 
     // cpu interface
-    input [19:0] iAddr,     // read/write address
-    input [ 7:0] iWrData,   // write io/mem data
-    input        iWrMem,    // memory write
-    input        iWrIo,     // io write
-    input        iRdIo,     // io read
-    output [7:0] oRdData,   // read io/mem data
-    output       oSel       // read data valid
+    input [19:0]     iAddr,     // read/write address
+    input [ 7:0]     iWrData,   // write io/mem data
+    input            iWrMem,    // memory write
+    input            iWrIo,     // io write
+    input            iRdIo,     // io read
+    output reg [7:0] oRdData,   // read io/mem data
+    output           oSel,      // read data valid
 
     // VGA interface
-    output [3:0] oVgaR,
-    output [3:0] oVgaG,
-    output [3:0] oVgaB,
-    output       oVgaHs,
-    output       oVgaVs
+    output [3:0]     oVgaR,
+    output [3:0]     oVgaG,
+    output [3:0]     oVgaB,
+    output           oVgaHs,
+    output           oVgaVs
 );
 
   //
@@ -182,19 +193,20 @@ module video_cga(
   //
   // port read/write logic
   //
-  always (posedge iClk) begin
-    iRdData <= 12'h0;
+  always @(posedge iClk) begin
+    oRdData <= 12'h0;
+    oSel    <= 1'b0;
     case (iAddr[11:0])
     12'h3D8: begin
       if (iWrIo) reg3D8  <= iWrData;
-      if (iRdIo) iRdData <= reg3D8;
+      if (iRdIo) { oRdData, oSel } <= { reg3D8, 1'b1 };
     end
     12'h3D9: begin
       if (iWrIo) reg3D9  <= iWrData;
-      if (iRdIo) iRdData <= reg3D9;
+      if (iRdIo) { oRdData, oSel } <= { reg3D9, 1'b1 };
     end
     12'h3DA: begin
-      if (iRdIo) iRdData <= reg3DA;
+      if (iRdIo) { oRdData, oSel } <= { reg3DA, 1'b1 };
     end
     endcase
   end
@@ -214,23 +226,25 @@ module video_cga(
     .oAddr     (crtcAddr),
     .oRA       (crtcRA),
     .oDA       (crtcDA),
-    .oVgaVS    (crtcVS),
-    .oVgaHS    (crtcHS),
+    .oVgaVs    (crtcVS),
+    .oVgaHs    (crtcHS),
     .oVgaBlank (crtcBlank)
   );
 
   //
   // delays
   //
-  reg [ 3:0] dlyCrtcVS;
-  reg [ 3:0] dlyCrtcHS;
-  reg [ 3:0] dlyCrtcBlank;
-  reg [ 3:0] dlyCrtcDA1;
+  reg [ 2:0] dlyCrtcVS;
+  reg [ 2:0] dlyCrtcHS;
+  reg [ 2:0] dlyCrtcBlank;
+  reg [ 3:0] dlyCrtcDA1, dlyCrtcDA2;
+  reg [ 2:0] dlyCrtcRA1;
   always @(posedge iClk25) begin
-    dlyCrtcVS    <= { dlyCrtcVS   [2:0], crtcVS };
-    dlyCrtcHS    <= { dlyCrtcHS   [2:0], crtcHS };
-    dlyCrtcBlank <= { dlyCrtcBlank[2:0], crtcBlank };
-    dlyCrtcDa1   <= crtcDA;
+    dlyCrtcVS    <= { dlyCrtcVS   [1:0], crtcVS };
+    dlyCrtcHS    <= { dlyCrtcHS   [1:0], crtcHS };
+    dlyCrtcBlank <= { dlyCrtcBlank[1:0], crtcBlank };
+    dlyCrtcRA1   <= crtcRA;
+    { dlyCrtcDA2, dlyCrtcDA1 } <= { dlyCrtcDA1, crtcDA };
   end
 
   //
@@ -250,7 +264,7 @@ module video_cga(
     .iClk25 (iClk25),   // RD clock
     .iWrAddr(iAddr),
     .iWr    (iWrMem & ramSel),
-    .iWrData(iData),
+    .iWrData(iWrData),
     .iRdAddr(ramRdAddr),
     .oRdData(ramRdData)
   );
@@ -261,23 +275,23 @@ module video_cga(
   //
   // font lookup
   //
-  wire [10:0] glyphAddr = { txtChar, crtcRA[2:0] };
+  wire [10:0] glyphAddr = { txtChar, dlyCrtcRA1 };
   reg  [ 7:0] glyphRow;
   reg         glyphBit;
   wire [ 3:0] glyphVal = glyphBit ? 4'hf : 4'h0;
 
-  always @(posedge iClk) begin
+  always @(posedge iClk25) begin
     glyphRow <= font[glyphAddr];
-    glyphBit <= glyphRow[dlyCrtcDa1[3:1]];
+    glyphBit <= glyphRow[ dlyCrtcDA2[2:0] ];
   end
 
   //
   // vga output
   //
-  assign oVgaR  = dlyCrtcBlank[1] ? 4'd0 : glyphVal;
-  assign oVgaG  = dlyCrtcBlank[1] ? 4'd0 : glyphVal;
-  assign oVgaB  = dlyCrtcBlank[1] ? 4'd0 : glyphVal;
-  assign oVgaHs = dlyCrtcHS[1];
-  assign oVgaVs = dlyCrtcVS[1];
+  assign oVgaR  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
+  assign oVgaG  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
+  assign oVgaB  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
+  assign oVgaHs = dlyCrtcHS[2];
+  assign oVgaVs = dlyCrtcVS[2];
 
 endmodule
