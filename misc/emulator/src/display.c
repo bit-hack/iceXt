@@ -96,6 +96,10 @@ static void render_mode_4(SDL_Surface* screen) {
 static void render_mda(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
 
+  if (false) {
+    dump_vram();
+  }
+
   uint32_t* dst = screen->pixels;
 
   for (uint32_t y = 0; y < 400; ++y) {
