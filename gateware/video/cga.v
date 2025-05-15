@@ -11,7 +11,7 @@
 module video_crtc(
     input              iClk25,
     input       [ 2:0] iGlyphMaxY, // char height - 1
-    output      [11:0] oAddr,      // character address [000.FFF] 8x8
+    output      [12:0] oAddr,      // character address [000.1FFF] 8x8
     output      [ 2:0] oRA,        // row address [0..7]
     output      [ 3:0] oDA,        // dot address [0..15]
     output reg         oVgaHs,     // horizontal sync
@@ -36,7 +36,7 @@ module video_crtc(
 
   reg [ 9:0] xcounter = 0;
   reg [ 9:0] ycounter = 0;
-  reg [11:0] yaddr    = 0;  // start of scanline memory address
+  reg [12:0] yaddr    = 0;  // start of scanline memory address
 
   wire cmp_xvis    = (xcounter == xvis);     // front porch start
   wire cmp_xsyncs  = (xcounter == xsyncs);   // sync start
@@ -55,8 +55,10 @@ module video_crtc(
 
   always @(posedge iClk25) begin
     if (cmp_xmax) begin
-      if (ycounter[3:0] == {iGlyphMaxY, 1'b1}) begin
-        yaddr <= yaddr + 12'd80;
+      if (ycounter[0] == 1'b1) begin
+        if ((ycounter[3:1] & iGlyphMaxY) == iGlyphMaxY) begin
+          yaddr <= yaddr + 13'd80;
+        end
       end
       if (cmp_ymax) begin
         yaddr <= 0;
@@ -113,7 +115,7 @@ module video_ram(
   //  7:0 - attribute
   // 15:8 - character
   reg [15:0] RAM[8192];  // 16KB
-  initial $readmemh("roms/test_vram_txt.hex", RAM);
+  initial $readmemh("roms/test_vram_gfx.hex", RAM);
 
   //
   // cpu write port
@@ -169,7 +171,7 @@ module video_cga(
   //
   // mode control register
   //
-  reg  [7:0] reg3D8        = 8'b00001000;
+  reg  [7:0] reg3D8        = 8'b000_0_1_0_1_0;
   wire       regBlink      = reg3D8[5];
   wire       regHiResGfx   = reg3D8[4];
   wire       regVideoOutEn = reg3D8[3];
@@ -214,7 +216,8 @@ module video_cga(
   //
   // CRTC
   //
-  wire [11:0] crtcAddr;
+  wire [ 2:0] glyphMaxY = regGfxMode ? 3'd1 : 3'd7;
+  wire [12:0] crtcAddr;
   wire [ 2:0] crtcRA;
   wire [ 3:0] crtcDA;
   wire        crtcVS;
@@ -222,7 +225,7 @@ module video_cga(
   wire        crtcBlank;
   video_crtc u_video_crtc(
     .iClk25    (iClk25),
-    .iGlyphMaxY(3'd7),  // 1 for graphics mode?
+    .iGlyphMaxY(glyphMaxY),
     .oAddr     (crtcAddr),
     .oRA       (crtcRA),
     .oDA       (crtcDA),
@@ -247,17 +250,23 @@ module video_cga(
     { dlyCrtcDA2, dlyCrtcDA1 } <= { dlyCrtcDA1, crtcDA };
   end
 
+  // 0x0000              +0x2000
+  // <------ 80 ------->
+  //                     <------ 80 ------->
+  // <------ 80 ------->
+  //                     <------ 80 ------->
+
   //
   // address generators
   //
-  wire [13:0] ramAddrTxt = { crtcAddr, 1'b0 };
-  wire [13:0] ramAddrGfx = 14'd0;
+  wire [13:0] ramAddrTxt = { crtcAddr[12:0], 1'b0 };
+  wire [13:0] ramAddrGfx = { crtcRA[0], crtcAddr[12:0] };
 
   //
   // video ram
   //
   wire        ramSel = iAddr[19:15] == 5'b10111;  // [B8000..Bffff]
-  wire [13:0] ramRdAddr = ramAddrTxt;
+  wire [13:0] ramRdAddr = regGfxMode ? ramAddrGfx : ramAddrTxt;
   wire [15:0] ramRdData;
   video_ram u_video_ram(
     .iClk   (iClk),     // WR clock
@@ -286,11 +295,50 @@ module video_cga(
   end
 
   //
+  // pixel lookup
+  //
+  reg [1:0] pixel;
+  always @(posedge iClk25) begin
+    case (dlyCrtcDA1[3:1])
+    0: pixel <= ramRdData[15:14];
+    1: pixel <= ramRdData[13:12];
+    2: pixel <= ramRdData[11:10];
+    3: pixel <= ramRdData[ 9: 8];
+    4: pixel <= ramRdData[ 7: 6];
+    5: pixel <= ramRdData[ 5: 4];
+    6: pixel <= ramRdData[ 3: 2];
+    7: pixel <= ramRdData[ 1: 0];
+    endcase
+  end
+
+  //
+  // palette lookup
+  //
+  reg [3:0] pixR;
+  reg [3:0] pixG;
+  reg [3:0] pixB;
+  always @(posedge iClk25) begin
+    case (pixel)
+    0: { pixR, pixG, pixB } <= { 4'h0, 4'h0, 4'h0 };
+    1: { pixR, pixG, pixB } <= { 4'h0, 4'ha, 4'ha };
+    2: { pixR, pixG, pixB } <= { 4'ha, 4'h0, 4'ha };
+    3: { pixR, pixG, pixB } <= { 4'ha, 4'ha, 4'ha };
+    endcase
+  end
+
+  //
+  // GFX/TXT MUX
+  //
+  wire [3:0] outR = regGfxMode ? pixR : glyphVal;
+  wire [3:0] outG = regGfxMode ? pixG : glyphVal;
+  wire [3:0] outB = regGfxMode ? pixB : glyphVal;
+
+  //
   // vga output
   //
-  assign oVgaR  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
-  assign oVgaG  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
-  assign oVgaB  = dlyCrtcBlank[2] ? 4'd0 : glyphVal;
+  assign oVgaR  = dlyCrtcBlank[2] ? 4'd0 : outR;
+  assign oVgaG  = dlyCrtcBlank[2] ? 4'd0 : outG;
+  assign oVgaB  = dlyCrtcBlank[2] ? 4'd0 : outB;
   assign oVgaHs = dlyCrtcHS[2];
   assign oVgaVs = dlyCrtcVS[2];
 

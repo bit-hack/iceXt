@@ -15,4 +15,4 @@ chipset/pit.v
 sound/ym3014.v
 io/keyboard.v
 io/sdcard.v
-top.v
+top_cga.v
