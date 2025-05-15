@@ -56,7 +56,7 @@ module sdCard(
 
   always @(posedge iClk) begin
     sd_send <= 0;
-    oSel  <= 0;
+    oSel    <= 0;
     if (sd_valid) begin
       sd_latch_rx <= sd_rx;
     end
@@ -68,7 +68,7 @@ module sdCard(
         sd_send     <= 1;
         sd_latch_tx <= iData;
       end
-      if (iAddr[11:0] == 12'hba) begin
+      if (iAddr[11:0] == 12'h0ba) begin
         click <= !click;
       end
     end

@@ -6,4 +6,4 @@
  *
 **/
 
-`define CFG_ENABLE_ADLIB 1
+//`define CFG_ENABLE_ADLIB 1

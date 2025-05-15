@@ -67,7 +67,7 @@ module top(
     output ym_clk,
 
     // pmod
-    output [ 7:0] pmod
+    output [7:0] pmod
 );
 
   //

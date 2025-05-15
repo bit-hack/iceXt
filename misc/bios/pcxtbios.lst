@@ -30283,8 +30283,8 @@ E359  0E				push		cs
 E35A  1F				pop		ds
 
 
-	jne	@@config			; No, it's a cold boot
-E35B  75 05				jne		L$27
+	jmp	@@config			; No, it's a cold boot
+E35B  EB 05				jmp		L$27
 
 
 @@skip_config:
@@ -35435,7 +35435,7 @@ endp	int_10_dispatch
 ;---------------------------------------------------------------------------------------------------
 proc	int_10_func_0	near
 
-  out 0FEh, ax     ; hook video mode change
+	out 0FEh, ax     ; hook video mode change
 F115				int_10_func_0:
 F115  E7 FE				out		0xfe,ax
 

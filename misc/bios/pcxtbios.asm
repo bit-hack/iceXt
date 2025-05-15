@@ -921,7 +921,7 @@ endif
 	push	cs
 	pop	ds				; DS = CS (ROM, FE00h)
 
-	jne	@@config			; No, it's a cold boot
+	jmp	@@config			; No, it's a cold boot
 
 @@skip_config:
 	mov	bh, -3				; Position cursor at row 0 for boot BASIC message

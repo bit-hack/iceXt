@@ -162,6 +162,11 @@ module video_cga(
     output           oVgaVs
 );
 
+  // todo:
+  //  hi-res modes
+  //  cursor
+  //  regColor handling
+
   //
   // CGA font ROM
   //
@@ -171,7 +176,7 @@ module video_cga(
   //
   // mode control register
   //
-  reg  [7:0] reg3D8        = 8'b000_0_1_0_0_0;
+  reg  [7:0] reg3D8        = 8'b00_0_0_1_0_0_0;
   wire       regBlink      = reg3D8[5];
   wire       regHiResGfx   = reg3D8[4];
   wire       regVideoOutEn = reg3D8[3];
