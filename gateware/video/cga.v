@@ -53,12 +53,12 @@ module video_crtc(
   assign oRA       = ycounter[3:1];         // 200 resolution
   assign oAddr     = yaddr + xcounter[9:3]; // 8x8 pixels granularity
 
+  wire [3:0] glyphMaxY = { iGlyphMaxY, 1'b1 };
+
   always @(posedge iClk25) begin
     if (cmp_xmax) begin
-      if (ycounter[0] == 1'b1) begin
-        if ((ycounter[3:1] & iGlyphMaxY) == iGlyphMaxY) begin
-          yaddr <= yaddr + 13'd80;
-        end
+      if ((ycounter[3:0] & glyphMaxY) == glyphMaxY) begin
+        yaddr <= yaddr + 13'd80;
       end
       if (cmp_ymax) begin
         yaddr <= 0;
@@ -97,7 +97,7 @@ endmodule
 module video_ram(
     input             iClk,       // write port clock
     input             iClk25,     // read port clock
-    
+
     // write port
     input      [13:0] iWrAddr,    // 0..16k
     input             iWr,
@@ -115,7 +115,7 @@ module video_ram(
   //  7:0 - attribute
   // 15:8 - character
   reg [15:0] RAM[8192];  // 16KB
-  initial $readmemh("roms/test_vram_gfx.hex", RAM);
+  initial $readmemh("roms/test_vram_txt.hex", RAM);
 
   //
   // cpu write port
@@ -171,7 +171,7 @@ module video_cga(
   //
   // mode control register
   //
-  reg  [7:0] reg3D8        = 8'b000_0_1_0_1_0;
+  reg  [7:0] reg3D8        = 8'b000_0_1_0_0_0;
   wire       regBlink      = reg3D8[5];
   wire       regHiResGfx   = reg3D8[4];
   wire       regVideoOutEn = reg3D8[3];
@@ -182,15 +182,21 @@ module video_cga(
   //
   // color control register
   //
-  reg  [7:0] reg3D9        = 8'b00010000;
-  wire       regPalette    = reg3D9[5];
-  wire       regBrightFg   = reg3D9[4];
-  wire [3:0] regColor      = reg3D9[3:0];
+  reg  [7:0] reg3D9      = 8'b00_1_0_0000;
+  wire       regPalette  = reg3D9[5];
+  wire       regBrightFg = reg3D9[4];
+  wire [3:0] regColor    = reg3D9[3:0];
 
   //
   // status register
   //
-  wire [7:0] reg3DA        = 8'b1111_1_0_0_1;
+  wire [7:0] reg3DA = {
+    4'hf,       // unused
+    oVgaVs,     // vertical retrace
+    1'b0,       // light pen switch
+    1'b0,       // light pen trigger
+    !active     // display enable
+  };
 
   //
   // port read/write logic
@@ -242,19 +248,15 @@ module video_cga(
   reg [ 2:0] dlyCrtcBlank;
   reg [ 3:0] dlyCrtcDA1, dlyCrtcDA2;
   reg [ 2:0] dlyCrtcRA1;
+  reg [ 7:0] dlyTxtAttr1, dlyTxtAttr2;
   always @(posedge iClk25) begin
     dlyCrtcVS    <= { dlyCrtcVS   [1:0], crtcVS };
     dlyCrtcHS    <= { dlyCrtcHS   [1:0], crtcHS };
     dlyCrtcBlank <= { dlyCrtcBlank[1:0], crtcBlank };
     dlyCrtcRA1   <= crtcRA;
-    { dlyCrtcDA2, dlyCrtcDA1 } <= { dlyCrtcDA1, crtcDA };
+    { dlyCrtcDA2,  dlyCrtcDA1  } <= { dlyCrtcDA1,  crtcDA  };
+    { dlyTxtAttr2, dlyTxtAttr1 } <= { dlyTxtAttr1, txtAttr };
   end
-
-  // 0x0000              +0x2000
-  // <------ 80 ------->
-  //                     <------ 80 ------->
-  // <------ 80 ------->
-  //                     <------ 80 ------->
 
   //
   // address generators
@@ -263,7 +265,7 @@ module video_cga(
   wire [13:0] ramAddrGfx = { crtcRA[0], crtcAddr[12:0] };
 
   //
-  // video ram
+  // video RAM
   //
   wire        ramSel = iAddr[19:15] == 5'b10111;  // [B8000..Bffff]
   wire [13:0] ramRdAddr = regGfxMode ? ramAddrGfx : ramAddrTxt;
@@ -282,12 +284,11 @@ module video_cga(
   wire [7:0] txtAttr = ramRdData[ 7:0];  // ramRdAddr[0]==1
 
   //
-  // font lookup
+  // font ROM lookup
   //
   wire [10:0] glyphAddr = { txtChar, dlyCrtcRA1 };
   reg  [ 7:0] glyphRow;
   reg         glyphBit;
-  wire [ 3:0] glyphVal = glyphBit ? 4'hf : 4'h0;
 
   always @(posedge iClk25) begin
     glyphRow <= font[glyphAddr];
@@ -295,7 +296,38 @@ module video_cga(
   end
 
   //
-  // pixel lookup
+  // glyph color lookup
+  //
+  reg [11:0] palCga[16];
+  initial begin
+    palCga[ 0] = 12'h000;
+    palCga[ 1] = 12'h00a;
+    palCga[ 2] = 12'h0a0;
+    palCga[ 3] = 12'h0aa;
+    palCga[ 4] = 12'ha00;
+    palCga[ 5] = 12'ha0a;
+    palCga[ 6] = 12'ha50;
+    palCga[ 7] = 12'haaa;
+    palCga[ 8] = 12'h555;
+    palCga[ 9] = 12'h55f;
+    palCga[10] = 12'h5f5;
+    palCga[11] = 12'h5ff;
+    palCga[12] = 12'hf55;
+    palCga[13] = 12'hf5f;
+    palCga[14] = 12'hff5;
+    palCga[15] = 12'hfff;
+  end
+
+  // note: we could register these if needed
+  wire [11:0] colorFg = palCga[ dlyTxtAttr2[3:0] ];
+  wire [11:0] colorBg = palCga[ dlyTxtAttr2[7:4] ];
+  
+  wire [3:0] glyphR = glyphBit ? colorFg[11:8] : colorBg[11:8];
+  wire [3:0] glyphG = glyphBit ? colorFg[ 7:4] : colorBg[ 7:4];
+  wire [3:0] glyphB = glyphBit ? colorFg[ 3:0] : colorBg[ 3:0];
+
+  //
+  // graphics mode pixel lookup
   //
   reg [1:0] pixel;
   always @(posedge iClk25) begin
@@ -312,33 +344,49 @@ module video_cga(
   end
 
   //
-  // palette lookup
+  // graphics mode palette lookup
   //
+  reg [11:0] palGfx[16];
+  initial begin
+    palGfx[ 0] = 12'h000;  // 0   .. pal=0, intensity=0
+    palGfx[ 1] = 12'h0a0;  // 2
+    palGfx[ 2] = 12'ha00;  // 4
+    palGfx[ 3] = 12'ha50;  // 6
+    palGfx[ 4] = 12'h000;  // 0   .. pal=0, intensity=1
+    palGfx[ 5] = 12'h5f5;  // 10
+    palGfx[ 6] = 12'hf55;  // 12
+    palGfx[ 7] = 12'hff5;  // 14
+    palGfx[ 8] = 12'h000;  // 0   .. pal=1, intensity=0
+    palGfx[ 9] = 12'h0aa;  // 3
+    palGfx[10] = 12'ha0a;  // 5
+    palGfx[11] = 12'haaa;  // 7
+    palGfx[12] = 12'h000;  // 0   .. pal=1, intensity=1
+    palGfx[13] = 12'h5ff;  // 11
+    palGfx[14] = 12'hf5f;  // 13
+    palGfx[15] = 12'hfff;  // 15
+  end
+
   reg [3:0] pixR;
   reg [3:0] pixG;
   reg [3:0] pixB;
   always @(posedge iClk25) begin
-    case (pixel)
-    0: { pixR, pixG, pixB } <= { 4'h0, 4'h0, 4'h0 };
-    1: { pixR, pixG, pixB } <= { 4'h0, 4'ha, 4'ha };
-    2: { pixR, pixG, pixB } <= { 4'ha, 4'h0, 4'ha };
-    3: { pixR, pixG, pixB } <= { 4'ha, 4'ha, 4'ha };
-    endcase
+    { pixR, pixG, pixB } <= palGfx[ { regPalette, regBrightFg, pixel }];
   end
 
   //
   // GFX/TXT MUX
   //
-  wire [3:0] outR = regGfxMode ? pixR : glyphVal;
-  wire [3:0] outG = regGfxMode ? pixG : glyphVal;
-  wire [3:0] outB = regGfxMode ? pixB : glyphVal;
+  wire [3:0] outR = regGfxMode ? pixR : glyphR;
+  wire [3:0] outG = regGfxMode ? pixG : glyphG;
+  wire [3:0] outB = regGfxMode ? pixB : glyphB;
 
   //
   // vga output
   //
-  assign oVgaR  = dlyCrtcBlank[2] ? 4'd0 : outR;
-  assign oVgaG  = dlyCrtcBlank[2] ? 4'd0 : outG;
-  assign oVgaB  = dlyCrtcBlank[2] ? 4'd0 : outB;
+  wire active = regVideoOutEn & !dlyCrtcBlank[2];
+  assign oVgaR  = active ? outR : 4'h0;
+  assign oVgaG  = active ? outG : 4'h0;
+  assign oVgaB  = active ? outB : 4'h0;
   assign oVgaHs = dlyCrtcHS[2];
   assign oVgaVs = dlyCrtcVS[2];
 
