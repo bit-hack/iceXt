@@ -5,3 +5,5 @@
  * /_/\___/\___/_/|_|/_/
  *
 **/
+
+`define CFG_ENABLE_ADLIB 1

@@ -9,7 +9,7 @@
 
 
 module clkEnGen #(
-    parameter CLK_IN  = 25000000,
+    parameter CLK_IN  = 10000000,
     parameter CLK_OUT =  3571428
 ) (
     input  iClk,

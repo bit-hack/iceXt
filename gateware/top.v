@@ -45,9 +45,6 @@ module top(
     output        vga_vs,
     output        vga_hs,
 
-    // pmod
-    output [ 7:0] pmod,
-
     // PS/2 interface
     input ps2_mclk,
     input ps2_mdat,
@@ -62,7 +59,15 @@ module top(
 
     // misc
     output led_io,
-    output pit_spk
+    output pit_spk,
+    
+    // ym3014 DAC
+    output ym_sd,
+    output ym_load,
+    output ym_clk,
+
+    // pmod
+    output [ 7:0] pmod
 );
 
   //
@@ -332,17 +337,34 @@ module top(
   );
 
   //
+  // adlib audio
+  //
+
+`ifdef CFG_ENABLE_ADLIB
+  adlib u_adlib(
+    .iClk   (pll_clk10),
+    .iRst   (rst),
+    .iWr    (cpu_io_wr),
+    .iWrData(cpu_data_out),
+    .iAddr  (cpu_addr),
+    .oYmSd  (ym_sd),
+    .oYmLoad(ym_load),
+    .oYmClk (ym_clk)
+  );
+`endif
+
+  //
   // PMOD
   //
   assign pmod = {
     /*6*/1'b0,
-    /*4*/spk_enable,
-    /*2*/pit_channel_2,
-    /*0*/pitClkEn,
+    /*4*/1'b0,
+    /*2*/1'b0,
+    /*0*/1'b0,
     /*7*/1'b0,
     /*5*/1'b0,
-    /*3*/spk_gate,
-    /*1*/irq0
+    /*3*/1'b0,
+    /*1*/1'b0
   };
 
 endmodule

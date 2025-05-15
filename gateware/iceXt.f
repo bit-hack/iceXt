@@ -5,6 +5,7 @@ utils/uartTx.v
 utils/clkEnGen.v
 utils/reset.v
 utils/spiMaster.v
+utils/sevenSeg.v
 cpu/cpu_bus.v
 roms/biosrom.v
 roms/diskrom.v
@@ -12,7 +13,8 @@ sram/sram_ctrl.v
 video/cga.v
 chipset/pic.v
 chipset/pit.v
+sound/adlib.v
 sound/ym3014.v
 io/keyboard.v
 io/sdcard.v
-top_cga.v
+top.v
