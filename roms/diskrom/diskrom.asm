@@ -9,6 +9,18 @@ org 0
 [BITS 16]
 
 
+; Enable hard disk emulation
+;
+; cylinders  64
+; sectors    63
+; heads      16
+;            32Mb max
+;
+; If disabled will fall back to 1.44Mb floppy emulation
+;
+%define USE_HDD     1
+%define USE_CLICKER 1
+
 %define PORT_DEBUG    0xb0
 %define PORT_SPI_DATA 0xb8
 %define PORT_SPI_CTRL 0xb9
@@ -21,8 +33,6 @@ org 0
 %define ERR_SUCCESS     0x00
 %define ERR_NOT_READY   0xaa
 %define ERR_INVALID_CMD 0x01
-
-%define USE_HDD 1
 
 %macro SD_SEND 1
   push ax
@@ -275,7 +285,9 @@ sd_read_sector:
   ;
   ; click generator
   ;
+%if USE_CLICKER
   out PORT_CLICK, al
+%endif
 
   ;
   ; send CMD17
@@ -325,8 +337,10 @@ sd_read_sector:
   mov al, 0
   ret
 
+
+%if USE_HDD
 ;------------------------------------------------------------------------------
-;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+; lba = (cylinder * HEADS + head) * SECTORS + sector;
 ;   ch    - cylinder  (64)
 ;   cl    - sector    (63)
 ;   dh    - head      (16)
@@ -350,7 +364,7 @@ chs_to_lba_hdd:
   shl ax, 1
   shl ax, 1
   mov dx, ax
-  sub dx, bx
+  sub dx, bx    ; note: sub early to avoid overflow
   add ax, dx    ; accum *= 63
   xor ch, ch
   dec cx
@@ -359,9 +373,9 @@ chs_to_lba_hdd:
   pop dx
   pop bx
   ret
-
+%else
 ;------------------------------------------------------------------------------
-;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+; lba = (cylinder * HEADS + head) * SECTORS + sector;
 ;   ch    - cylinder  (80)
 ;   cl    - sector    (18)
 ;   dh    - head      (2)
@@ -388,6 +402,7 @@ chs_to_lba_fdd:
   pop dx
   pop bx
   ret
+%endif
 
 ;------------------------------------------------------------------------------
 int13:
@@ -395,7 +410,7 @@ int13:
   ; out 0xbc, ax
   ; iret
 
-  out 0xb0, ax  ; enable debugging
+  ; out 0xb0, ax  ; enable debugging
 
   cli
 
@@ -405,6 +420,7 @@ int13:
   push ax
 
 %if USE_HDD
+  ; without this check the floppy will be checked first
   cmp dl, 0x80
   jne .not_hdd
 %endif
@@ -414,6 +430,8 @@ int13:
   je int13_02
   cmp ah, 0x00
   je int13_00
+  cmp ah, 0x01
+  je int13_01
   cmp ah, 0x08
   je int13_08
   cmp ah, 0x15
@@ -429,8 +447,17 @@ int13:
   jmp int13_exit
 
 ;------------------------------------------------------------------------------
+; Reset disk system
 int13_00:
   mov ah, ERR_SUCCESS
+  clc             ; CF = 0
+  jmp int13_exit
+
+;------------------------------------------------------------------------------
+; Get status of last drive operation
+int13_01:
+  mov ah, ERR_SUCCESS
+  ; TODO: set AH with the last error code
   clc             ; CF = 0
   jmp int13_exit
 
@@ -474,22 +501,25 @@ int13_02:
   jmp int13_exit
 
 ;------------------------------------------------------------------------------
+; Disk base table (only needed for floppies)
 disk_base_table:
-	db	11001111b
-	db	2
-	db	25h
-	db	2           ; 2 - 512 bytes
-	db	17          ; sectors per track (last sector number)
-	db	2Ah
-	db	0FFh
-	db	50h
-	db	0F6h
-	db	19h
-	db	4
+  db 11001111b
+  db 2
+  db 25h
+  db 2           ; 2 - 512 bytes
+  db 17          ; sectors per track (last sector number)
+  db 2Ah
+  db 0FFh
+  db 50h
+  db 0F6h
+  db 19h
+  db 4
 
 ;------------------------------------------------------------------------------
+; Get drive parameters
 int13_08:
 %if USE_HDD == 0
+  ; disk base table is only needed for floppies
   mov ax, cs
   mov es, ax
   mov di, disk_base_table
@@ -516,6 +546,7 @@ int13_08:
   jmp int32_exit_cf
 
 ;------------------------------------------------------------------------------
+; Read disk type
 int13_15:
   pop ax
   pop bx
@@ -552,7 +583,7 @@ int32_exit_cf:
   sub si, 6
   pop si
   sti
-  out 0xb2, ax  ; turn off debugging
+  ; out 0xb2, ax  ; turn off debugging
   iret
 .int32_exit_cf1:
   push si
@@ -562,5 +593,5 @@ int32_exit_cf:
   sub si, 6
   pop si
   sti
-  out 0xb2, ax  ; turn off debugging
+  ; out 0xb2, ax  ; turn off debugging
   iret
