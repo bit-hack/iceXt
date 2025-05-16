@@ -57,14 +57,14 @@ module top(
     output sd_clk,
     output sd_cs,
 
-    // misc
-    output led_io,
-    output pit_spk,
-    
     // ym3014 DAC
     output ym_sd,
     output ym_load,
     output ym_clk,
+
+    // misc
+    output led_io,
+    output pit_spk,
 
     // pmod
     output [7:0] pmod
@@ -205,11 +205,11 @@ module top(
     .iClk25 (pll_clk25),
     .iAddr  (cpu_addr),
     .iWrData(cpu_data_out),
-    .iWrMem (cpu_mem_wr), 
+    .iWrMem (cpu_mem_wr),
     .iWrIo  (cpu_io_wr),
     .iRdIo  (cpu_io_rd),
     .oRdData(cga_out),
-    .oSel   (cga_sel),   
+    .oSel   (cga_sel),
     .oVgaR  (vga_r),
     .oVgaG  (vga_g),
     .oVgaB  (vga_b),
@@ -356,6 +356,7 @@ module top(
   //
   // PMOD
   //
+
   assign pmod = {
     /*6*/1'b0,
     /*4*/1'b0,
