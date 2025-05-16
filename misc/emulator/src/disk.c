@@ -11,6 +11,19 @@
 
 
 static FILE* disk;
+static uint64_t disk_size = 0;
+
+#define USE_HDD 1
+
+#if USE_HDD
+static uint32_t disk_heads     = 16;
+static uint32_t disk_sectors   = 63;
+static uint32_t disk_cylinders = 0;
+#else
+static uint32_t disk_heads     = 2;
+static uint32_t disk_sectors   = 18;
+static uint32_t disk_cylinders = 80;
+#endif
 
 static int spi_cs = 1;
 static int sd_idle = 1;
@@ -62,12 +75,33 @@ static uint8_t spi_recv(void) {
 }
 #endif  // USE_SERIAL_SD
 
+static void set_stack_cf() {
+  uint32_t sp = cpu_get_address(cpu_get_SS(), cpu_get_SP());
+  memory[sp+4] |= 1;
+}
+
+static void clr_stack_cf() {
+  uint32_t sp = cpu_get_address(cpu_get_SS(), cpu_get_SP());
+  memory[sp+4] &= 0xfe;
+}
 
 bool disk_load(const char* path) {
   disk = fopen(path, "rb");
   if (!disk) {
     return false;
   }
+
+  fseek(disk, 0, SEEK_END);
+  disk_size = ftell(disk);
+  fseek(disk, 0, SEEK_SET);
+
+  if (!disk_cylinders) {
+    disk_cylinders = disk_size / (disk_heads * disk_sectors * 512);
+  }
+
+  printf("sectors  : %u\n", disk_sectors);
+  printf("heads    : %u\n", disk_heads);
+  printf("cylinders: %u\n", disk_cylinders);
 
 #ifdef USE_SERIAL_SD
   serial = serial_open(14, 115200);
@@ -169,14 +203,15 @@ uint8_t disk_spi_read() {
 }
 #endif
 
-void disk_int13_00(void) {
+static bool disk_int13_00(void) {
+  return true;
 }
 
-void disk_int13_02(void) {
+static bool disk_int13_02(void) {
 
-  const uint32_t CYLINDERS = 80;
-  const uint32_t SECTORS   = 18;
-  const uint32_t HEADS     = 2;
+  const uint32_t CYLINDERS = disk_cylinders;
+  const uint32_t SECTORS   = disk_sectors;
+  const uint32_t HEADS     = disk_heads;
 
   const uint8_t count    = cpu_get_AL();
   const uint8_t cylinder = cpu_get_CH();
@@ -188,51 +223,84 @@ void disk_int13_02(void) {
   const uint32_t bx   = cpu_get_BX();
   const uint32_t dest = cpu_get_address(es, bx);
 
-  // 0, 13h, 21h, 22h
-
   const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
 
-  printf("sector: %x\n", lba);
+  printf("sector: %x dest: %x\n", lba, dest);
 
   fseek(disk, lba * 512, SEEK_SET);
   fread(&memory[dest], 1, 512 * count, disk);
 
   cpu_set_AL(count);
+  clr_stack_cf();
+  return true;
 }
 
-void disk_int13_08(void) {
+static bool disk_int13_08(void) {
 
-  cpu_set_AX(0);
-  cpu_set_DL(1);  // number of diskettes
+  uint32_t cyl = (disk_cylinders-1);
+
+  cpu_set_AH(0);
+  cpu_set_CH(cyl);  // cylinders - 1
+  cpu_set_CL((disk_sectors & 0x3f) | ((cyl >> 6) & 0x3));      // sectors
+  cpu_set_DH(disk_heads-1);      // heads - 1
+  cpu_set_DL(1);                 // number of drives
   cpu_set_BX(0);
 
-  //cpu_set_ES(0xfe00);
-  //cpu_set_DI(0x0FC7);
+  // todo: pointer to drive parameter table?
+
+  // note: this cant be zero or causes a hang
+  //cpu_set_ES(0x0000);
+  //cpu_set_DI(0x0000);
+  return true;
 }
 
-void disk_int13_15(void) {
-
+static bool disk_int13_15(void) {
+  return true;
 }
 
 void disk_int13(void) {
 
-  const uint8_t func = cpu_get_AH();
+  const uint8_t func  = cpu_get_AH();
+  const uint8_t drive = cpu_get_DL();
+
+//  cpu_dump_state();
+//  cpu_debug = 1;
+
+  printf("INT13h func:%02x drive:%02x\n", func, drive);
+
+#if USE_HDD
+  if (drive != 0x80) {
+#else
+  if (drive != 0x00) {
+#endif
+    cpu_set_AH(1);
+    set_stack_cf();
+    return;
+  }
+
+  bool ok = true;
 
   switch (func) {
   case 0x0:
-    disk_int13_00();
+    ok = disk_int13_00();
     break;
   case 0x2:
-    disk_int13_02();
+    ok = disk_int13_02();
     break;
   case 0x8:
-    disk_int13_08();
+    ok = disk_int13_08();
     break;
   case 0x15:
-    disk_int13_15();
+    ok = disk_int13_15();
     break;
   }
 
-  cpu_set_AH(0);
-  cpu_set_CF(0);  // success
+  if (ok) {
+    cpu_set_AH(0);  // success
+    clr_stack_cf();
+  }
+  else {
+    cpu_set_AH(1);  // failure
+    set_stack_cf();
+  }
 }

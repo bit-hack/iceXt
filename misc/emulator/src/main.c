@@ -57,22 +57,26 @@ void dump_sector() {
 void port_write(uint32_t port, uint8_t value) {
 //  printf("PORT WRITE: %03x <= %02x\n", port, value);
 
+  if (port == 0xb0) {
+    printf("----------------------------------------------------\n");
+    cpu_debug = 1;
+  }
+  if (port == 0xb2) {
+    cpu_debug = 0;
+  }
   if (port == 0xb8) {
     disk_spi_write(value);
   }
   if (port == 0xb9) {
     disk_spi_ctrl(value);
   }
-  if (port == 0xba) {
-    // legacy
-    //disk_int13();
-  }
   if (port == 0xbc) {
+    // legacy
+    disk_int13();
+  }
+  if (port == 0xbe) {
     //cpu_dump_state();
     //dump_sector();
-  }
-  if (port == 0xb0) {
-    printf("DEBUG:%u\n", value);
   }
 
   if (port == 0x20 || port == 0x21) {
@@ -98,6 +102,11 @@ void port_write(uint32_t port, uint8_t value) {
 
 uint8_t mem_read(uint32_t addr) {
   addr &= 0xfffff;
+
+  if (addr == 0x475) {
+    return 1;
+  }
+
   return memory[addr];
 }
 
@@ -196,6 +205,9 @@ int main(int argc, char** args) {
     fprintf(stderr, "Unable to load disk!\n");
     return 1;
   }
+
+  memory[0x410] = 0b00101100;
+  memory[0x410] = 0b00000000;
 
   const uint32_t steps = 10000;
   uint32_t irq0 = 0;

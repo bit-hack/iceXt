@@ -22,6 +22,8 @@ org 0
 %define ERR_NOT_READY   0xaa
 %define ERR_INVALID_CMD 0x01
 
+%define USE_HDD 1
+
 %macro SD_SEND 1
   push ax
   mov al, %1
@@ -325,10 +327,45 @@ sd_read_sector:
 
 ;------------------------------------------------------------------------------
 ;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
+;   ch    - cylinder  (64)
+;   cl    - sector    (63)
+;   dh    - head      (16)
+chs_to_lba_hdd:
+  push bx
+  push dx
+  push cx
+  xor ax, ax    ; accum = 0
+  mov al, ch
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1     ; accum = cylinder * 16
+  mov dl, dh
+  xor dh, dh
+  add ax, dx    ; accum += head
+  mov bx, ax
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  mov dx, ax
+  sub dx, bx
+  add ax, dx    ; accum *= 63
+  xor ch, ch
+  dec cx
+  add ax, cx    ; accum += (sector - 1)
+  pop cx
+  pop dx
+  pop bx
+  ret
+
+;------------------------------------------------------------------------------
+;  const uint32_t lba = (cylinder * HEADS + head) * SECTORS + sector;
 ;   ch    - cylinder  (80)
 ;   cl    - sector    (18)
 ;   dh    - head      (2)
-chs_to_lba:
+chs_to_lba_fdd:
   push bx
   push dx
   push cx
@@ -354,12 +391,23 @@ chs_to_lba:
 
 ;------------------------------------------------------------------------------
 int13:
+
+  ; out 0xbc, ax
+  ; iret
+
+  out 0xb0, ax  ; enable debugging
+
   cli
 
   push dx
   push cx
   push bx
   push ax
+
+%if USE_HDD
+  cmp dl, 0x80
+  jne .not_hdd
+%endif
 
   ; dispatch to specific handler
   cmp ah, 0x02
@@ -373,6 +421,11 @@ int13:
 
   mov ah, ERR_SUCCESS
   clc             ; CF = 0
+  jmp int13_exit
+
+.not_hdd:
+  mov ah, 1
+  stc             ; CF = 1
   jmp int13_exit
 
 ;------------------------------------------------------------------------------
@@ -391,7 +444,11 @@ int13_00:
 ;   es:bx - buffer
 int13_02:
   push ax
-  call chs_to_lba
+%if USE_HDD
+  call chs_to_lba_hdd
+%else
+  call chs_to_lba_fdd
+%endif
   pop cx
   xor ch, ch
   push cx
@@ -432,22 +489,31 @@ disk_base_table:
 
 ;------------------------------------------------------------------------------
 int13_08:
+%if USE_HDD == 0
   mov ax, cs
   mov es, ax
   mov di, disk_base_table
+%endif
   pop ax
   pop bx
   pop cx
   pop dx
+%if USE_HDD
+  mov ch, 63
+  mov cl, 63
+  mov dh, 15
+  mov dl, 1
+  mov bx, 0
+%else
   mov bl, 4       ; 1.44Mb disk
   mov ch, 80      ; cylinders
   mov cl, 18      ; sectors
   mov dh, 1       ; sides (zero based)
   mov dl, 1       ; number of drives attached
+%endif
   mov ah, ERR_SUCCESS
   clc             ; CF = 0
-  sti
-  iret
+  jmp int32_exit_cf
 
 ;------------------------------------------------------------------------------
 int13_15:
@@ -457,12 +523,10 @@ int13_15:
   pop dx
   mov ah, 1       ; diskette no change detection present
   clc             ; CF = 0
-  sti
-  iret
+  jmp int32_exit_cf
 
 ;------------------------------------------------------------------------------
 int13_exit:
-
   ; fix return code as some functions need to return values
   ;
   ; 02 need to return in AL
@@ -475,5 +539,28 @@ int13_exit:
   pop bx
   pop cx
   pop dx
+  jmp int32_exit_cf
+
+;------------------------------------------------------------------------------
+; return from interrupt but propagate the carry flag
+int32_exit_cf:
+  jb  .int32_exit_cf1
+  push si
+  mov si, sp
+  add si, 6
+  and byte ss:[si], 0xfe
+  sub si, 6
+  pop si
   sti
+  out 0xb2, ax  ; turn off debugging
+  iret
+.int32_exit_cf1:
+  push si
+  mov si, sp
+  add si, 6
+  or byte ss:[si], 1
+  sub si, 6
+  pop si
+  sti
+  out 0xb2, ax  ; turn off debugging
   iret
