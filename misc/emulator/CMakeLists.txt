@@ -12,14 +12,18 @@ add_executable(iceXtEmu
   src/disk.h
   src/display.c
   src/display.h
-  src/serial.c
-  src/serial.h
+#  src/serial.c
+#  src/serial.h
 )
 
 add_subdirectory(src/udis86)
 
-set(SDL_LIBRARY     "unknown" CACHE FILEPATH "SDL1.2 library path")
-set(SDL_INCLUDE_DIR "unknown" CACHE PATH     "SDL1.2 include directory")
+if(WIN32)
+  set(SDL_LIBRARY     "unknown" CACHE FILEPATH "SDL1.2 library path")
+  set(SDL_INCLUDE_DIR "unknown" CACHE PATH     "SDL1.2 include directory")
+else()
+  find_package(SDL REQUIRED)
+endif()
 
 include_directories(iceXtEmu ${SDL_INCLUDE_DIR} src)
 target_link_libraries(iceXtEmu ${SDL_LIBRARY} lib_udis86)

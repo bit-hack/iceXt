@@ -2431,8 +2431,8 @@ static void dump_inst(void)
 
     ud_disassemble(&ud_obj);
 
-    const char* asm = ud_insn_asm(&ud_obj);
-    printf("%s\n", asm);
+    const char* str = ud_insn_asm(&ud_obj);
+    printf("%s\n", str);
 }
 
 static void do_instruction(uint8_t code)
