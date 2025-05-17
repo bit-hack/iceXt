@@ -74,14 +74,14 @@ module top(
   // clock pll
   //
 
-  wire pll_clk10;
-  wire pll_clk25;
+  wire pll_clk_bus;
+  wire pll_clk_25;
   wire pll_locked;
 
   pll u_pll(
-    .clkin  (clk25),     // 25 MHz
-    .clkout0(pll_clk10), // 10 MHz
-    .clkout1(pll_clk25), // 25 MHz
+    .clkin  (clk25),
+    .clkout0(pll_clk_bus),
+    .clkout1(pll_clk_25),
     .locked (pll_locked)
   );
 
@@ -92,7 +92,7 @@ module top(
   wire rst;
 
   reset u_reset (
-    .iClk  (pll_clk10),
+    .iClk  (pll_clk_bus),
     .iReset(~sw_rst | ~pll_locked),
     .oReset(rst)
   );
@@ -105,7 +105,7 @@ module top(
   wire       bios_rom_sel;
 
   biosRom u_biosrom(
-    .iClk (pll_clk10),
+    .iClk (pll_clk_bus),
     .iAddr(cpu_addr),
     .iRd  (cpu_mem_rd),
     .oSel (bios_rom_sel),
@@ -120,7 +120,7 @@ module top(
   wire       disk_rom_sel;
 
   diskRom u_diskrom(
-    .iClk (pll_clk10),
+    .iClk (pll_clk_bus),
     .iAddr(cpu_addr),
     .iRd  (cpu_mem_rd),
     .oSel (disk_rom_sel),
@@ -153,7 +153,7 @@ module top(
   //
 
   cpu_bus u_cpu_bus(
-    .iClk      (pll_clk10),
+    .iClk      (pll_clk_bus),
 
     // internal cpu interface
     .iCpuRst   (rst),
@@ -201,8 +201,8 @@ module top(
   wire       cga_sel;
 
   video_cga u_video_cga(
-    .iClk   (pll_clk10),
-    .iClk25 (pll_clk25),
+    .iClk   (pll_clk_bus),
+    .iClk25 (pll_clk_25),
     .iAddr  (cpu_addr),
     .iWrData(cpu_data_out),
     .iWrMem (cpu_mem_wr),
@@ -224,7 +224,7 @@ module top(
   wire sram_dir;
 
   sram_ctrl u_sram_ctrl(
-    .iClk(pll_clk10),
+    .iClk(pll_clk_bus),
     .iRd (cpu_mem_rd),
     .iWr (cpu_mem_wr),
     .oDir(sram_dir),  // 1(fpga->sram) 0(fpga<-sram)
@@ -245,7 +245,7 @@ module top(
   wire [7:0] pic_out;
 
   pic u_pic(
-    .iClk   (pll_clk10),
+    .iClk   (pll_clk_bus),
     .iRst   (rst),
     .iIrq0  (irq0),          // timer
     .iIrq1  (irq1),          // keyboard
@@ -261,8 +261,8 @@ module top(
 
   wire pitClkEn;
 
-  pitClock u_pit_clock(
-    .iClk     (pll_clk10),
+  pitClock #(.CLK_IN(`CLOCK_SPEED)) u_pit_clock(
+    .iClk     (pll_clk_bus),
     .oClkEnPit(pitClkEn)  // 1.193182Mhz
   );
 
@@ -272,8 +272,8 @@ module top(
   wire       pit_sel;
 
   pit u_pit(
-    .iClk  (pll_clk10),
-    .iClkEn(pitClkEn),  // 1.193182Mhz
+    .iClk  (pll_clk_bus),
+    .iClkEn(pitClkEn),
     .iData (cpu_data_out),
     .iAddr (cpu_addr),
     .iWr   (cpu_io_wr),
@@ -298,7 +298,7 @@ module top(
   wire       spk_enable;
 
   ps2_keyboard u_ps2_keyboard(
-    .iClk      (pll_clk10),
+    .iClk      (pll_clk_bus),
     .iAddr     (cpu_addr),
     .iRd       (cpu_io_rd),
     .iWr       (cpu_io_wr),
@@ -321,7 +321,7 @@ module top(
   wire       sd_click;
 
   sdCard u_sdcard(
-    .iClk   (pll_clk10),
+    .iClk   (pll_clk_bus),
     .iAddr  (cpu_addr),
     .iWr    (cpu_io_wr),
     .iRd    (cpu_io_rd),
@@ -342,7 +342,7 @@ module top(
 
 `ifdef CFG_ENABLE_ADLIB
   adlib u_adlib(
-    .iClk   (pll_clk10),
+    .iClk   (pll_clk_bus),
     .iRst   (rst),
     .iWr    (cpu_io_wr),
     .iWrData(cpu_data_out),

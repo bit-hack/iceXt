@@ -8,14 +8,18 @@
 `default_nettype none
 
 
-module pitClock(
-    input      iClk,        // 10Mhz
+module pitClock #(
+    parameter CLK_IN = 10000000
+)
+(
+    input      iClk,
     output reg oClkEnPit    // 1.193182Mhz
 );
 
+  localparam ACCUM = (1193182 * 1024) / CLK_IN;
+
   reg  [9:0] count = 0;
-//  wire [9:0] next = count + 10'd122;
-  wire [9:0] next = count + 10'd73;
+  wire [9:0] next = count + ACCUM;
 
   always @(posedge iClk) begin
     oClkEnPit <= (next[9] ^ count[9]) & next[9];
