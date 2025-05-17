@@ -271,7 +271,7 @@ module top(
   wire [7:0] pit_data_out;
   wire       pit_sel;
 
-  pit2 u_pit(
+  pit u_pit(
     .iClk  (pll_clk10),
     .iClkEn(pitClkEn),  // 1.193182Mhz
     .iData (cpu_data_out),

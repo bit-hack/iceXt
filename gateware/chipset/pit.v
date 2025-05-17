@@ -8,7 +8,7 @@
 `default_nettype none
 
 
-module pit2(
+module pit(
     input        iClk,
     input        iClkEn,  // 1.193182Mhz
     input [7:0]  iData,
