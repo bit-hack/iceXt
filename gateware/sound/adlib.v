@@ -7,6 +7,8 @@
 **/
 `default_nettype none
 
+`include "../config.vh"
+
 
 module adlib(
     input        iClk,
@@ -24,7 +26,7 @@ module adlib(
 );
 
   wire adlibClkEn;
-  clkEnGen #(.CLK_IN(10000000)) uClkEnGen (
+  clkEnGen #(.CLK_IN(`CLOCK_SPEED)) uClkEnGen (
     .iClk  (iClk),
     .oClkEn(adlibClkEn)
   );
