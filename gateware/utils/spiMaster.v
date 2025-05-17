@@ -9,7 +9,7 @@ module spiMaster(
   output reg   oAvail = 0,  // oData is available
   output reg   oTaken = 0,  // iData has been taken
   output       oBusy,       // is busy
-  
+
   // SPI external interface
   output       oMosi,       // spi mosi
   input        iMiso,       // spi miso
@@ -25,10 +25,10 @@ module spiMaster(
   assign oBusy = (state != 0);
 
   always @(posedge iClk) begin
-  
+
     oTaken <= 0;
     oAvail <= 0;
-  
+
     div <= (div == 0) ? iClkDiv : div - 1;
 
     case (state)

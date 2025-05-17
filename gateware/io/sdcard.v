@@ -24,9 +24,17 @@ module sdCard(
     output       oClick
 );
 
+  // read  port 0B8h  - data recv
+  // write port 0B8h  - data send
+  //
+  // read  port 0B9h  - { BUSY }
+  // write port 0B9h  - { CS }
+  //
+  // write port 0BAh  - click
+
   assign oBusy  = ~sd_busy;
   assign oSdCs  = spi_cs;
-  assign oData  = sd_latch_rx;
+  assign oData  = sd_data_out;
   assign oClick = click;
 
   wire [7:0] sd_rx;
@@ -37,8 +45,9 @@ module sdCard(
   reg        spi_cs  = 1;
   reg        click   = 0;
 
-  reg [7:0] sd_latch_rx = 0;
-  reg [7:0] sd_latch_tx = 0;
+  reg [7:0] sd_latch_rx = 0;  // latched rx byte
+  reg [7:0] sd_latch_tx = 0;  // latched tx byte
+  reg [7:0] sd_data_out = 0;
 
   spiMaster uSpiMaster(
     /*input        */.iClk   (iClk),
@@ -61,12 +70,12 @@ module sdCard(
       sd_latch_rx <= sd_rx;
     end
     if (iWr) begin
-      if (iAddr[11:0] == 12'h0b9) begin
-        spi_cs <= iData[0];
-      end
       if (iAddr[11:0] == 12'h0b8) begin
         sd_send     <= 1;
         sd_latch_tx <= iData;
+      end
+      if (iAddr[11:0] == 12'h0b9) begin
+        spi_cs <= iData[0];
       end
       if (iAddr[11:0] == 12'h0ba) begin
         click <= !click;
@@ -74,7 +83,12 @@ module sdCard(
     end
     if (iRd) begin
       if (iAddr[11:0] == 12'h0b8) begin
-        oSel <= 1;
+        oSel        <= 1;
+        sd_data_out <= sd_latch_rx;
+      end
+      if (iAddr[11:0] == 12'h0b9) begin
+        oSel        <= 1;
+        sd_data_out <= { 7'b0, sd_busy };
       end
     end
   end

@@ -27,7 +27,6 @@ org 0
 %define PORT_CLICK    0xba
 
 %define SD_DUMMY_CLOCKS 10
-%define SD_SEND_DELAY   20
 %define SD_RESP_WAIT    16
 
 %define ERR_SUCCESS     0x00
@@ -114,13 +113,13 @@ install_int13:
 
 ;------------------------------------------------------------------------------
 sd_send:
+  push ax
   out PORT_SPI_DATA, al
-  push cx
-  mov cx, SD_SEND_DELAY
 .delay:
-  nop
-  loop .delay
-  pop cx
+  in al, PORT_SPI_CTRL
+  test al, 0x1
+  jnz .delay
+  pop ax
   ret
 
 ;------------------------------------------------------------------------------
