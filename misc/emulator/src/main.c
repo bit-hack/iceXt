@@ -13,7 +13,6 @@
 
 
 uint8_t memory[1024 * 1024];
-uint8_t io    [1024 * 64];
 
 
 static uint8_t keyScanCode(int in);
@@ -31,17 +30,26 @@ void int_notify(uint8_t num) {
 }
 
 uint8_t port_read(uint32_t port) {
-//  printf("PORT READ: %03x\n", port);
-
-  //if (port == 0x3DA) {
-  //  return 0xff;  // weird this is required!
-  //}
 
   if (port == 0xb8) {
     return disk_spi_read();
   }
 
-  return io[port & 0xffff];
+  if (port == 0xb9) {
+    return 0;  // SPI not busy
+  }
+
+  uint8_t out = 0;
+
+  if (display_cga_io_read(port, &out)) {
+    return out;
+  }
+
+  if (display_ega_io_read(port, &out)) {
+    return out;
+  }
+
+  return 0;
 }
 
 void dump_sector() {
@@ -72,7 +80,7 @@ void port_write(uint32_t port, uint8_t value) {
   }
   if (port == 0xbc) {
     // legacy
-    disk_int13();
+    //disk_int13();
   }
   if (port == 0xbe) {
     //cpu_dump_state();
@@ -96,15 +104,18 @@ void port_write(uint32_t port, uint8_t value) {
     //printf("video mode change %x\n", value);
   }
 
-  display_io_write(port & 0xfff, value);
-  io[port & 0xffff] = value;
+  display_cga_io_write(port & 0xfff, value);
+  display_ega_io_write(port & 0xfff, value);
 }
 
 uint8_t mem_read(uint32_t addr) {
   addr &= 0xfffff;
 
-  if (addr == 0x475) {
-    return 1;
+  if ((addr & 0xF8000) == 0xB8000) {
+    return display_cga_mem_read(addr & 0x3fff);
+  }
+  if ((addr & 0xF8000) == 0xA0000) {
+    return display_ega_mem_read(addr & 0x3fff);
   }
 
   return memory[addr];
@@ -113,7 +124,14 @@ uint8_t mem_read(uint32_t addr) {
 void mem_write(uint32_t addr, uint8_t data) {
   addr &= 0xfffff;
   memory[addr] = data;
-  display_mem_write(addr, data);
+
+  if ((addr & 0xF8000) == 0xB8000) {
+    display_cga_mem_write(addr & 0x3fff, data);
+    return;
+  }
+  if ((addr & 0xF8000) == 0xA0000) {
+    display_ega_mem_write(addr & 0x3fff, data);
+  }
 }
 
 static bool load_hex(uint8_t *dst, uint32_t addr, const char* path, uint32_t max) {
@@ -191,7 +209,7 @@ int main(int argc, char** args) {
   const char* romPath  = argc >= 3 ? args[2] : "C:\\riscv\\iceXt\\misc\\diskrom\\bin\\diskrom.hex";
   const char* diskPath = argc >= 4 ? args[3] : "C:\\riscv\\iceXt\\misc\\dos-boot-2.img";
 
-  if (!load_bin(0xfe000, biosPath)) {
+  if (!load_hex(memory, 0xfe000, biosPath, 1024 * 8)) {
     fprintf(stderr, "Unable to load BIOS!\n");
     return 1;
   }
