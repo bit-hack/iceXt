@@ -185,9 +185,11 @@ static uint8_t p3C4_2 = 0xf;    // Graphics: Bit Mask Register
 static uint8_t p3CE_index = 0;
 static uint8_t p3CE_0 = 0;      // Graphics: Set/Reset Register
 static uint8_t p3CE_1 = 0;      // Graphics: Enable Set/Reset Register
+static uint8_t p3CE_2 = 0;      // Graphics: Color Compare Register
 static uint8_t p3CE_3 = 0;      // Graphics: Data Rotate
 static uint8_t p3CE_4 = 0;      // Graphics: Read Map Select Register
 static uint8_t p3CE_5 = 0;      // Graphics: Mode Register
+static uint8_t p3CE_7 = 0;      // Graphics: Color Don't Care Register
 static uint8_t p3CE_8 = 0;      // Graphics: Bit Mask Register
 
 
@@ -205,10 +207,11 @@ static uint8_t ega_read_plane() {
 }
 
 static uint8_t ega_rotate() {
+  // note: only active in write mode 0
   return (p3CE_3 & 7);
 }
 
-static uint8_t ega_func() {
+static uint8_t ega_alu_func() {
   return (p3CE_3 >> 3) & 3;
 }
 
@@ -219,7 +222,7 @@ static void render_mode_ega_gfx(SDL_Surface* screen) {
   uint32_t src_pitch = 320 / 8;
 
   uint32_t* dst0 = screen->pixels;
-  uint32_t* dst1 = (uint32_t*)screen->pixels + dst_pitch;
+  uint32_t* dst1 = ((uint32_t*)screen->pixels) + dst_pitch;
 
   uint8_t scanline[320] = { 0 };
 
@@ -227,28 +230,31 @@ static void render_mode_ega_gfx(SDL_Surface* screen) {
 
     uint32_t base = y * src_pitch;
 
-    for (uint32_t x = 0; x < 320; ++x) {
-      
-      const uint8_t mask = 0x80 >> (x % 8);
+    for (uint32_t x = 0; x < 320; x += 8) {
+      for (uint32_t i = 0; i < 8; ++i) {
 
-      const uint8_t b0 = plane0[ base + (x / 8) ] & mask;
-      const uint8_t b1 = plane1[ base + (x / 8) ] & mask;
-      const uint8_t b2 = plane2[ base + (x / 8) ] & mask;
-      const uint8_t b3 = plane3[ base + (x / 8) ] & mask;
+        const uint8_t mask = 0x80 >> i;
 
-      scanline[x] = (b0 ? 0x1 : 0x0) |
-                    (b1 ? 0x2 : 0x0) |
-                    (b2 ? 0x4 : 0x0) |
-                    (b3 ? 0x8 : 0x0);
+        const uint8_t b0 = plane0[base + (x/8)] & mask;
+        const uint8_t b1 = plane1[base + (x/8)] & mask;
+        const uint8_t b2 = plane2[base + (x/8)] & mask;
+        const uint8_t b3 = plane3[base + (x/8)] & mask;
+
+        scanline[x + i] =
+          (b0 ? 0x1 : 0x0) |
+          (b1 ? 0x2 : 0x0) |
+          (b2 ? 0x4 : 0x0) |
+          (b3 ? 0x8 : 0x0);
+      }
     }
 
     for (uint32_t x = 0; x < 320; ++x) {
 
       uint8_t index = palette[ scanline[ x ] & 0xf ];
 
-      uint8_t b = 3 & (index >> 4);
-      uint8_t g = 3 & (index >> 2);
-      uint8_t r = 3 & (index >> 0);
+      uint32_t b = (index >> 4) & 3;
+      uint32_t g = (index >> 2) & 3;
+      uint32_t r = (index >> 0) & 3;
 
       uint32_t rgb = ((r << 24) | (g << 16) | (b << 8)) >> 2;
 
@@ -272,40 +278,51 @@ static uint8_t rotate(uint8_t rot, uint8_t a) {
   return ((t & 0xff00) | ((t & 0xff) << 8)) >> 8;
 }
 
+void ega_write_planes(uint32_t addr, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3) {
+  if (p3C4_2 & 1) { plane0[addr] = d0; }
+  if (p3C4_2 & 2) { plane1[addr] = d1; }
+  if (p3C4_2 & 4) { plane2[addr] = d2; }
+  if (p3C4_2 & 8) { plane3[addr] = d3; }
+}
+
 void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   const uint8_t mode = ega_write_mode();
-
-  data = rotate(ega_rotate(), data);
 
   // note: we take the latch as the prior value and do a bit blend with it
   //       there is no actual bit enables being used.
 
   // mode0
   if (mode == 0) {
-    // todo: this needs to use the set/reset register
-    if (p3C4_2 & 1) { plane0[addr] = latch0; }
-    if (p3C4_2 & 2) { plane1[addr] = latch1; }
-    if (p3C4_2 & 4) { plane2[addr] = latch2; }
-    if (p3C4_2 & 8) { plane3[addr] = latch3; }
+    // TODO
     return;
   }
 
   // mode1
   if (mode == 1) {
-    if (p3C4_2 & 1) { plane0[addr] = blend(0, 0xff, latch0); }
-    if (p3C4_2 & 2) { plane1[addr] = blend(0, 0xff, latch1); }
-    if (p3C4_2 & 4) { plane2[addr] = blend(0, 0xff, latch2); }
-    if (p3C4_2 & 8) { plane3[addr] = blend(0, 0xff, latch3); }
+    ega_write_planes(addr,
+      latch0,
+      latch1,
+      latch2,
+      latch3
+    );
     return;
   }
 
   // mode2
   if (mode == 2) {
-    if (p3C4_2 & 1) { plane0[addr] = blend(p3CE_8, data, latch0); }
-    if (p3C4_2 & 2) { plane1[addr] = blend(p3CE_8, data, latch1); }
-    if (p3C4_2 & 4) { plane2[addr] = blend(p3CE_8, data, latch2); }
-    if (p3C4_2 & 8) { plane3[addr] = blend(p3CE_8, data, latch3); }
+
+    const uint8_t b0 = (data & 1) ? 0xff : 0x00;
+    const uint8_t b1 = (data & 2) ? 0xff : 0x00;
+    const uint8_t b2 = (data & 4) ? 0xff : 0x00;
+    const uint8_t b3 = (data & 8) ? 0xff : 0x00;
+
+    ega_write_planes(addr,
+      blend(p3CE_8, b0, latch0),
+      blend(p3CE_8, b1, latch1),
+      blend(p3CE_8, b2, latch2),
+      blend(p3CE_8, b3, latch3)
+    );
     return;
   }
 }
@@ -332,7 +349,7 @@ uint8_t display_ega_mem_read(uint32_t addr) {
     // TODO
   }
 
-  return 0;
+  return 0xff;
 }
 
 void ega_write_3C0(uint8_t data) {
@@ -362,6 +379,9 @@ void ega_write_3CF(uint8_t index, uint8_t data) {
   if (index == 1) {
     p3CE_1 = data;  // Graphics: Enable Set/Reset Register
   }
+  if (index == 2) {
+    p3CE_2 = data;  // Graphics: Color Compare Register
+  }
   if (index == 3) {
     p3CE_3 = data;  // Graphics: Data Rotate 
   }
@@ -370,6 +390,9 @@ void ega_write_3CF(uint8_t index, uint8_t data) {
   }
   if (index == 5) {
     p3CE_5 = data;  // Graphics: Mode Register
+  }
+  if (index == 7) {
+    p3CE_7 = data;  // Graphics: Color Don't Care Register
   }
   if (index == 8) {
     p3CE_8 = data;  // Graphics: Bit(Map) Mask Register
@@ -381,7 +404,6 @@ void display_ega_io_write(uint32_t port, uint8_t data) {
   if ((port & 0xF00) == 0x300) {
     printf("%03x <= %02x\n", port, data);
   }
-
   if (port == 0x3C0) {
     ega_write_3C0(data);
   }

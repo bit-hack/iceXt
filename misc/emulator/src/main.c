@@ -120,7 +120,7 @@ void port_write(uint32_t port, uint8_t value) {
 uint8_t mem_read(uint32_t addr) {
   addr &= 0xfffff;
 
-  if (addr >= 0xA0000 && addr < 0xB0000) {
+  if (addr >= 0xA0000 && addr < 0xA4000) {
     return display_ega_mem_read(addr & 0x3fff);
   }
   if ((addr & 0xF8000) == 0xB8000) {
@@ -134,7 +134,7 @@ void mem_write(uint32_t addr, uint8_t data) {
   addr &= 0xfffff;
   memory[addr] = data;
 
-  if (addr >= 0xA0000 && addr < 0xB0000) {
+  if (addr >= 0xA0000 && addr < 0xA4000) {
     display_ega_mem_write(addr & 0x3fff, data);
   }
   if ((addr & 0xF8000) == 0xB8000) {
