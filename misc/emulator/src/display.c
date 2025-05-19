@@ -125,6 +125,7 @@ bool display_cga_io_read(uint32_t port, uint8_t *out) {
 
 void display_set_mode(uint8_t mode) {
   display_mode = mode;
+  printf("Display Mode: %x\n", mode);
 }
 
 void display_draw(SDL_Surface* screen) {
@@ -184,6 +185,7 @@ static uint8_t p3C4_2 = 0xf;    // Graphics: Bit Mask Register
 static uint8_t p3CE_index = 0;
 static uint8_t p3CE_0 = 0;      // Graphics: Set/Reset Register
 static uint8_t p3CE_1 = 0;      // Graphics: Enable Set/Reset Register
+static uint8_t p3CE_3 = 0;      // Graphics: Data Rotate
 static uint8_t p3CE_4 = 0;      // Graphics: Read Map Select Register
 static uint8_t p3CE_5 = 0;      // Graphics: Mode Register
 static uint8_t p3CE_8 = 0;      // Graphics: Bit Mask Register
@@ -205,72 +207,111 @@ static uint8_t ega_read_plane() {
 static void render_mode_ega_gfx(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
 
-  uint32_t* dst = screen->pixels;
+  uint32_t dst_pitch = (screen->pitch / 4);
+  uint32_t src_pitch = 320 / 8;
 
-  for (uint32_t y = 0; y < 400; ++y) {
-    uint32_t iy = y / 2;
+  uint32_t* dst0 = screen->pixels;
+  uint32_t* dst1 = (uint32_t*)screen->pixels + dst_pitch;
 
-    for (uint32_t x = 0; x < 640; ++x) {
-      uint32_t ix = x / 2;
+  uint8_t scanline[320] = { 0 };
 
-      dst[x] = 0xFF00FF;
+  for (uint32_t y = 0; y < 200; ++y) {
+
+    uint32_t base = y * src_pitch;
+
+    for (uint32_t x = 0; x < 320; ++x) {
+      
+      const uint8_t mask = 0x80 >> (x % 8);
+
+      const uint8_t b0 = plane0[ base + (x / 8) ] & mask;
+      const uint8_t b1 = plane1[ base + (x / 8) ] & mask;
+      const uint8_t b2 = plane2[ base + (x / 8) ] & mask;
+      const uint8_t b3 = plane3[ base + (x / 8) ] & mask;
+
+      scanline[x] = (b0 ? 0x1 : 0x0) |
+                    (b1 ? 0x2 : 0x0) |
+                    (b2 ? 0x4 : 0x0) |
+                    (b3 ? 0x8 : 0x0);
     }
 
-    dst += screen->pitch / 4;
+    for (uint32_t x = 0; x < 320; ++x) {
+
+      uint8_t index = palette[ scanline[ x ] & 0xf ];
+
+      uint8_t b = 3 & (index >> 4);
+      uint8_t g = 3 & (index >> 2);
+      uint8_t r = 3 & (index >> 0);
+
+      uint32_t rgb = ((r << 24) | (g << 16) | (b << 8)) >> 2;
+
+      dst0[ x * 2 + 0 ] = rgb;
+      dst0[ x * 2 + 1 ] = rgb;
+      dst1[ x * 2 + 0 ] = rgb;
+      dst1[ x * 2 + 1 ] = rgb;
+    }
+
+    dst0 += dst_pitch * 2;
+    dst1 += dst_pitch * 2;
   }
+}
+
+static uint8_t blend(uint8_t mask, uint8_t a, uint8_t b) {
+  return (a & mask) | (b & ~mask);
 }
 
 void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   const uint8_t mode = ega_write_mode();
 
-  const o0 = plane0[addr] & ~p3CE_8;
-  const o1 = plane1[addr] & ~p3CE_8;
-  const o2 = plane2[addr] & ~p3CE_8;
-  const o3 = plane3[addr] & ~p3CE_8;
+  // note: we take the latch as the prior value and do a bit blend with it
+  //       there is no actual bit enables being used.
 
   // mode0
   if (mode == 0) {
-    // TODO
+    // todo: this needs to use the set/reset register
+    if (p3C4_2 & 1) { plane0[addr] = latch0; }
+    if (p3C4_2 & 2) { plane1[addr] = latch1; }
+    if (p3C4_2 & 4) { plane2[addr] = latch2; }
+    if (p3C4_2 & 8) { plane3[addr] = latch3; }
     return;
   }
 
   // mode1
   if (mode == 1) {
-    if (p3C4_2 & 0b0001) { plane0[addr] = o0 | (p3CE_8 & latch0); }
-    if (p3C4_2 & 0b0010) { plane1[addr] = o1 | (p3CE_8 & latch1); }
-    if (p3C4_2 & 0b0100) { plane2[addr] = o2 | (p3CE_8 & latch2); }
-    if (p3C4_2 & 0b1000) { plane3[addr] = o3 | (p3CE_8 & latch3); }
+    if (p3C4_2 & 1) { plane0[addr] = blend(     0, 0xff, latch0); }
+    if (p3C4_2 & 2) { plane1[addr] = blend(     0, 0xff, latch1); }
+    if (p3C4_2 & 4) { plane2[addr] = blend(     0, 0xff, latch2); }
+    if (p3C4_2 & 8) { plane3[addr] = blend(     0, 0xff, latch3); }
     return;
   }
 
   // mode2
   if (mode == 2) {
-    if (p3C4_2 & 0b0001) { plane0[addr] = o0 | p3CE_8; }
-    if (p3C4_2 & 0b0010) { plane1[addr] = o1 | p3CE_8; }
-    if (p3C4_2 & 0b0100) { plane2[addr] = o2 | p3CE_8; }
-    if (p3C4_2 & 0b1000) { plane3[addr] = o3 | p3CE_8; }
+    if (p3C4_2 & 1) { plane0[addr] = blend(p3CE_8, data, latch0); }
+    if (p3C4_2 & 2) { plane1[addr] = blend(p3CE_8, data, latch1); }
+    if (p3C4_2 & 4) { plane2[addr] = blend(p3CE_8, data, latch2); }
+    if (p3C4_2 & 8) { plane3[addr] = blend(p3CE_8, data, latch3); }
     return;
   }
 }
 
 uint8_t display_ega_mem_read(uint32_t addr) {
 
-  latch0 = plane0[addr & 0x3fff];
-  latch1 = plane1[addr & 0x3fff];
-  latch2 = plane2[addr & 0x3fff];
-  latch3 = plane3[addr & 0x3fff];
+  // a read fills the latches
+  latch0 = plane0[addr];
+  latch1 = plane1[addr];
+  latch2 = plane2[addr];
+  latch3 = plane3[addr];
 
   if (ega_read_mode() == 0) {
-
     switch (ega_read_plane()) {
     case 0: return latch0;
     case 1: return latch1;
     case 2: return latch2;
     case 3: return latch3;
     }
-
   }
+
   if (ega_read_mode() == 1) {
 
     // TODO
@@ -306,6 +347,9 @@ void ega_write_3CF(uint8_t index, uint8_t data) {
   if (index == 1) {
     p3CE_1 = data;  // Graphics: Enable Set/Reset Register
   }
+  if (index == 3) {
+    p3CE_3 = data;  // Graphics: Data Rotate 
+  }
   if (index == 4) {
     p3CE_4 = data;  // Graphics: Read Map Select Register
   }
@@ -318,6 +362,11 @@ void ega_write_3CF(uint8_t index, uint8_t data) {
 }
 
 void display_ega_io_write(uint32_t port, uint8_t data) {
+
+  if ((port & 0xF00) == 0x300) {
+    printf("%03x <= %02x\n", port, data);
+  }
+
   if (port == 0x3C0) {
     ega_write_3C0(data);
   }
@@ -336,8 +385,16 @@ void display_ega_io_write(uint32_t port, uint8_t data) {
 }
 
 bool display_ega_io_read(uint32_t port, uint8_t *out) {
+
+  if ((port & 0xF00) == 0x300) {
+    printf("%03x => ??\n", port);
+  }
+
   if (port == 0x3DA) {
     p3C0_ff = 0;  // reset FF to address
+    *out = 0xff;
+    return true;
   }
+
   return false;
 }

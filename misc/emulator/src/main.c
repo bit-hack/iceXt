@@ -14,6 +14,7 @@
 
 uint8_t memory[1024 * 1024];
 
+uint8_t p60;  // port 60h
 
 static uint8_t keyScanCode(int in);
 
@@ -37,6 +38,10 @@ uint8_t port_read(uint32_t port) {
 
   if (port == 0xb9) {
     return 0;  // SPI not busy
+  }
+
+  if (port == 0x60) {
+    return p60;
   }
 
   uint8_t out = 0;
@@ -64,6 +69,10 @@ void dump_sector() {
 
 void port_write(uint32_t port, uint8_t value) {
 //  printf("PORT WRITE: %03x <= %02x\n", port, value);
+
+  if (port == 0x60) {
+    p60 = value;
+  }
 
   if (port == 0xb0) {
     printf("----------------------------------------------------\n");
@@ -111,11 +120,11 @@ void port_write(uint32_t port, uint8_t value) {
 uint8_t mem_read(uint32_t addr) {
   addr &= 0xfffff;
 
+  if (addr >= 0xA0000 && addr < 0xB0000) {
+    return display_ega_mem_read(addr & 0x3fff);
+  }
   if ((addr & 0xF8000) == 0xB8000) {
     return display_cga_mem_read(addr & 0x3fff);
-  }
-  if ((addr & 0xF8000) == 0xA0000) {
-    return display_ega_mem_read(addr & 0x3fff);
   }
 
   return memory[addr];
@@ -125,12 +134,11 @@ void mem_write(uint32_t addr, uint8_t data) {
   addr &= 0xfffff;
   memory[addr] = data;
 
+  if (addr >= 0xA0000 && addr < 0xB0000) {
+    display_ega_mem_write(addr & 0x3fff, data);
+  }
   if ((addr & 0xF8000) == 0xB8000) {
     display_cga_mem_write(addr & 0x3fff, data);
-    return;
-  }
-  if ((addr & 0xF8000) == 0xA0000) {
-    display_ega_mem_write(addr & 0x3fff, data);
   }
 }
 
