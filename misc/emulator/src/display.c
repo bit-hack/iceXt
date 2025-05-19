@@ -204,6 +204,14 @@ static uint8_t ega_read_plane() {
   return (p3CE_4 & 3);
 }
 
+static uint8_t ega_rotate() {
+  return (p3CE_3 & 7);
+}
+
+static uint8_t ega_func() {
+  return (p3CE_3 >> 3) & 3;
+}
+
 static void render_mode_ega_gfx(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
 
@@ -259,9 +267,16 @@ static uint8_t blend(uint8_t mask, uint8_t a, uint8_t b) {
   return (a & mask) | (b & ~mask);
 }
 
+static uint8_t rotate(uint8_t rot, uint8_t a) {
+  const uint16_t t = (a << 8) >> rot;
+  return ((t & 0xff00) | ((t & 0xff) << 8)) >> 8;
+}
+
 void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   const uint8_t mode = ega_write_mode();
+
+  data = rotate(ega_rotate(), data);
 
   // note: we take the latch as the prior value and do a bit blend with it
   //       there is no actual bit enables being used.
@@ -278,10 +293,10 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   // mode1
   if (mode == 1) {
-    if (p3C4_2 & 1) { plane0[addr] = blend(     0, 0xff, latch0); }
-    if (p3C4_2 & 2) { plane1[addr] = blend(     0, 0xff, latch1); }
-    if (p3C4_2 & 4) { plane2[addr] = blend(     0, 0xff, latch2); }
-    if (p3C4_2 & 8) { plane3[addr] = blend(     0, 0xff, latch3); }
+    if (p3C4_2 & 1) { plane0[addr] = blend(0, 0xff, latch0); }
+    if (p3C4_2 & 2) { plane1[addr] = blend(0, 0xff, latch1); }
+    if (p3C4_2 & 4) { plane2[addr] = blend(0, 0xff, latch2); }
+    if (p3C4_2 & 8) { plane3[addr] = blend(0, 0xff, latch3); }
     return;
   }
 
