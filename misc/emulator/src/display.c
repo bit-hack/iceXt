@@ -271,20 +271,13 @@ static void render_mode_ega_gfx(SDL_Surface* screen) {
   }
 }
 
-static uint8_t blend(uint8_t mask, uint8_t a, uint8_t b) {
-  return (a & mask) | (b & ~mask);
-}
-
 static uint8_t rotate(uint8_t rot, uint8_t a) {
   const uint16_t t = (a << 8) >> rot;
   return ((t & 0xff00) | ((t & 0xff) << 8)) >> 8;
 }
 
-void ega_write_planes(uint32_t addr, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3) {
-  if (p3C4_2 & 1) { plane0[addr] = d0; }
-  if (p3C4_2 & 2) { plane1[addr] = d1; }
-  if (p3C4_2 & 4) { plane2[addr] = d2; }
-  if (p3C4_2 & 8) { plane3[addr] = d3; }
+static uint8_t blend(uint8_t mask, uint8_t a, uint8_t b) {
+  return (a & mask) | (b & ~mask);
 }
 
 uint8_t alu_op(uint8_t a, uint8_t b) {
@@ -294,6 +287,17 @@ uint8_t alu_op(uint8_t a, uint8_t b) {
   case 2: return a | b;
   case 3: return a ^ b;
   }
+}
+
+void ega_write_planes(uint32_t addr, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3) {
+  if (p3C4_2 & 1) { plane0[addr] = d0; }
+  if (p3C4_2 & 2) { plane1[addr] = d1; }
+  if (p3C4_2 & 4) { plane2[addr] = d2; }
+  if (p3C4_2 & 8) { plane3[addr] = d3; }
+}
+
+uint8_t as_mask(uint8_t v) {
+  return v ? 0xff : 0x00;
 }
 
 void display_ega_mem_write(uint32_t addr, uint8_t data) {
@@ -306,10 +310,10 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
     data = rotate(ega_rotate(), data);
 
     // compute set/reset values
-    const uint8_t sr0 = (p3CE_0 & 1) ? 0xff : 0x00;
-    const uint8_t sr1 = (p3CE_0 & 2) ? 0xff : 0x00;
-    const uint8_t sr2 = (p3CE_0 & 4) ? 0xff : 0x00;
-    const uint8_t sr3 = (p3CE_0 & 8) ? 0xff : 0x00;
+    const uint8_t sr0 = as_mask(p3CE_0 & 1);
+    const uint8_t sr1 = as_mask(p3CE_0 & 2);
+    const uint8_t sr2 = as_mask(p3CE_0 & 4);
+    const uint8_t sr3 = as_mask(p3CE_0 & 8);
 
     // set/reset enable mux
     const uint8_t in0 = (p3CE_1 & 1) ? sr0 : data;
@@ -346,10 +350,10 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
   // mode2
   if (mode == 2) {
 
-    const uint8_t b0 = (data & 1) ? 0xff : 0x00;
-    const uint8_t b1 = (data & 2) ? 0xff : 0x00;
-    const uint8_t b2 = (data & 4) ? 0xff : 0x00;
-    const uint8_t b3 = (data & 8) ? 0xff : 0x00;
+    const uint8_t b0 = as_mask(data & 1);
+    const uint8_t b1 = as_mask(data & 2);
+    const uint8_t b2 = as_mask(data & 4);
+    const uint8_t b3 = as_mask(data & 8);
 
     // ALU result
     const uint8_t alu0 = alu_op(b0, latch0);
@@ -386,7 +390,22 @@ uint8_t display_ega_mem_read(uint32_t addr) {
 
   if (ega_read_mode() == 1) {
 
-    // TODO
+    const uint8_t c0 = as_mask(p3CE_2 & 1);
+    const uint8_t c1 = as_mask(p3CE_2 & 2);
+    const uint8_t c2 = as_mask(p3CE_2 & 4);
+    const uint8_t c3 = as_mask(p3CE_2 & 8);
+
+    // bits set for all non-matching planes
+    const uint8_t a0 = (p3CE_7 & 1) ? 0 : (c0 ^ latch0);
+    const uint8_t a1 = (p3CE_7 & 2) ? 0 : (c1 ^ latch1);
+    const uint8_t a2 = (p3CE_7 & 4) ? 0 : (c2 ^ latch2);
+    const uint8_t a3 = (p3CE_7 & 8) ? 0 : (c3 ^ latch3);
+
+    // sum all the differing pixels
+    const uint8_t diff = a0 | a1 | a2 | a3;
+
+    // invert to get a mask of all matching bits
+    return ~diff;
   }
 
   return 0xff;
@@ -397,11 +416,9 @@ void ega_write_3C0(uint8_t data) {
     p3C0_index = data;
   }
   if (p3C0_ff == 1) {  // data write
-
     if (p3C0_index < 16) {
       palette[p3C0_index & 0xf] = data;
     }
-
   }
   p3C0_ff = !p3C0_ff;
 }
@@ -469,7 +486,7 @@ bool display_ega_io_read(uint32_t port, uint8_t *out) {
 
   if (port == 0x3DA) {
     p3C0_ff = 0;  // reset FF to address
-    *out = 0xff;
+    *out = 0xff;  // required to stop some games polling for VBLANK?
     return true;
   }
 

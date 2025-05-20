@@ -235,7 +235,7 @@ int main(int argc, char** args) {
   memory[0x410] = 0b00101100;
   memory[0x410] = 0b00000000;
 
-  const uint32_t steps = 10000;
+  const uint32_t steps = 100000;
   uint32_t irq0 = 0;
 
   SDL_Surface* screen = SDL_SetVideoMode(640, 400, 32, 0);
