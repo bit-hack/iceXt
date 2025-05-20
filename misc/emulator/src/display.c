@@ -252,9 +252,11 @@ static void render_mode_ega_gfx(SDL_Surface* screen) {
 
       uint8_t index = palette[ scanline[ x ] & 0xf ];
 
-      uint32_t b = (index >> 4) & 3;
-      uint32_t g = (index >> 2) & 3;
-      uint32_t r = (index >> 0) & 3;
+      // x x RL GL BL RH GH BH
+
+      uint32_t r = ((index >> 1) & 2) | ((index >> 5) & 1);
+      uint32_t g = ((index >> 0) & 2) | ((index >> 4) & 1);
+      uint32_t b = ((index << 1) & 2) | ((index >> 3) & 1);
 
       uint32_t rgb = ((r << 24) | (g << 16) | (b << 8)) >> 2;
 
@@ -285,16 +287,48 @@ void ega_write_planes(uint32_t addr, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t
   if (p3C4_2 & 8) { plane3[addr] = d3; }
 }
 
+uint8_t alu_op(uint8_t a, uint8_t b) {
+  switch (ega_alu_func() & 3) {
+  case 0: return a;
+  case 1: return a & b;
+  case 2: return a | b;
+  case 3: return a ^ b;
+  }
+}
+
 void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   const uint8_t mode = ega_write_mode();
 
-  // note: we take the latch as the prior value and do a bit blend with it
-  //       there is no actual bit enables being used.
-
   // mode0
   if (mode == 0) {
-    // TODO
+
+    data = rotate(ega_rotate(), data);
+
+    // compute set/reset values
+    const uint8_t sr0 = (p3CE_0 & 1) ? 0xff : 0x00;
+    const uint8_t sr1 = (p3CE_0 & 2) ? 0xff : 0x00;
+    const uint8_t sr2 = (p3CE_0 & 4) ? 0xff : 0x00;
+    const uint8_t sr3 = (p3CE_0 & 8) ? 0xff : 0x00;
+
+    // set/reset enable mux
+    const uint8_t in0 = (p3CE_1 & 1) ? sr0 : data;
+    const uint8_t in1 = (p3CE_1 & 2) ? sr1 : data;
+    const uint8_t in2 = (p3CE_1 & 4) ? sr2 : data;
+    const uint8_t in3 = (p3CE_1 & 8) ? sr3 : data;
+
+    // ALU result
+    const uint8_t alu0 = alu_op(in0, latch0);
+    const uint8_t alu1 = alu_op(in1, latch1);
+    const uint8_t alu2 = alu_op(in2, latch2);
+    const uint8_t alu3 = alu_op(in3, latch3);
+
+    ega_write_planes(addr,
+      blend(p3CE_8, alu0, latch0),
+      blend(p3CE_8, alu1, latch1),
+      blend(p3CE_8, alu2, latch2),
+      blend(p3CE_8, alu3, latch3)
+    );
     return;
   }
 
@@ -317,11 +351,17 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
     const uint8_t b2 = (data & 4) ? 0xff : 0x00;
     const uint8_t b3 = (data & 8) ? 0xff : 0x00;
 
+    // ALU result
+    const uint8_t alu0 = alu_op(b0, latch0);
+    const uint8_t alu1 = alu_op(b1, latch1);
+    const uint8_t alu2 = alu_op(b2, latch2);
+    const uint8_t alu3 = alu_op(b3, latch3);
+
     ega_write_planes(addr,
-      blend(p3CE_8, b0, latch0),
-      blend(p3CE_8, b1, latch1),
-      blend(p3CE_8, b2, latch2),
-      blend(p3CE_8, b3, latch3)
+      blend(p3CE_8, alu0, latch0),
+      blend(p3CE_8, alu1, latch1),
+      blend(p3CE_8, alu2, latch2),
+      blend(p3CE_8, alu3, latch3)
     );
     return;
   }
