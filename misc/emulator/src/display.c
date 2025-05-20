@@ -215,8 +215,28 @@ static uint8_t ega_alu_func() {
   return (p3CE_3 >> 3) & 3;
 }
 
+static void dump_hex(const char *path, const uint8_t* data, size_t x) {
+  FILE *fd = fopen(path, "w");
+  for (size_t i = 0; i < x; ++i) {
+    fprintf(fd, "%02x\n", data[i]);
+  }
+  fclose(fd);
+}
+
+static void dump_ega() {
+  dump_hex("ega_plane_0.hex", plane0,  sizeof(plane0));
+  dump_hex("ega_plane_1.hex", plane1,  sizeof(plane1));
+  dump_hex("ega_plane_2.hex", plane2,  sizeof(plane2));
+  dump_hex("ega_plane_3.hex", plane3,  sizeof(plane3));
+  dump_hex("ega_palette.hex", palette, sizeof(palette));
+}
+
 static void render_mode_ega_gfx(SDL_Surface* screen) {
   SDL_FillRect(screen, NULL, 0x101010);
+
+  if (false) {
+    dump_ega();
+  }
 
   uint32_t dst_pitch = (screen->pitch / 4);
   uint32_t src_pitch = 320 / 8;
