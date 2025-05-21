@@ -18,4 +18,4 @@ sound/adlib.v
 sound/ym3014.v
 io/keyboard.v
 io/sdcard.v
-top_ega.v
+top.v

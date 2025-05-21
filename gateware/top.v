@@ -139,6 +139,7 @@ module top(
       keyboard_sel ? keyboard_out :
            pit_sel ? pit_data_out :
            cga_sel ?      cga_out :
+           ega_sel ?      ega_out :
                            sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;
@@ -199,6 +200,11 @@ module top(
 
   wire [7:0] cga_out;
   wire       cga_sel;
+  wire [3:0] cga_r;
+  wire [3:0] cga_g;
+  wire [3:0] cga_b;
+  wire       cga_hs;
+  wire       cga_vs;
 
   video_cga u_video_cga(
     .iClk   (pll_clk_bus),
@@ -210,12 +216,53 @@ module top(
     .iRdIo  (cpu_io_rd),
     .oRdData(cga_out),
     .oSel   (cga_sel),
-    .oVgaR  (vga_r),
-    .oVgaG  (vga_g),
-    .oVgaB  (vga_b),
-    .oVgaHs (vga_hs),
-    .oVgaVs (vga_vs)
+    .oVgaR  (cga_r),
+    .oVgaG  (cga_g),
+    .oVgaB  (cga_b),
+    .oVgaHs (cga_hs),
+    .oVgaVs (cga_vs)
   );
+  
+  //
+  // EGA interface
+  //
+
+  wire [7:0] ega_out;
+  wire       ega_sel;
+  wire [3:0] ega_r;
+  wire [3:0] ega_g;
+  wire [3:0] ega_b;
+  wire       ega_hs;
+  wire       ega_vs;
+  wire       ega_active;
+
+  video_ega u_video_ega(
+    .iClk   (pll_clk_bus),
+    .iClk25 (pll_clk_25),
+    .iAddr  (cpu_addr),
+    .iWrData(cpu_data_out),
+    .iWrMem (cpu_mem_wr),
+    .iWrIo  (cpu_io_wr),
+    .iRdIo  (cpu_io_rd),
+    .oRdData(ega_out),
+    .oSel   (ega_sel),
+    .oVgaR  (ega_r),
+    .oVgaG  (ega_g),
+    .oVgaB  (ega_b),
+    .oVgaHs (ega_hs),
+    .oVgaVs (ega_vs),
+    .oActive(ega_active)
+  );
+
+  //
+  // multiplex into the VGA output
+  //
+  
+  assign vga_r  = ega_active ? ega_r  : cga_r;
+  assign vga_g  = ega_active ? ega_g  : cga_g;
+  assign vga_b  = ega_active ? ega_b  : cga_b;
+  assign vga_vs = ega_active ? ega_vs : cga_vs;
+  assign vga_hs = ega_active ? ega_hs : cga_hs;
 
   //
   // SRAM interface

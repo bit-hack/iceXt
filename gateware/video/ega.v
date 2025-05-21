@@ -220,17 +220,17 @@ module video_ega(
   wire [31:0] vramData;
   wire [31:0] vramRdData;
   video_ram_ega u_video_ram(
-    .iClk    (iClk),       // cpu read/write clock
-    .iClk25  (iClk25),     // vga read clock
+    .iClk    (iClk),        // cpu read/write clock
+    .iClk25  (iClk25),      // vga read clock
     // cpu write port
-    .iWrAddr (vramWrAddr),      // 0..16k
+    .iWrAddr (vramWrAddr),  // 0..16k
     .iWr     (vramWr),
     .iWrData (vramWrData),
     // cpu read port
     .iRdAddr (iAddr[13:0]),
     .oRdData (vramRdData),
     // vga read port
-    .iVgaAddr(crtcAddr),  // 0..16k
+    .iVgaAddr(crtcAddr),    // 0..16k
     .oVgaData(vramData)
   );
 

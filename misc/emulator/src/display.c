@@ -326,7 +326,7 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
 
   // mode0
   if (mode == 0) {
-
+#if 0
     data = rotate(ega_rotate(), data);
 
     // compute set/reset values
@@ -353,6 +353,7 @@ void display_ega_mem_write(uint32_t addr, uint8_t data) {
       blend(p3CE_8, alu2, latch2),
       blend(p3CE_8, alu3, latch3)
     );
+#endif
     return;
   }
 
@@ -409,7 +410,7 @@ uint8_t display_ega_mem_read(uint32_t addr) {
   }
 
   if (ega_read_mode() == 1) {
-
+#if 0
     const uint8_t c0 = as_mask(p3CE_2 & 1);
     const uint8_t c1 = as_mask(p3CE_2 & 2);
     const uint8_t c2 = as_mask(p3CE_2 & 4);
@@ -426,6 +427,7 @@ uint8_t display_ega_mem_read(uint32_t addr) {
 
     // invert to get a mask of all matching bits
     return ~diff;
+#endif
   }
 
   return 0xff;
