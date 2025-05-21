@@ -116,12 +116,6 @@ module video_ram_ega(
   reg [7:0] plane1[16384];
   reg [7:0] plane2[16384];
   reg [7:0] plane3[16384];
-  
-  // load test contents
-  initial $readmemh("misc/ega/ega_plane_0.hex", plane0);
-  initial $readmemh("misc/ega/ega_plane_1.hex", plane1);
-  initial $readmemh("misc/ega/ega_plane_2.hex", plane2);
-  initial $readmemh("misc/ega/ega_plane_3.hex", plane3);
 
   //
   // cpu read/write ports
@@ -183,8 +177,9 @@ module video_ega(
     output [3:0]     oVgaB,
     output           oVgaHs,
     output           oVgaVs,
-    
-    output reg       oActive = 0
+
+    output reg       oActive = 0,
+    output [7:0]     oDebug
 );
 
   wire selected = iAddr[19:15] == 5'b1010_0; // 0xA0000..0xA7FFF
@@ -212,18 +207,17 @@ module video_ega(
   //
   // VRAM
   //
-  
-  reg        vramWr     = 0;
-  reg [13:0] vramWrAddr = 0;
-  reg [ 7:0] vramWrData = 0;
-  
+
+  reg [ 3:0] vramWr     = 0;
+  reg [31:0] vramWrData = 0;
+
   wire [31:0] vramData;
   wire [31:0] vramRdData;
   video_ram_ega u_video_ram(
     .iClk    (iClk),        // cpu read/write clock
     .iClk25  (iClk25),      // vga read clock
     // cpu write port
-    .iWrAddr (vramWrAddr),  // 0..16k
+    .iWrAddr (iAddr[13:0]),  // 0..16k
     .iWr     (vramWr),
     .iWrData (vramWrData),
     // cpu read port
@@ -238,16 +232,16 @@ module video_ega(
   // DAC pallette
   //
   reg [7:0] palette[16];
-  initial $readmemh("misc/ega/ega_palette.hex", palette);
+  initial $readmemh("roms/ega_palette.hex", palette);
 
   //
-  // 
+  //
   //
   reg [ 2:0] dlyCrtcDa;
   reg        dlyCrtcVs1, dlyCrtcVs0;
   reg        dlyCrtcHs1, dlyCrtcHs0;
   reg        dlyCrtcBl1, dlyCrtcBl0;
-  
+
   always @(posedge iClk25) begin
     dlyCrtcDa   <= crtcDa;
     { dlyCrtcVs1, dlyCrtcVs0 } <= { dlyCrtcVs0, crtcVs };
@@ -273,13 +267,13 @@ module video_ega(
   reg [7:0] palColor;
 
   always @(posedge iClk25) begin
-      palColor <= palIndex;    
+      palColor <= palette[ palIndex ];
   end
 
   //
   // vga output
   //
-  
+
   wire [3:0] outR = { palColor[2], palColor[5], 2'b0 };
   wire [3:0] outG = { palColor[1], palColor[4], 2'b0 };
   wire [3:0] outB = { palColor[0], palColor[3], 2'b0 };
@@ -294,12 +288,12 @@ module video_ega(
   //
   //
   //
-  
+
   reg       p3C0_ff = 0;    // 0-index, 1-data
   reg [7:0] p3C0_index = 0;
-  
+
   reg [7:0] p3C4_index = 0;
-  reg [7:0] p3C4_2 = 0;     // Graphics: Bit Mask Register
+  reg [7:0] p3C4_2 = 8'hff; // Graphics: Bit Mask Register
 
   reg [7:0] p3CE_index = 0;
   reg [7:0] p3CE_0 = 0;     // Graphics: Set/Reset Register
@@ -315,7 +309,7 @@ module video_ega(
   reg [7:0] latch2 = 0;
   reg [7:0] latch1 = 0;
   reg [7:0] latch0 = 0;
-  
+
   wire [1:0] writeMode   = p3CE_5[1:0];
   wire       readMode    = p3CE_5[3];
   wire [1:0] readPlane   = p3CE_4[1:0];
@@ -330,14 +324,8 @@ module video_ega(
   wire [7:0] bc2 = iWrData[2] ? 8'hff : 8'h00;
   wire [7:0] bc3 = iWrData[3] ? 8'hff : 8'h00;
 
-  // set/reset masks
-  wire [7:0] sr0 = p3CE_0[0] ? 8'hff : 8'h00;
-  wire [7:0] sr1 = p3CE_0[1] ? 8'hff : 8'h00;
-  wire [7:0] sr2 = p3CE_0[2] ? 8'hff : 8'h00;
-  wire [7:0] sr3 = p3CE_0[3] ? 8'hff : 8'h00;
-
   always @(posedge iClk) begin
-  
+
     oSel <= 0;
 
     //
@@ -351,13 +339,13 @@ module video_ega(
         oSel    <= 1;
       end
     end
-  
+
     //
     // IO write
     //
-  
+
     if (iWrIo) begin
-    
+
       // video mode enable hack
       if (iAddr[11:0] == 12'h0fe) begin
         oActive <= iWrData == 8'hd;
@@ -368,34 +356,37 @@ module video_ega(
           p3C0_index <= iWrData;
         end else begin
           if (p3C0_index[7:4] == 4'h0) begin
-            palette[ p3C0_index ] <= iWrData;
+            palette[ p3C0_index[3:0] ] <= iWrData;
           end
         end
         p3C0_ff <= !p3C0_ff;
       end
+
       if (iAddr[11:0] == 12'h3C4) begin
         p3C4_index <= iWrData;
       end
       if (iAddr[11:0] == 12'h3C5) begin
         case (p3C4_index)
-        2: p3C4_2 <= iWrData;
+        8'd2: p3C4_2 <= iWrData;
         endcase
       end
+
       if (iAddr[11:0] == 12'h3CE) begin
         p3CE_index <= iWrData;
       end
       if (iAddr[11:0] == 12'h3CF) begin
         case (p3CE_index)
-        0: p3CE_0 <= iWrData;
-        1: p3CE_1 <= iWrData;
-        2: p3CE_2 <= iWrData;
-        3: p3CE_3 <= iWrData;
-        4: p3CE_4 <= iWrData;
-        5: p3CE_5 <= iWrData;
-        7: p3CE_7 <= iWrData;
-        8: p3CE_8 <= iWrData;
+        8'd0: p3CE_0 <= iWrData;
+        8'd1: p3CE_1 <= iWrData;
+        8'd2: p3CE_2 <= iWrData;
+        8'd3: p3CE_3 <= iWrData;
+        8'd4: p3CE_4 <= iWrData;
+        8'd5: p3CE_5 <= iWrData;
+        8'd7: p3CE_7 <= iWrData;
+        8'd8: p3CE_8 <= iWrData;
         endcase
       end
+
     end
 
     //
@@ -410,15 +401,15 @@ module video_ega(
       { latch3, latch2, latch1, latch0 } <= vramRdData;
 
       case (readMode)
-      0: begin
+      1'd0: begin
         case (readPlane)
-        3: oRdData <= vramRdData[31:24];
-        2: oRdData <= vramRdData[23:16];
-        1: oRdData <= vramRdData[15: 8];
-        0: oRdData <= vramRdData[ 7: 0];
+        4'd3: oRdData <= vramRdData[31:24];
+        4'd2: oRdData <= vramRdData[23:16];
+        4'd1: oRdData <= vramRdData[15: 8];
+        4'd0: oRdData <= vramRdData[ 7: 0];
         endcase
       end
-      1: begin
+      1'd1: begin
         // TODO... color compare
       end
       endcase
@@ -434,10 +425,10 @@ module video_ega(
 
     if (iWrMem & selected) begin
       case (writeMode)
-      0: begin
+      2'd0: begin
         // TODO... set/reset
       end
-      1: begin
+      2'd1: begin
         vramWrData <= {
           latch3,
           latch2,
@@ -445,10 +436,10 @@ module video_ega(
           latch0
         };
       end
-      2: begin
+      2'd2: begin
 
         // TODO... alu ops
-      
+
         vramWrData <= {
           (mapMask & bc3) | ((~mapMask) & latch3),
           (mapMask & bc2) | ((~mapMask) & latch2),
@@ -462,4 +453,12 @@ module video_ega(
 
     end
   end
+
+  assign oDebug = {
+    2'b00,
+    selected,
+    iWrMem,
+    writePlanes
+  };
+  
 endmodule
