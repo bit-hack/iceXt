@@ -11,10 +11,11 @@ roms/biosrom.v
 roms/diskrom.v
 sram/sram_ctrl.v
 video/cga.v
+video/ega.v
 chipset/pic.v
 chipset/pit.v
 sound/adlib.v
 sound/ym3014.v
 io/keyboard.v
 io/sdcard.v
-top.v
+top_ega.v

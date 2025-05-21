@@ -1,4 +1,4 @@
-Module: D:\iceXt\roms\bios\pcxtbios.asm
+Module: C:\riscv\iceXt\roms\bios\pcxtbios.asm
 GROUP: 'DGROUP' _TEXT,_DATA
 
 File contains no line numbers.
@@ -35435,9 +35435,9 @@ endp	int_10_dispatch
 ;---------------------------------------------------------------------------------------------------
 proc	int_10_func_0	near
 
-	out 0FEh, ax     ; hook video mode change
+	out 0FEh, al     ; hook video mode change
 F115				int_10_func_0:
-F115  E7 FE				out		0xfe,ax
+F115  E6 FE				out		0xfe,al
 
 
 	mov	al, [ds:10h]			; Set mode of CRT

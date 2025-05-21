@@ -3233,7 +3233,7 @@ endp	int_10_dispatch
 ;---------------------------------------------------------------------------------------------------
 proc	int_10_func_0	near
 
-	out 0FEh, ax     ; hook video mode change
+	out 0FEh, al     ; hook video mode change
 
 	mov	al, [ds:10h]			; Set mode of CRT
 	mov	dx, 3B4h			;   mono port
