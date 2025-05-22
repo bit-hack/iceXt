@@ -435,14 +435,15 @@ uint8_t display_ega_mem_read(uint32_t addr) {
 
 void ega_write_3C0(uint8_t data) {
   if (p3C0_ff == 0) {  // index write
-    p3C0_index = data;
+    p3C0_index = data & 0x1f;
+    p3C0_ff = 1;
   }
   if (p3C0_ff == 1) {  // data write
     if (p3C0_index < 16) {
-      palette[p3C0_index & 0xf] = data;
+      palette[p3C0_index] = data;
     }
+    p3C0_ff = 0;
   }
-  p3C0_ff = !p3C0_ff;
 }
 
 void ega_write_3C5(uint8_t index, uint8_t data) {
@@ -480,9 +481,14 @@ void ega_write_3CF(uint8_t index, uint8_t data) {
 
 void display_ega_io_write(uint32_t port, uint8_t data) {
 
-  if ((port & 0xF00) == 0x300) {
+  if (0) {
+    printf("--------------------------------\n");
+  }
+
+  if (port == 0x3C0) {
     printf("%03x <= %02x\n", port, data);
   }
+
   if (port == 0x3C0) {
     ega_write_3C0(data);
   }
@@ -502,11 +508,12 @@ void display_ega_io_write(uint32_t port, uint8_t data) {
 
 bool display_ega_io_read(uint32_t port, uint8_t *out) {
 
-  if ((port & 0xF00) == 0x300) {
-    printf("%03x => ??\n", port);
-  }
-
   if (port == 0x3DA) {
+
+    if (p3C0_ff) {
+      printf("----------- reset 3C0\n");
+    }
+
     p3C0_ff = 0;  // reset FF to address
     *out = 0xff;  // required to stop some games polling for VBLANK?
     return true;

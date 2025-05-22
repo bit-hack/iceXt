@@ -217,7 +217,7 @@ module video_ega(
     .iClk    (iClk),        // cpu read/write clock
     .iClk25  (iClk25),      // vga read clock
     // cpu write port
-    .iWrAddr (iAddr[13:0]),  // 0..16k
+    .iWrAddr (iAddr[13:0]), // 0..16k
     .iWr     (vramWr),
     .iWrData (vramWrData),
     // cpu read port
@@ -262,7 +262,8 @@ module video_ega(
     plane3[3'h7 ^ dlyCrtcDa],
     plane2[3'h7 ^ dlyCrtcDa],
     plane1[3'h7 ^ dlyCrtcDa],
-    plane0[3'h7 ^ dlyCrtcDa] };
+    plane0[3'h7 ^ dlyCrtcDa]
+  };
 
   reg [7:0] palColor;
 
@@ -274,9 +275,9 @@ module video_ega(
   // vga output
   //
 
-  wire [3:0] outR = { palColor[2], palColor[5], 2'b0 };
-  wire [3:0] outG = { palColor[1], palColor[4], 2'b0 };
-  wire [3:0] outB = { palColor[0], palColor[3], 2'b0 };
+  wire [3:0] outR = { palColor[2], palColor[5], palColor[2], palColor[5] };
+  wire [3:0] outG = { palColor[1], palColor[4], palColor[1], palColor[4] };
+  wire [3:0] outB = { palColor[0], palColor[3], palColor[0], palColor[3] };
 
   wire active = !dlyCrtcBl1;
   assign oVgaR  = active ? outR : 4'h0;
@@ -305,10 +306,11 @@ module video_ega(
   reg [7:0] p3CE_7 = 0;     // Graphics: Color Don't Care Register
   reg [7:0] p3CE_8 = 0;     // Graphics: Bit(map) Mask Register
 
-  reg [7:0] latch3 = 0;
-  reg [7:0] latch2 = 0;
-  reg [7:0] latch1 = 0;
-  reg [7:0] latch0 = 0;
+  reg  [ 7:0] latch3 = 0;
+  reg  [ 7:0] latch2 = 0;
+  reg  [ 7:0] latch1 = 0;
+  reg  [ 7:0] latch0 = 0;
+  wire [31:0] latch32 = { latch3, latch2, latch1, latch0 };
 
   wire [1:0] writeMode   = p3CE_5[1:0];
   wire       readMode    = p3CE_5[3];
@@ -319,10 +321,60 @@ module video_ega(
   wire [7:0] mapMask     = p3CE_8;
 
   // write mode 2 bit broadcast
-  wire [7:0] bc0 = iWrData[0] ? 8'hff : 8'h00;
-  wire [7:0] bc1 = iWrData[1] ? 8'hff : 8'h00;
-  wire [7:0] bc2 = iWrData[2] ? 8'hff : 8'h00;
-  wire [7:0] bc3 = iWrData[3] ? 8'hff : 8'h00;
+  wire [ 7:0] bc3  = iWrData[3] ? 8'hff : 8'h00;
+  wire [ 7:0] bc2  = iWrData[2] ? 8'hff : 8'h00;
+  wire [ 7:0] bc1  = iWrData[1] ? 8'hff : 8'h00;
+  wire [ 7:0] bc0  = iWrData[0] ? 8'hff : 8'h00;
+  wire [31:0] bc32 = { bc3, bc2, bc1, bc0 };
+
+  wire [7:0] sr3 = p3CE_0[3] ? 8'hff : 8'h00;
+  wire [7:0] sr2 = p3CE_0[2] ? 8'hff : 8'h00;
+  wire [7:0] sr1 = p3CE_0[1] ? 8'hff : 8'h00;
+  wire [7:0] sr0 = p3CE_0[0] ? 8'hff : 8'h00;
+
+  reg  [ 7:0] dataRot;
+  reg  [31:0] srMux;
+  reg  [31:0] aluRes;
+  reg  [ 3:0] dlyWr;
+  reg  [31:0] writeMux;
+
+  //
+  // VRAM write data logic
+  //
+
+  always @(*) begin
+    case (rotate)
+    default: dataRot = iWrData;
+    3'd1: dataRot = { iWrData[  0], iWrData[7:1] };
+    3'd2: dataRot = { iWrData[1:0], iWrData[7:2] };
+    3'd3: dataRot = { iWrData[2:0], iWrData[7:3] };
+    3'd4: dataRot = { iWrData[3:0], iWrData[7:4] };
+    3'd5: dataRot = { iWrData[4:0], iWrData[7:5] };
+    3'd6: dataRot = { iWrData[5:0], iWrData[7:6] };
+    3'd7: dataRot = { iWrData[6:0], iWrData[7]   };
+    endcase
+
+    srMux = (writeMode == 2'd2) ? bc32 : {
+        p3CE_1[3] ? sr3 : dataRot,
+        p3CE_1[2] ? sr2 : dataRot,
+        p3CE_1[1] ? sr1 : dataRot,
+        p3CE_1[0] ? sr0 : dataRot
+    };
+
+    case (aluFunc)
+    default: aluRes = srMux;
+    2'd1:    aluRes = srMux & latch32;
+    2'd2:    aluRes = srMux | latch32;
+    2'd2:    aluRes = srMux ^ latch32;
+    endcase
+
+    writeMux = (writeMode == 2'd1) ? latch32 : {
+      (aluRes[31:24] & mapMask) | (latch3 & ~mapMask),
+      (aluRes[23:16] & mapMask) | (latch2 & ~mapMask),
+      (aluRes[15: 8] & mapMask) | (latch1 & ~mapMask),
+      (aluRes[ 7: 0] & mapMask) | (latch0 & ~mapMask)
+    };
+  end
 
   always @(posedge iClk) begin
 
@@ -421,37 +473,9 @@ module video_ega(
     // MEM write
     //
 
-    vramWr <= 4'h0;
-
-    if (iWrMem & selected) begin
-      case (writeMode)
-      2'd0: begin
-        // TODO... set/reset
-      end
-      2'd1: begin
-        vramWrData <= {
-          latch3,
-          latch2,
-          latch1,
-          latch0
-        };
-      end
-      2'd2: begin
-
-        // TODO... alu ops
-
-        vramWrData <= {
-          (mapMask & bc3) | ((~mapMask) & latch3),
-          (mapMask & bc2) | ((~mapMask) & latch2),
-          (mapMask & bc1) | ((~mapMask) & latch1),
-          (mapMask & bc0) | ((~mapMask) & latch0)
-        };
-      end
-      endcase
-
-      vramWr <= writePlanes;
-
-    end
+    dlyWr      <= iWrMem & selected;
+    vramWr     <= dlyWr ? writePlanes : 4'd0;
+    vramWrData <= writeMux;
   end
 
   assign oDebug = {
