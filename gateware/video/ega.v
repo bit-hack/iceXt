@@ -99,12 +99,9 @@ module video_ram_ega(
     input             iClk25,     // vga read clock
 
     // cpu write port
-    input      [13:0] iWrAddr,    // 0..16k
+    input      [13:0] iCpuAddr,   // 0..16k
     input      [ 3:0] iWr,
     input      [31:0] iWrData,
-
-    // cpu read port
-    input      [13:0] iRdAddr,    // 0..16k
     output reg [31:0] oRdData,
 
     // vga read port
@@ -122,24 +119,24 @@ module video_ram_ega(
   //
   always @(posedge iClk) begin
     if (iWr[3]) begin
-      plane3[ iWrAddr ] <= iWrData[31:24];
+      plane3[ iCpuAddr ] <= iWrData[31:24];
     end else begin
-      oRdData[31:24] <= plane3[ iRdAddr ];
+      oRdData[31:24] <= plane3[ iCpuAddr ];
     end
     if (iWr[2]) begin
-      plane2[ iWrAddr ] <= iWrData[23:16];
+      plane2[ iCpuAddr ] <= iWrData[23:16];
     end else begin
-      oRdData[23:16] <= plane2[ iRdAddr ];
+      oRdData[23:16] <= plane2[ iCpuAddr ];
     end
     if (iWr[1]) begin
-      plane1[ iWrAddr ] <= iWrData[15:8];
+      plane1[ iCpuAddr ] <= iWrData[15:8];
     end else begin
-      oRdData[15:8] <= plane1[ iRdAddr ];
+      oRdData[15:8] <= plane1[ iCpuAddr ];
     end
     if (iWr[0]) begin
-      plane0[ iWrAddr ] <= iWrData[7:0];
+      plane0[ iCpuAddr ] <= iWrData[7:0];
     end else begin
-      oRdData[7:0] <= plane0[ iRdAddr ];
+      oRdData[7:0] <= plane0[ iCpuAddr ];
     end
   end
 
@@ -178,8 +175,7 @@ module video_ega(
     output           oVgaHs,
     output           oVgaVs,
 
-    output reg       oActive = 0,
-    output [7:0]     oDebug
+    output reg       oActive = 0
 );
 
   wire selected = iAddr[19:15] == 5'b1010_0; // 0xA0000..0xA7FFF
@@ -217,11 +213,9 @@ module video_ega(
     .iClk    (iClk),        // cpu read/write clock
     .iClk25  (iClk25),      // vga read clock
     // cpu write port
-    .iWrAddr (iAddr[13:0]), // 0..16k
+    .iCpuAddr(iAddr[13:0]), // 0..16k
     .iWr     (vramWr),
     .iWrData (vramWrData),
-    // cpu read port
-    .iRdAddr (iAddr[13:0]),
     .oRdData (vramRdData),
     // vga read port
     .iVgaAddr(crtcAddr),    // 0..16k
@@ -287,15 +281,18 @@ module video_ega(
   assign oVgaVs = dlyCrtcVs1;
 
   //
-  //
+  // register files
   //
 
+  // attribute Controller registers
   reg         p3C0_ff = 0;    // 0-index, 1-data
-  reg  [ 7:0] p3C0_index = 0;
+  reg  [ 5:0] p3C0_index = 0;
 
+  // sequencer registers
   reg  [ 7:0] p3C4_index = 0;
   reg  [ 7:0] p3C4_2 = 8'hff; // Graphics: Bit Mask Register
 
+  // graphics controller registers
   reg  [ 7:0] p3CE_index = 0;
   reg  [ 7:0] p3CE_0 = 0;     // Graphics: Set/Reset Register
   reg  [ 7:0] p3CE_1 = 0;     // Graphics: Enable Set/Reset Register
@@ -306,19 +303,23 @@ module video_ega(
   reg  [ 7:0] p3CE_7 = 0;     // Graphics: Color Don't Care Register
   reg  [ 7:0] p3CE_8 = 0;     // Graphics: Bit(map) Mask Register
 
+  // data read latches
   reg  [ 7:0] latch3 = 0;
   reg  [ 7:0] latch2 = 0;
   reg  [ 7:0] latch1 = 0;
   reg  [ 7:0] latch0 = 0;
   wire [31:0] latch32 = { latch3, latch2, latch1, latch0 };
 
-  wire [ 1:0] writeMode   = p3CE_5[1:0];
-  wire        readMode    = p3CE_5[3];
-  wire [ 1:0] readPlane   = p3CE_4[1:0];
-  wire [ 3:0] writePlanes = p3C4_2[3:0];
-  wire [ 2:0] rotate      = p3CE_3[2:0];
-  wire [ 1:0] aluFunc     = p3CE_3[4:3];
-  wire [ 7:0] mapMask     = p3CE_8;
+  wire [ 1:0] writeMode     = p3CE_5[1:0];
+  wire        readMode      = p3CE_5[3];
+  wire [ 1:0] readPlane     = p3CE_4[1:0];
+  wire [ 3:0] writePlanes   = p3C4_2[3:0];
+  wire [ 2:0] rotate        = p3CE_3[2:0];
+  wire [ 1:0] aluFunc       = p3CE_3[4:3];
+  wire [ 7:0] mapMask       = p3CE_8;
+  wire [ 3:0] colorDontCare = p3CE_7[3:0];
+  wire [ 3:0] colorCompare  = p3CE_2[3:0];
+  wire [ 3:0] setReset      = p3CE_0[3:0];
 
   // write mode 2 bit broadcast
   wire [ 7:0] bc3  = iWrData[3] ? 8'hff : 8'h00;
@@ -328,19 +329,32 @@ module video_ega(
   wire [31:0] bc32 = { bc3, bc2, bc1, bc0 };
 
   // set/reset bits
-  wire [ 7:0] sr3  = p3CE_0[3] ? 8'hff : 8'h00;
-  wire [ 7:0] sr2  = p3CE_0[2] ? 8'hff : 8'h00;
-  wire [ 7:0] sr1  = p3CE_0[1] ? 8'hff : 8'h00;
-  wire [ 7:0] sr0  = p3CE_0[0] ? 8'hff : 8'h00;
+  wire [ 7:0] sr3  = setReset[3] ? 8'hff : 8'h00;
+  wire [ 7:0] sr2  = setReset[2] ? 8'hff : 8'h00;
+  wire [ 7:0] sr1  = setReset[1] ? 8'hff : 8'h00;
+  wire [ 7:0] sr0  = setReset[0] ? 8'hff : 8'h00;
 
-  reg  [ 7:0] dataRot;
-  reg  [31:0] srMux;
-  reg  [31:0] aluRes;
-  reg  [ 3:0] dlyWr;
-  reg  [31:0] writeMux;
+  // color compare broadcast
+  wire [ 7:0] cc3  = colorCompare[3] ? 8'hff : 8'h00;
+  wire [ 7:0] cc2  = colorCompare[2] ? 8'hff : 8'h00;
+  wire [ 7:0] cc1  = colorCompare[1] ? 8'hff : 8'h00;
+  wire [ 7:0] cc0  = colorCompare[0] ? 8'hff : 8'h00;
+
+  // color compare bit differences
+  reg  [ 7:0] cd3  = colorDontCare[3] ? 8'd0 : (cc3 ^ latch3);
+  reg  [ 7:0] cd2  = colorDontCare[2] ? 8'd0 : (cc2 ^ latch2);
+  reg  [ 7:0] cd1  = colorDontCare[1] ? 8'd0 : (cc1 ^ latch1);
+  reg  [ 7:0] cd0  = colorDontCare[0] ? 8'd0 : (cc0 ^ latch0);
 
   //
-  // VRAM write data logic
+  reg  [ 7:0] dataRot  = 0;
+  reg  [31:0] srMux    = 0;
+  reg  [31:0] aluRes   = 0;
+  reg  [31:0] writeMux = 0;
+  reg         dlyWr    = 0;
+
+  //
+  // VRAM write data path
   //
 
   always @(*) begin
@@ -409,11 +423,11 @@ module video_ega(
         oActive <= iWrData == 8'hd;
       end
 
-      if (iAddr[11:0] == 12'h3C0) begin
+      if (iAddr[11:0] == 12'h3c0) begin
         if (p3C0_ff == 0) begin
-          p3C0_index <= iWrData;
+          p3C0_index <= iWrData[5:0];
         end else begin
-          if (p3C0_index[7:4] == 4'h0) begin
+          if (p3C0_index[5:4] == 2'd0) begin
             palette[ p3C0_index[3:0] ] <= iWrData;
           end
         end
@@ -460,6 +474,7 @@ module video_ega(
 
       case (readMode)
       1'd0: begin
+        // plane select read mode
         case (readPlane)
         4'd3: oRdData <= vramRdData[31:24];
         4'd2: oRdData <= vramRdData[23:16];
@@ -468,7 +483,9 @@ module video_ega(
         endcase
       end
       1'd1: begin
-        // TODO... color compare
+        // color compare read mode
+        // accumulate mismatches and invert
+        oRdData <= ~(cd3 | cd2 | cd1 | cd0);
       end
       endcase
 
@@ -483,12 +500,5 @@ module video_ega(
     vramWr     <= dlyWr ? writePlanes : 4'd0;
     vramWrData <= writeMux;
   end
-
-  assign oDebug = {
-    2'b00,
-    selected,
-    iWrMem,
-    writePlanes
-  };
 
 endmodule

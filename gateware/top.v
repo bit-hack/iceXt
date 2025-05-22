@@ -235,7 +235,6 @@ module top(
   wire       ega_hs;
   wire       ega_vs;
   wire       ega_active;
-  wire [7:0] ega_debug;
 
   video_ega u_video_ega(
     .iClk   (pll_clk_bus),
@@ -253,8 +252,7 @@ module top(
     .oVgaB  (ega_b),
     .oVgaHs (ega_hs),
     .oVgaVs (ega_vs),
-    .oActive(ega_active),
-    .oDebug (ega_debug)
+    .oActive(ega_active)
   );
 
   //
@@ -408,14 +406,14 @@ module top(
   //
 
   assign pmod = {
-    /*6*/ega_debug[6],
-    /*4*/ega_debug[4],
-    /*2*/ega_debug[2],
-    /*0*/ega_debug[0],
-    /*7*/ega_debug[7],
-    /*5*/ega_debug[5],
-    /*3*/ega_debug[3],
-    /*1*/ega_debug[1]
+    /*6*/1'b0,
+    /*4*/1'b0,
+    /*2*/1'b0,
+    /*0*/1'b0,
+    /*7*/1'b0,
+    /*5*/1'b0,
+    /*3*/1'b0,
+    /*1*/1'b0
   };
 
 endmodule
