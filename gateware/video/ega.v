@@ -290,21 +290,21 @@ module video_ega(
   //
   //
 
-  reg       p3C0_ff = 0;    // 0-index, 1-data
-  reg [7:0] p3C0_index = 0;
+  reg         p3C0_ff = 0;    // 0-index, 1-data
+  reg  [ 7:0] p3C0_index = 0;
 
-  reg [7:0] p3C4_index = 0;
-  reg [7:0] p3C4_2 = 8'hff; // Graphics: Bit Mask Register
+  reg  [ 7:0] p3C4_index = 0;
+  reg  [ 7:0] p3C4_2 = 8'hff; // Graphics: Bit Mask Register
 
-  reg [7:0] p3CE_index = 0;
-  reg [7:0] p3CE_0 = 0;     // Graphics: Set/Reset Register
-  reg [7:0] p3CE_1 = 0;     // Graphics: Enable Set/Reset Register
-  reg [7:0] p3CE_2 = 0;     // Graphics: Color Compare Register
-  reg [7:0] p3CE_3 = 0;     // Graphics: Data Rotate
-  reg [7:0] p3CE_4 = 0;     // Graphics: Read Map Select Register
-  reg [7:0] p3CE_5 = 0;     // Graphics: Mode Register
-  reg [7:0] p3CE_7 = 0;     // Graphics: Color Don't Care Register
-  reg [7:0] p3CE_8 = 0;     // Graphics: Bit(map) Mask Register
+  reg  [ 7:0] p3CE_index = 0;
+  reg  [ 7:0] p3CE_0 = 0;     // Graphics: Set/Reset Register
+  reg  [ 7:0] p3CE_1 = 0;     // Graphics: Enable Set/Reset Register
+  reg  [ 7:0] p3CE_2 = 0;     // Graphics: Color Compare Register
+  reg  [ 7:0] p3CE_3 = 0;     // Graphics: Data Rotate
+  reg  [ 7:0] p3CE_4 = 0;     // Graphics: Read Map Select Register
+  reg  [ 7:0] p3CE_5 = 0;     // Graphics: Mode Register
+  reg  [ 7:0] p3CE_7 = 0;     // Graphics: Color Don't Care Register
+  reg  [ 7:0] p3CE_8 = 0;     // Graphics: Bit(map) Mask Register
 
   reg  [ 7:0] latch3 = 0;
   reg  [ 7:0] latch2 = 0;
@@ -312,13 +312,13 @@ module video_ega(
   reg  [ 7:0] latch0 = 0;
   wire [31:0] latch32 = { latch3, latch2, latch1, latch0 };
 
-  wire [1:0] writeMode   = p3CE_5[1:0];
-  wire       readMode    = p3CE_5[3];
-  wire [1:0] readPlane   = p3CE_4[1:0];
-  wire [3:0] writePlanes = p3C4_2[3:0];
-  wire [2:0] rotate      = p3CE_3[2:0];
-  wire [1:0] aluFunc     = p3CE_3[4:3];
-  wire [7:0] mapMask     = p3CE_8;
+  wire [ 1:0] writeMode   = p3CE_5[1:0];
+  wire        readMode    = p3CE_5[3];
+  wire [ 1:0] readPlane   = p3CE_4[1:0];
+  wire [ 3:0] writePlanes = p3C4_2[3:0];
+  wire [ 2:0] rotate      = p3CE_3[2:0];
+  wire [ 1:0] aluFunc     = p3CE_3[4:3];
+  wire [ 7:0] mapMask     = p3CE_8;
 
   // write mode 2 bit broadcast
   wire [ 7:0] bc3  = iWrData[3] ? 8'hff : 8'h00;
@@ -327,10 +327,11 @@ module video_ega(
   wire [ 7:0] bc0  = iWrData[0] ? 8'hff : 8'h00;
   wire [31:0] bc32 = { bc3, bc2, bc1, bc0 };
 
-  wire [7:0] sr3 = p3CE_0[3] ? 8'hff : 8'h00;
-  wire [7:0] sr2 = p3CE_0[2] ? 8'hff : 8'h00;
-  wire [7:0] sr1 = p3CE_0[1] ? 8'hff : 8'h00;
-  wire [7:0] sr0 = p3CE_0[0] ? 8'hff : 8'h00;
+  // set/reset bits
+  wire [ 7:0] sr3  = p3CE_0[3] ? 8'hff : 8'h00;
+  wire [ 7:0] sr2  = p3CE_0[2] ? 8'hff : 8'h00;
+  wire [ 7:0] sr1  = p3CE_0[1] ? 8'hff : 8'h00;
+  wire [ 7:0] sr0  = p3CE_0[0] ? 8'hff : 8'h00;
 
   reg  [ 7:0] dataRot;
   reg  [31:0] srMux;
@@ -343,6 +344,8 @@ module video_ega(
   //
 
   always @(*) begin
+
+    // barrel shifter
     case (rotate)
     default: dataRot = iWrData;
     3'd1: dataRot = { iWrData[  0], iWrData[7:1] };
@@ -354,6 +357,7 @@ module video_ega(
     3'd7: dataRot = { iWrData[6:0], iWrData[7]   };
     endcase
 
+    // set/reset mux
     srMux = (writeMode == 2'd2) ? bc32 : {
         p3CE_1[3] ? sr3 : dataRot,
         p3CE_1[2] ? sr2 : dataRot,
@@ -361,6 +365,7 @@ module video_ega(
         p3CE_1[0] ? sr0 : dataRot
     };
 
+    // ALU
     case (aluFunc)
     default: aluRes = srMux;
     2'd1:    aluRes = srMux & latch32;
@@ -368,6 +373,7 @@ module video_ega(
     2'd2:    aluRes = srMux ^ latch32;
     endcase
 
+    // map mask bit blending
     writeMux = (writeMode == 2'd1) ? latch32 : {
       (aluRes[31:24] & mapMask) | (latch3 & ~mapMask),
       (aluRes[23:16] & mapMask) | (latch2 & ~mapMask),
@@ -484,5 +490,5 @@ module video_ega(
     iWrMem,
     writePlanes
   };
-  
+
 endmodule
