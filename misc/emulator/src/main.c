@@ -21,6 +21,18 @@ static uint8_t keyScanCode(int in);
 
 void int_notify(uint8_t num) {
 
+  if (num == 0x13) {
+
+    uint8_t ah = cpu_get_AH();
+    switch (ah) {
+    case 2:
+      break;
+    default:
+      printf("13h\n", ah);
+      cpu_dump_state();
+    }
+  }
+
   if (num == 0x10) {
     if (cpu_get_AH() == 0) {
       // video change mode

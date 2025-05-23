@@ -20,6 +20,7 @@ org 0
 ;
 %define USE_HDD     1
 %define USE_CLICKER 1
+%define USE_WRITE   0
 
 %define PORT_DEBUG    0xb0
 %define PORT_SPI_DATA 0xb8
@@ -326,6 +327,13 @@ sd_read_sector:
   inc bx
   loop .recv_sector
 
+  ; clock in CRC
+  SD_SEND 0xff
+  SD_SEND 0xff
+
+  ; send additional 8 clocks
+  SD_SEND 0xff
+
 .success:
   pop cx
   mov al, 1
@@ -336,6 +344,77 @@ sd_read_sector:
   mov al, 0
   ret
 
+
+;------------------------------------------------------------------------------
+; ax    = sector
+; es:bx = src
+sd_write_sector:
+  ; TODO  https://yaseen.ly/writing-data-to-sdcards-without-a-filesystem-spi/
+
+  ;
+  ; click generator
+  ;
+%if USE_CLICKER
+  out PORT_CLICK, al
+%endif
+
+  ;
+  ; send CMD14
+  ;
+  SD_SEND (0x40|24)
+  SD_SEND 0
+  SD_SEND 0
+  SD_SEND ah
+  SD_SEND al
+  SD_SEND (0x01|0xcc)
+
+  push cx
+  mov cx, 8
+.cmd_24_response:
+  SD_RECV
+  test al, al
+  jz .cmd_24_done
+  loop .cmd_24_response
+  jmp .fail
+.cmd_24_done:
+
+  ; send the start token
+  SD_SEND 0xFE
+
+  ; write a 512byte block
+  mov cx, 512
+.send_sector:
+  mov al, es:[bx]
+  SD_SEND al
+  inc bx
+  loop .send_sector
+
+  ; clock in CRC
+  SD_SEND 0xff
+  SD_SEND 0xff
+
+  ; check if the data was accepted
+  SD_RECV
+  and al, 0x1f
+  cmp al, 5
+  jne .fail
+
+  ; wait for card to become ready
+.cmd_24_wait_for_ready:
+  SD_RECV
+  test al, al
+  jz .cmd_24_wait_for_ready
+.cmd_24_now_ready:
+
+.success:
+  pop cx
+  mov al, 1
+  ret
+
+.fail:
+  pop cx
+  mov al, 0
+  ret
 
 %if USE_HDD
 ;------------------------------------------------------------------------------
@@ -427,6 +506,8 @@ int13:
   ; dispatch to specific handler
   cmp ah, 0x02
   je int13_02
+  cmp ah, 0x03
+  je int13_03
   cmp ah, 0x00
   je int13_00
   cmp ah, 0x01
@@ -494,6 +575,46 @@ int13_02:
   jmp int13_exit
 
 .int13_02_fail:
+  pop cx                  ; cx was left on the stack so pop it
+  mov ah, ERR_NOT_READY
+  stc
+  jmp int13_exit
+
+;------------------------------------------------------------------------------
+; Write Sectors to Drive
+;   al    - sectors to write
+;   ch    - cylinder
+;   cl    - sector
+;   dh    - head
+;   dl    - drive
+;   es:bx - buffer
+int13_03:
+  ;out 0xb0, ax  ; turn on debugging
+  push ax
+%if USE_HDD
+  call chs_to_lba_hdd
+%else
+  call chs_to_lba_fdd
+%endif
+  pop cx
+  xor ch, ch              ; isolate just the sectors to write
+  push cx                 ; push number of sectors to write
+
+.int13_03_write_sector:
+  push ax
+  call sd_write_sector
+  test al, al
+  jz .int13_03_fail
+  pop ax                  ; restore sector number
+  inc ax                  ; advance to the next sector
+  loop .int13_03_write_sector
+
+  pop ax                  ; al = sectors written
+  mov ah, ERR_SUCCESS
+  clc                     ; CF = 0
+  jmp int13_exit
+
+.int13_03_fail:
   pop cx                  ; cx was left on the stack so pop it
   mov ah, ERR_NOT_READY
   stc
@@ -582,7 +703,7 @@ int32_exit_cf:
   sub si, 6
   pop si
   sti
-  ; out 0xb2, ax  ; turn off debugging
+  ;out 0xb2, ax  ; turn off debugging
   iret
 .int32_exit_cf1:
   push si
@@ -592,5 +713,5 @@ int32_exit_cf:
   sub si, 6
   pop si
   sti
-  ; out 0xb2, ax  ; turn off debugging
+  ;out 0xb2, ax  ; turn off debugging
   iret

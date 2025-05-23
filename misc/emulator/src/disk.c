@@ -32,8 +32,9 @@ static uint64_t shift_in  = ~0llu;
 static uint64_t shift_out = ~0llu;
 
 static uint32_t sector;
-static uint32_t read_count = 0;
-static bool reading = false;
+static uint32_t read_count  = 0;
+static uint32_t write_count = 0;
+static bool wait_for_start = false;
 
 #ifdef USE_SERIAL_SD
 static serial_t* serial;
@@ -86,7 +87,7 @@ static void clr_stack_cf() {
 }
 
 bool disk_load(const char* path) {
-  disk = fopen(path, "rb");
+  disk = fopen(path, "rb+");
   if (!disk) {
     return false;
   }
@@ -139,6 +140,26 @@ void disk_spi_write(uint8_t tx) {
   shift_in  = (shift_in  << 8) | tx;
   shift_out = (shift_out << 8);
 
+  if (write_count) {
+    if (wait_for_start) {
+      if ((shift_in & 0xff) == 0xfe) {
+        wait_for_start = false;
+      }
+    }
+    else {
+      uint8_t out = shift_in & 0xff;
+      fwrite(&out, 1, 1, disk);
+      if (0 == --write_count) {
+        //            ..--..--..--..--
+        shift_out = 0xffAAAA05ffff00ffllu;
+
+        // clear input so data cant be mistaken for a
+        // command
+        shift_in  = 0xffffffffffffffffllu;
+      }
+    }
+  }
+
   if (read_count) {
     uint8_t out = 0;
     fread(&out, 1, 1, disk);
@@ -147,6 +168,10 @@ void disk_spi_write(uint8_t tx) {
   }
   else {
     shift_out |= 0xff;
+  }
+
+  if (read_count || write_count) {
+    return;
   }
 
   const uint8_t cmd = (shift_in >> 48);
@@ -185,6 +210,17 @@ void disk_spi_write(uint8_t tx) {
                           0xffff00fffffffffflu;
     shift_in = ~0llu;
     sd_idle = 0;
+    break;
+  case (0x40 | 14): // CMD14
+    //            ..--..--..--..--
+    shift_out = 0xfffffffffffffffflu;
+    sector = shift_in >> 16;
+    shift_in = ~0llu;
+    shift_out = 0xffff00fffffffffflu;
+    fseek(disk, 512 * sector, SEEK_SET);
+    write_count = 512;
+    wait_for_start = true;
+    printf("write sector:%u\n", sector);
     break;
   case (0x40 | 17): // CMD17
     //printf("CMD17\n");
