@@ -1,166 +1,163 @@
-/*                     .__       .__
- *   ______ ___________|__|____  |  |
- *  /  ___// __ \_  __ \  \__  \ |  |
- *  \___ \\  ___/|  | \/  |/ __ \|  |__
- * /____  >\___  >__|  |__(____  /____/
- *      \/     \/              \/
- */
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "serial.h"
+#include "cpu.h"
 
 
-struct serial_t {
-  HANDLE handle;
-};
+// notes:
+//
+//  COM1 3F8 IRQ4
+//  COM2 2F8 IRQ3
+//  COM3 3E8 IRQ4
+//  COM4 2E8 IRQ3
+//
+
+static uint8_t RBR;         // 3F8 receiver buffer
+static uint8_t THR;         // 3F8 transmit holding register
+static uint8_t IER;         // 3F9 interrupt enable
+static uint8_t IIR = 1;     // 3FA interrupt ident
+static uint8_t LCR;         // 3FB line control
+static uint8_t MCR;         // 3FC modem control
+
+static uint8_t LSR = 0b1100000;  // 3FD line status
+// { 0, TEMT, THRE, BI, FE, PE, OE, DR }
+// DR   - data ready
+// OE   - overrun error
+// PE   - parity error
+// FE   - framing error
+// BI   - break interrupt
+// THRE - transmitter holding register
+// TEMT - transmitter empty
+
+static uint8_t MSR = 0x30;  // 3FE modem status
+static uint8_t SCR;  // 3FF scratch reg
+static uint8_t DLL;  // 3F8 divisor lsb
+static uint8_t DLM;  // 3F9 divisor msb
+
+#define DLAB ((LCR & 0x80) ? 1 : 0)
 
 
-static BOOL set_timeouts(
-  HANDLE handle)
-{
-  COMMTIMEOUTS com_timeout;
-  ZeroMemory(&com_timeout, sizeof(com_timeout));
-  com_timeout.ReadIntervalTimeout         = 3;
-  com_timeout.ReadTotalTimeoutMultiplier  = 3;
-  com_timeout.ReadTotalTimeoutConstant    = 2;
-  com_timeout.WriteTotalTimeoutMultiplier = 3;
-  com_timeout.WriteTotalTimeoutConstant   = 2;
-  return SetCommTimeouts(handle, &com_timeout);
+static void mouse_send(uint8_t data) {
+  RBR = data;
+  LSR |= (LSR & 1) ? 2 : 0;  // OE<=DR
+  LSR |= 1;                  // DR<=1
+}
+
+void mouse_poll() {
+
+}
+
+void mouse_reset(uint8_t RTS) {
+  if (/*@posedge */RTS) {
+    mouse_send('M');
+  }
+}
+
+void serial_io_write(uint16_t port, uint8_t value) {
+
+  if (port >= 0x3F8 && port <= 0x3FF) {
+    printf("%03x <= %02x\n", port, value);
+  }
+
+  if (port == (0x3F8+0)) {  // 3F8
+    if (DLAB) {
+      DLL = value;
+    }
+    else {
+      // write to transmit buffer
+      THR = value;
+      LSR &= ~0b1100000; // lower TEMT, THRE
+    }
+  }
+  if (port == (0x3F8+1)) {  // 3F9
+    if (DLAB) {
+      DLM = value;
+    }
+    else {
+      // interrupt enable
+      IER = value;
+    }
+  }
+  if (port == (0x3F8+3)) {  // 3FB
+    LCR = value;
+  }
+  if (port == (0x3F8+4)) {  // 3FC
+    uint8_t delta = MCR ^ value;
+    MCR = value;
+    if (delta & 2) {
+      mouse_reset(MCR & 2);  // call when DTR changes
+    }
+  }
+  if (port == (0x3F8+5)) {  // 3FD
+    LSR = value;
+  }
+  if (port == (0x3F8+6)) {  // 3FE
+    MSR = value;
+  }
+  if (port == (0x3F8+7)) {  // 3FF
+    SCR = value;
+  }
+}
+
+bool _serial_io_read(uint16_t port, uint8_t* out) {
+  if (port == (0x3F8+0)) {  // 3F8
+    if (DLAB) {
+      *out = DLL;
+    }
+    else {
+      *out = RBR;
+      LSR &= ~1;  // DR<=0
+      mouse_poll();
+    }
+    return true;
+  }
+  if (port == (0x3F8+1)) {  // 3F9
+    if (DLAB) {
+      *out = DLM;
+    }
+    else {
+      *out = IER;
+    }
+    return true;
+  }
+  if (port == (0x3F8+2)) {  // 3FA
+    *out = IIR;
+    IIR = 0b001;
+    return true;
+  }
+  if (port == (0x3F8+3)) {  // 3FB
+    *out = LCR;
+    return true;
+  }
+  if (port == (0x3F8+4)) {  // 3FC
+    *out = MCR;
+    return true;
+  }
+  if (port == (0x3F8+5)) {  // 3FD
+    *out = LSR;
+    LSR &= 0b01100001;
+    return true;
+  }
+  if (port == (0x3F8+6)) {  // 3FE
+    *out = MSR;
+    return true;
+  }
+  if (port == (0x3F8+7)) {  // 3FF
+    *out = SCR;
+    return true;
+  }
+  return false;
 }
 
 
-serial_t *serial_open(
-  uint32_t port,
-  uint32_t baud_rate)
-{
-  // construct com port device name
-  char dev_name[32];
-  snprintf(dev_name, sizeof(dev_name), "\\\\.\\COM%d", (int)port);
-  // open handle to serial device
-  HANDLE handle = CreateFileA(
-    dev_name,
-    GENERIC_READ | GENERIC_WRITE,
-    0,
-    NULL,
-    OPEN_EXISTING,
-    0,
-    NULL);
-  if (handle == INVALID_HANDLE_VALUE) {
-    goto on_error;
-  }
-  // query serial device control block
-  DCB dbc;
-  ZeroMemory(&dbc, sizeof(dbc));
-  dbc.DCBlength = sizeof(dbc);
-  if (GetCommState(handle, &dbc) == FALSE) {
-    goto on_error;
-  }
-  // change baud rate
-  if (dbc.BaudRate != baud_rate) {
-    dbc.BaudRate = baud_rate;
-  }
-  dbc.fBinary      = TRUE;
-  dbc.fParity      = FALSE;
-  dbc.fOutxCtsFlow = FALSE;
-  dbc.fDtrControl  = FALSE;
-  dbc.ByteSize     = 8;
-  dbc.fOutX        = FALSE;
-  dbc.fInX         = FALSE;
-  dbc.fNull        = FALSE;
-  dbc.fRtsControl  = RTS_CONTROL_DISABLE;
-  dbc.Parity       = NOPARITY;
-  dbc.StopBits     = ONESTOPBIT;
-  dbc.EofChar      = 0;
-  dbc.ErrorChar    = 0;
-  dbc.EvtChar      = 0;
-  dbc.XonChar      = 0;
-  dbc.XoffChar     = 0;
+bool serial_io_read(uint16_t port, uint8_t* out) {
 
-  // warning: this seems to write a number of rogue bytes to the  serial port.
-  if (SetCommState(handle, &dbc) == FALSE) {
-    goto on_error;
+  if (!_serial_io_read(port, out)) {
+    return false;
   }
-  // set com timeouts
-  if (set_timeouts(handle) == FALSE) {
-    goto on_error;
+
+  if (port == 0x3FD && *out == 0x60) {
   }
-  // wrap in serial object
-  serial_t *serial = (serial_t*)malloc(sizeof(serial_t));
-  if (serial == NULL) {
-    goto on_error;
+  else {
+    printf("%03x => %02x\n", port, *out);
   }
-  serial->handle = handle;
-
-  // make sure all input and output queues are clear before we continue
-  PurgeComm(handle, PURGE_TXCLEAR | PURGE_RXCLEAR);
-
-  // success
-  return serial;
-  // error handler
-on_error:
-  if (handle != INVALID_HANDLE_VALUE)
-    CloseHandle(handle);
-  return NULL;
-}
-
-void serial_close(
-  serial_t *serial)
-{
-  assert(serial);
-  if (serial->handle != INVALID_HANDLE_VALUE) {
-    CloseHandle(serial->handle);
-  }
-  free(serial);
-}
-
-uint32_t serial_send(
-  serial_t *serial,
-  const void *data,
-  size_t nbytes)
-{
-  assert(serial && data && nbytes);
-  DWORD nb_written = 0;
-  if (WriteFile(
-        serial->handle,
-        data,
-        (DWORD)nbytes,
-        &nb_written,
-        NULL) == FALSE) {
-    return 0;
-  }
-  return nb_written;
-}
-
-uint32_t serial_read(
-  serial_t *serial,
-  void *dst,
-  size_t nbytes)
-{
-  assert(serial && dst && nbytes);
-  DWORD nb_read = 0;
-  if (ReadFile(
-        serial->handle,
-        dst,
-        (DWORD)nbytes,
-        &nb_read,
-        NULL) == FALSE) {
-    return 0;
-  }
-  return nb_read;
-}
-
-void serial_flush(
-  serial_t *serial) {
-  FlushFileBuffers(serial->handle);
-}
-
-void serial_purge(
-  serial_t* serial) {
-  PurgeComm(serial->handle, PURGE_TXCLEAR | PURGE_RXCLEAR);
+  return true;
 }

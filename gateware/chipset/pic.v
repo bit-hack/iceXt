@@ -13,6 +13,7 @@ module pic(
   input        iRst,
   input        iIrq0,     // timer
   input        iIrq1,     // keyboard
+  input        iIrq4,     // com1
   input        iIntAck,   // cpu->pic int ack
   output       oInt,      // cpu<-pic int req
   output       oSel,
@@ -22,24 +23,27 @@ module pic(
   // todo: mask
   //       end of interrupt
 
-  reg [1:0] isr   = 0;  // in service
-  reg [1:0] irr   = 0;  // pending
-  reg       sel   = 0;  // pic selected
-  reg [7:0] vec   = 0;  // vector code
+  reg [7:0] isr = 0;  // in service
+  reg [7:0] irr = 0;  // pending
+  reg       sel = 0;  // pic selected
+  reg [7:0] vec = 0;  // vector code
 
-  wire [1:0] top =      // priority
-    irr[0] ? 2'b01 :
-    irr[1] ? 2'b10 :
-             2'b00;
+  wire [7:0] top =      // priority
+  //            76543210
+    irr[0] ? 8'b00000001 :
+    irr[1] ? 8'b00000010 :
+    irr[4] ? 8'b00010000 :
+             8'b00000000;
 
-  wire [7:0] code =     // lane to code
-    isr[0] ? 8'd8 :
-    isr[1] ? 8'd9 :
+  wire [7:0] code =     // intr to code
+    isr[0] ? 8'd8  :    // timer
+    isr[1] ? 8'd9  :    // keyboard
+    isr[4] ? 8'd12 :    // uart
              8'd0;
 
-  wire [1:0] irq  = { iIrq1, iIrq0 };
-  wire [1:0] irqe = (irq ^ irqd) & irq;   // IRQ positive edges
-  reg  [1:0] irqd;                        // IRQ delay
+  wire [7:0] irq  = { 3'b000, iIrq4, 2'b00, iIrq1, iIrq0 };
+  wire [7:0] irqe = (irq ^ irqd) & irq;   // IRQ positive edges
+  reg  [7:0] irqd;                        // IRQ delay
 
   always @(posedge iClk) begin
 
@@ -58,8 +62,8 @@ module pic(
 
     // handle resets
     if (iRst) begin
-      irr <= 2'd0;
-      isr <= 2'd0;
+      irr <= 8'd0;
+      isr <= 8'd0;
       vec <= 8'd0;
     end
   end

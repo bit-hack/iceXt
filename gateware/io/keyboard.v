@@ -8,20 +8,6 @@
 `default_nettype none
 
 
-//      ST    D0    D1    D2    D3    D4    D5    D6    D7    PR    SP
-//      |     |     |     |     |     |     |     |     |     |     |
-// _____    __    __    __    __    __    __    __    __    __    __    ____
-//      |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|     CLK
-// ___             ______      ____________    _____________________________
-//    |___________|      |____|            |__|                              DAT
-//
-//  Clock is ~13.230Khz
-//  Frame is 11 bits
-//  data valid when clock is low
-//  ST - always 0
-//  SP - always 1
-//  PR - odd parity
-
 module scancode_converter(
     input            iClk,
     input            iKeyUp,
@@ -134,7 +120,7 @@ module scancode_converter(
     end
 endmodule
 
-module ps2_keyboard(
+module keyboard_ctrl(
     input            iClk,
 
     // CPU interface
@@ -152,7 +138,9 @@ module ps2_keyboard(
 
     // external PS2 interface
     input            iPs2Clk,
-    input            iPs2Dat
+    input            iPs2Dat,
+    output           oPs2Clk,
+    output           oPs2Dat
 );
 
   //
@@ -182,49 +170,26 @@ module ps2_keyboard(
   // PS2 port logic
   //
 
-  reg [ 3:0] ps2ClkSync = 0;
-  reg [ 3:0] ps2DatSync = 0;
-  reg [10:0] shift      = 0;
-  reg [ 3:0] count      = 0;
-  reg [15:0] timeout    = 0;
-  reg [ 7:0] data       = 0;
-  reg        sel        = 0;
+  wire       device0_avail;
+  wire [7:0] device0_data;
+  ps2_device device0(
+    .iClk    (iClk),
+    .iTx     (1'b0),
+    .iTxData (8'd0),
+    .oTxOk   (),
+    .oTxFail (),
+    .iInhibit(1'b0),
+    .oRx     (device0_avail),
+    .oRxData (device0_data),
+    .iPs2Clk (iPs2Clk),
+    .iPs2Dat (iPs2Dat),
+    .oPs2Clk (oPs2Clk),
+    .oPs2Dat (oPs2Dat),
+  );
 
-  // falling clock edge
-  wire shift_in = ps2ClkSync[3] == 1 && ps2ClkSync[2] == 0;
-
-  // sync ps/2 clock and data
-  always @(posedge iClk) begin
-    ps2ClkSync <= { ps2ClkSync[2:0], iPs2Clk };
-    ps2DatSync <= { ps2DatSync[2:0], iPs2Dat };
-  end
-
-  reg ps2_avail = 0;
-
-  always @(posedge iClk) begin
-
-    ps2_avail <= 0;
-    timeout   <= timeout + 1;
-
-    if (shift_in) begin
-      shift   <= { ps2DatSync[2], shift[10:1] };
-      count   <= count + 1;
-      timeout <= 0;
-    end
-
-    if (count == 4'd11) begin
-      count <= 0;
-      if (shift[ 0] == 0 &&     // start bit = 0
-          shift[10] == 1) begin // stop bit = 1
-        data      <= shift[8:1];
-        ps2_avail <= 1;
-      end
-    end
-
-    if (timeout == 16'hffff) begin
-      count <= 0;
-    end
-  end
+  //
+  // scancode conversion
+  //
 
   reg        key_up = 0;
   wire       irq;
@@ -235,15 +200,15 @@ module ps2_keyboard(
     .iClk  (iClk),
     .iKeyUp(key_up),
     .iStart(start),
-    .iCode (data),
+    .iCode (device0_data),
     .oAvail(irq),
     .oCode (scancode)
   );
-  
+
   always @(posedge iClk) begin
     start <= 0;
-    if (ps2_avail) begin
-      if (data == 8'hf0) begin
+    if (device0_avail) begin
+      if (device0_data == 8'hf0) begin
         key_up <= 1;
       end else begin
         start <= 1;

@@ -124,7 +124,7 @@ bool display_cga_io_read(uint32_t port, uint8_t *out) {
 }
 
 void display_set_mode(uint8_t mode) {
-  display_mode = mode;
+  display_mode = mode == 0x13 ? 0xd : mode;
   printf("Display Mode: %x\n", mode);
 }
 

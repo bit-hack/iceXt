@@ -12,8 +12,10 @@ add_executable(iceXtEmu
   src/disk.h
   src/display.c
   src/display.h
-#  src/serial.c
-#  src/serial.h
+  src/keyboard.c
+  src/keyboard.h
+  src/serial.c
+  src/serial.h
 )
 
 add_subdirectory(src/udis86)
@@ -27,3 +29,4 @@ endif()
 
 include_directories(iceXtEmu ${SDL_INCLUDE_DIR} src)
 target_link_libraries(iceXtEmu ${SDL_LIBRARY} lib_udis86)
+ 

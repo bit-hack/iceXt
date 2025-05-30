@@ -211,7 +211,7 @@ void disk_spi_write(uint8_t tx) {
     shift_in = ~0llu;
     sd_idle = 0;
     break;
-  case (0x40 | 14): // CMD14
+  case (0x40 | 24): // CMD24 (write single sector)
     //            ..--..--..--..--
     shift_out = 0xfffffffffffffffflu;
     sector = shift_in >> 16;
@@ -222,8 +222,7 @@ void disk_spi_write(uint8_t tx) {
     wait_for_start = true;
     printf("write sector:%u\n", sector);
     break;
-  case (0x40 | 17): // CMD17
-    //printf("CMD17\n");
+  case (0x40 | 17): // CMD17 (read single sector)
     //            ..--..--..--..--
     shift_out = 0xffff00fffffffffelu;
     sector    = shift_in >> 16;

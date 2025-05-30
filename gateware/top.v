@@ -46,10 +46,10 @@ module top(
     output        vga_hs,
 
     // PS/2 interface
-    input ps2_mclk,
-    input ps2_mdat,
-    input ps2_kclk,
-    input ps2_kdat,
+    inout ps2_mclk,
+    inout ps2_mdat,
+    inout ps2_kclk,
+    inout ps2_kdat,
 
     // SD card
     input  sd_do,
@@ -65,6 +65,10 @@ module top(
     // misc
     output led_io,
     output pit_spk,
+
+    // FPGA serial
+    output serial_tx,
+    input  serial_rx,
 
     // pmod
     output [7:0] pmod
@@ -136,6 +140,7 @@ module top(
       disk_rom_sel ? disk_rom_out :
            pic_sel ?      pic_out :
             sd_sel ?       sd_out :
+          uart_sel ?     uart_out :
       keyboard_sel ? keyboard_out :
            pit_sel ? pit_data_out :
            cga_sel ?      cga_out :
@@ -297,6 +302,7 @@ module top(
     .iRst   (rst),
     .iIrq0  (irq0),          // timer
     .iIrq1  (irq1),          // keyboard
+    .iIrq4  (uart_intr),     // com1
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
@@ -336,16 +342,22 @@ module top(
   assign pit_spk = (pit_channel_2 & spk_enable) ^ sd_click;
 
   //
-  // keyboard
+  // keyboard controller
   //
 
-  wire       irq1;
   wire [7:0] keyboard_out;
   wire       keyboard_sel;
+
+  wire       irq1;
   wire       spk_gate;
   wire       spk_enable;
 
-  ps2_keyboard u_ps2_keyboard(
+  wire       ps2_mclk_od;
+  wire       ps2_mdat_od;
+  assign     ps2_mclk = ps2_mclk_od ? 1'bz : 1'b0;
+  assign     ps2_mdat = ps2_mdat_od ? 1'bz : 1'b0;
+
+  keyboard_ctrl u_keyboard_ctrl(
     .iClk      (pll_clk_bus),
     .iAddr     (cpu_addr),
     .iRd       (cpu_io_rd),
@@ -357,7 +369,9 @@ module top(
     .oSpkGate  (spk_gate),
     .oSpkEnable(spk_enable),
     .iPs2Clk   (ps2_mclk),
-    .iPs2Dat   (ps2_mdat)
+    .iPs2Dat   (ps2_mdat),
+    .oPs2Clk   (ps2_mclk_od),
+    .oPs2Dat   (ps2_mdat_od)
   );
 
   //
@@ -401,6 +415,22 @@ module top(
   );
 `endif
 
+  wire [7:0] uart_out;
+  wire       uart_sel;
+  wire       uart_intr;
+  uartBridge u_uart_bridge(
+    .iClk   (pll_clk_bus),
+    .iAddr  (cpu_addr),
+    .iWr    (cpu_io_wr),
+    .iWrData(cpu_data_out),
+    .iRd    (cpu_io_rd),
+    .oRdData(uart_out),
+    .oSel   (uart_sel),
+    .oIntr  (uart_intr),
+    .iRx    (serial_rx),
+    .oTx    (serial_tx)
+  );
+
   //
   // PMOD
   //
@@ -408,12 +438,12 @@ module top(
   assign pmod = {
     /*6*/1'b0,
     /*4*/1'b0,
-    /*2*/sd_di,
-    /*0*/sd_clk,
+    /*2*/1'b0,
+    /*0*/1'b0,
     /*7*/1'b0,
     /*5*/1'b0,
-    /*3*/sd_do,
-    /*1*/sd_cs
+    /*3*/1'b0,
+    /*1*/1'b0
   };
 
 endmodule

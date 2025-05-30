@@ -28,18 +28,12 @@ module uart8250(
   output wire [7:0] oTxData,
   output wire       oTx,
 
-  input  wire       iDTR,      //
-
   output wire       oDTR,      // modem DTR signal
-  output wire       oLOOP,     // loop back enabled
+  output wire       oRTS       // modem RTL signal
 );
 
-  initial begin
-    $dumpfile("dump.vcd");
-    $dumpvars(0);
-  end
-
-  wire selected = { iAddr[11:3], 3'd0 } == 12'h3F8;
+  parameter BASE = 12'h3F8;
+  wire selected = { iAddr[11:3], 3'd0 } == BASE;
 
   reg [7:0] RBR = 0;           // +0  rx buffer
   reg [7:0] THR = 0;           // +0  tx buffer
@@ -69,11 +63,10 @@ module uart8250(
   wire DR   = LSR[0];  // rx available
   wire THRE = LSR[5];  // tx holding register empty
   wire TEMT = LSR[6];  // tx empty
-  wire LOOP = MCR[4];  // loop back
 
   assign oRxReady = !DR;
   assign oDTR     = DTR;
-  assign oLOOP    = LOOP;
+  assign oRTS     = RTS;
 
   always @(posedge iClk) begin
 
@@ -94,8 +87,8 @@ module uart8250(
     end
 
     if (iTxReady && !TEMT) begin
-      LSR[5]  <= 1'b1;    // drain THRE
-      LSR[6]  <= 1'b1;    // drain TEMT
+      LSR[5]  <= 1'b1;  // drain THRE
+      LSR[6]  <= 1'b1;  // drain TEMT
       oTx     <= 1;
       oTxData <= THR;
     end
@@ -114,11 +107,11 @@ module uart8250(
       oIntr <= 1'b1;
       IIR   <= 3'b100;  // data received
     end
-
+    
     //
     // write logic
     //
-
+  
     if (selected & iWr) begin
       case (iAddr[2:0])
       3'd0:
@@ -135,8 +128,6 @@ module uart8250(
       3'd1: IER <= iWrData[3:0];
       3'd3: LCR <= iWrData;
       3'd4: MCR <= iWrData[4:0];
-      //3'd5: LSR <= iWrData[6:0];  undefined
-      //3'd6: MSR <= iWrData;
       3'd7: SCR <= iWrData;
       default: ;
       endcase
