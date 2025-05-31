@@ -22,4 +22,4 @@ io/uart8250.v
 io/uartBridge.v
 io/uartMouse.v
 io/sdcard.v
-top_ps2.v
+top.v

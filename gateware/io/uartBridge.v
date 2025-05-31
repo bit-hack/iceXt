@@ -50,7 +50,7 @@ module uartBridge(
     .oSel    (oSel),
     .oIntr   (oIntr),
     .iRxData (mouseReset ? 8'h4D : rxData),
-    .iRx     (mouseReset | rxValid),
+    .iRx     (mouseReset         | rxValid),
     .oRxReady(),
     .oRxTaken(rxTaken),
     .iTxReady(txReady),

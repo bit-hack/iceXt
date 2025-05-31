@@ -418,17 +418,38 @@ module top(
   wire [7:0] uart_out;
   wire       uart_sel;
   wire       uart_intr;
-  uartBridge u_uart_bridge(
-    .iClk   (pll_clk_bus),
-    .iAddr  (cpu_addr),
-    .iWr    (cpu_io_wr),
-    .iWrData(cpu_data_out),
-    .iRd    (cpu_io_rd),
-    .oRdData(uart_out),
-    .oSel   (uart_sel),
-    .oIntr  (uart_intr),
-    .iRx    (serial_rx),
-    .oTx    (serial_tx)
+  //uartBridge u_uart_bridge(
+  //  .iClk   (pll_clk_bus),
+  //  .iAddr  (cpu_addr),
+  //  .iWr    (cpu_io_wr),
+  //  .iWrData(cpu_data_out),
+  //  .iRd    (cpu_io_rd),
+  //  .oRdData(uart_out),
+  //  .oSel   (uart_sel),
+  //  .oIntr  (uart_intr),
+  //  .iRx    (serial_rx),
+  //  .oTx    (serial_tx)
+  //);
+
+  wire       ps2_kclk_od;
+  wire       ps2_kdat_od;
+  assign     ps2_kclk = ps2_kclk_od ? 1'bz : 1'b0;
+  assign     ps2_kdat = ps2_kdat_od ? 1'bz : 1'b0;
+
+  uartMouse u_uart_mouse(
+    .iClk    (pll_clk_bus),
+    .iRst    (rst),
+    .iAddr   (cpu_addr),
+    .iWr     (cpu_io_wr),
+    .iWrData (cpu_data_out),
+    .iRd     (cpu_io_rd),
+    .oRdData (uart_out),
+    .oSel    (uart_sel),
+    .oIntr   (uart_intr),
+    .iPs2Clk (ps2_kclk),
+    .iPs2Data(ps2_kdat),
+    .oPs2Clk (ps2_kclk_od),
+    .oPs2Data(ps2_kdat_od)
   );
 
   //
@@ -439,11 +460,11 @@ module top(
     /*6*/1'b0,
     /*4*/1'b0,
     /*2*/1'b0,
-    /*0*/1'b0,
+    /*0*/ps2_kclk,
     /*7*/1'b0,
     /*5*/1'b0,
     /*3*/1'b0,
-    /*1*/1'b0
+    /*1*/ps2_kdat
   };
 
 endmodule
