@@ -19,6 +19,7 @@ module ps2_device(
     output reg       oTxFail = 0,
 
     input            iInhibit,
+    output           oIdle,
 
     output reg       oRx     = 0,
     output reg [7:0] oRxData = 0,
@@ -62,6 +63,8 @@ module ps2_device(
   reg [ 3:0] state = 0;
   reg [ 7:0] count = 0;
   reg [15:0] delay = 0;
+
+  assign oIdle = (state == STATE_IDLE);
 
   //
   // watchdog timeout

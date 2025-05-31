@@ -20,5 +20,6 @@ io/ps2.v
 io/keyboard.v
 io/uart8250.v
 io/uartBridge.v
+io/uartMouse.v
 io/sdcard.v
-top.v
+top_ps2.v

@@ -27,6 +27,8 @@ module uartBridge(
   output wire        oTx
 );
 
+  parameter BASE = 12'h3F8;
+
   wire [7:0] rxData;
   wire       rxValid;
   uartRx #(.CLK_FREQ(`CLOCK_SPEED)) uUartRx(
@@ -38,7 +40,7 @@ module uartBridge(
   );
 
   wire       rxTaken;
-  uart8250 #(.BASE(12'h3f8)) uUart8250(
+  uart8250 #(.BASE(BASE)) uUart8250(
     .iClk    (iClk),
     .iAddr   (iAddr),
     .iWr     (iWr),
