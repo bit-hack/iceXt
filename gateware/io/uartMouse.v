@@ -67,7 +67,7 @@ module uartMouse(
     .oSel    (oSel),
     .oIntr   (oIntr),
     .iRxData (mouseReset ? 8'h4D : uartRxData),
-    .iRx     (mouseReset | uartRx),
+    .iRx     (mouseReset |         uartRx),
     .oRxReady(),
     .oRxTaken(rxTaken),
     .iTxReady(1'b1),
@@ -84,7 +84,7 @@ module uartMouse(
     dlyRts <= rts;
     if ((!dlyRts) & rts) begin
       mouseReset <= 1;
-      //state      <= 0;  // force PS/2 mouse to reset
+      //state <= STATE_RESET;  // TODO: force PS/2 mouse to reset
     end
     if (rxTaken) begin
       mouseReset <= 0;
@@ -94,7 +94,6 @@ module uartMouse(
   localparam INTERVAL = `CLOCK_SPEED / 30;
 
   reg [19:0] period  = 0;
-  reg [ 3:0] state   = 0;
   reg [23:0] ps2Recv = 0;
 
   reg [23:0] uartShift  = { 8'b01000000, 8'b00000000, 8'b00000000 };
@@ -109,7 +108,13 @@ module uartMouse(
   wire       mouseLmb = ps2Recv[16];
   wire       mouseRmb = ps2Recv[17];
 
+
+  localparam STATE_RESET = 6;
+  localparam STATE_POLL  = 0;
+
+  reg [ 3:0] state     = STATE_RESET;
   wire [3:0] stateNext = state + 4'd1;
+
 
   always @(posedge iClk) begin
     period <= period - (|period);
@@ -119,70 +124,12 @@ module uartMouse(
     case (state)
 
     //
-    // reset
-    //
-    0: begin
-      ps2TxData <= 8'hff;
-      ps2Tx     <= ps2Idle;
-      if (ps2TxOk) begin
-        state <= stateNext;
-      end
-    end
-    1: begin
-      if (ps2Rx) begin
-        state <= (ps2RxData == 8'hfa) ? stateNext : 0;
-      end
-    end
-    2: begin
-      if (ps2Rx) begin
-        state <= (ps2RxData == 8'haa) ? stateNext : 0;
-      end
-    end
-    3: begin
-      if (ps2Rx) begin
-        state <= (ps2RxData == 8'h00) ? stateNext : 0;
-      end
-    end
-
-    //
-    // set defaults
-    //
-    4: begin
-      ps2Tx     <= ps2Idle;
-      ps2TxData <= 8'hf6;
-      if (ps2TxOk) begin
-        state <= stateNext;
-      end
-    end
-    5: begin
-      if (ps2Rx) begin
-        state <= (ps2RxData == 8'hfa) ? stateNext : 0;
-      end
-    end
-
-    //
-    // set scale 2:1
-    //
-    6: begin
-      ps2Tx     <= ps2Idle;
-      ps2TxData <= 8'he7;
-      if (ps2TxOk) begin
-        state <= stateNext;
-      end
-    end
-    7: begin
-      if (ps2Rx) begin
-        state <= (ps2RxData == 8'hfa) ? stateNext : 0;
-      end
-    end
-
-    //
     // request sample
     //
-    8: begin
+    STATE_POLL: begin
       if (period == 0) begin
         // request single packet
-        ps2Tx     <= ps2Idle;
+        ps2Tx     <= ps2Idle & !ps2TxOk;
         ps2TxData <= 8'heb;
         if (ps2TxOk) begin
           period <= INTERVAL;
@@ -190,13 +137,13 @@ module uartMouse(
         end
       end
     end
-    9: begin
+    1: begin
       if (ps2Rx) begin
         // ACK bit
-        state <= (ps2RxData == 8'hfa) ? stateNext : 8;
+        state <= (ps2RxData == 8'hfa) ? stateNext : STATE_POLL;
       end
     end
-    10: begin
+    2: begin
       if (ps2Rx) begin
         // byte1
         state   <= stateNext;
@@ -207,7 +154,7 @@ module uartMouse(
         uartShift  <= { uartShift[15:0], 8'd0 };
       end
     end
-    11: begin
+    3: begin
       if (ps2Rx) begin
         // byte2
         state   <= stateNext;
@@ -218,7 +165,7 @@ module uartMouse(
         uartShift  <= { uartShift[15:0], 8'd0 };
       end
     end
-    12: begin
+    4: begin
       if (ps2Rx) begin
         // byte3
         state   <= stateNext;
@@ -234,17 +181,9 @@ module uartMouse(
     // convert
     //
 
-    13: begin
-      state <= 8;
-
-      //              23            16   15            8    7             0
-      //              7 6 5 4 3 2 1 0  | 7 6 5 4 3 2 1 0  | 7 6 5 4 3 2 1 0
-      // PS/2 Format: YoXoYsXs1 BmBrBl | X7X6X5X4X3X2X1X0 | Y7Y6Y5Y4Y3Y2Y1Y0
-      // M$ft Format: 0 1 BlBrY7Y6X7X6 | 0 0 X5X4X3X2X1X0 | 0 0 Y5Y4Y3Y2Y1Y0
-      //
-
+    5: begin
+      state <= STATE_POLL;
       uartShift <= {
-//             Bl        Br        Y7,Y6         X7,X6
         2'b01, mouseLmb, mouseRmb, mouseDy[7:6], mouseDx[7:6],
         2'b00, mouseDx[5:0],
         2'b00, mouseDy[5:0]
@@ -252,16 +191,74 @@ module uartMouse(
     end
 
     //
+    // reset
+    //
+    STATE_RESET: begin
+      ps2TxData <= 8'hff;
+      ps2Tx <= ps2Idle & !ps2TxOk;
+      if (ps2TxOk) begin
+        state <= stateNext;
+      end
+    end
+    7: begin
+      if (ps2Rx) begin
+        state <= (ps2RxData == 8'hfa) ? stateNext : STATE_RESET;
+      end
+    end
+    8: begin
+      if (ps2Rx) begin
+        state <= (ps2RxData == 8'haa) ? stateNext : STATE_RESET;
+      end
+    end
+    9: begin
+      if (ps2Rx) begin
+        state <= (ps2RxData == 8'h00) ? stateNext : STATE_RESET;
+      end
+    end
+
+    //
+    // set defaults
+    //
+    10: begin
+      ps2Tx <= ps2Idle & !ps2TxOk;
+      ps2TxData <= 8'hf6;
+      if (ps2TxOk) begin
+        state <= stateNext;
+      end
+    end
+    11: begin
+      if (ps2Rx) begin
+        state <= (ps2RxData == 8'hfa) ? stateNext : STATE_RESET;
+      end
+    end
+
+    //
+    // set scale 2:1
+    //
+    12: begin
+      ps2Tx <= ps2Idle & !ps2TxOk;
+      ps2TxData <= 8'he7;
+      if (ps2TxOk) begin
+        state <= stateNext;
+      end
+    end
+    13: begin
+      if (ps2Rx) begin
+        state <= (ps2RxData == 8'hfa) ? STATE_POLL : STATE_RESET;
+      end
+    end
+
+    //
     // unknown state
     //
     default: begin
-      state <= 0;
+      state <= STATE_RESET;
     end
     endcase
 
     // reset logic
     if (iRst) begin
-      state <= 0;
+      state <= STATE_RESET;
     end
 
   end
