@@ -5,7 +5,6 @@ utils/uartTx.v
 utils/clkEnGen.v
 utils/reset.v
 utils/spiMaster.v
-utils/sevenSeg.v
 cpu/cpuBus.v
 roms/biosRom.v
 roms/diskRom.v

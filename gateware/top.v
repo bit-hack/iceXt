@@ -135,6 +135,12 @@ module top(
   // internal CPU bus
   //
 
+  reg port_sel = 0;
+  always @(posedge pll_clk_bus) begin
+    if (cpu_io_rd)  port_sel <= 1;
+    if (cpu_mem_rd) port_sel <= 0;
+  end
+
   wire [ 7:0] cpu_data_in =
       bios_rom_sel ? bios_rom_out :
       disk_rom_sel ? disk_rom_out :
@@ -145,6 +151,7 @@ module top(
            pit_sel ? pit_data_out :
            cga_sel ?      cga_out :
            ega_sel ?      ega_out :
+//          port_sel ?        8'hff :  // model unoccupied port space (causes display to not init?!)
                            sram_d;
   wire [ 7:0] cpu_data_out;
   wire        cpu_mem_rd;

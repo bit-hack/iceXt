@@ -259,7 +259,8 @@ module video_ega(
     plane0[3'h7 ^ dlyCrtcDa]
   };
 
-  reg [7:0] palColor;
+  reg  [7:0] palColor;
+  wire [3:0] palIRGB = { palColor[4], palColor[2], palColor[1], palColor[0] };
 
   always @(posedge iClk25) begin
       palColor <= palette[ palIndex ];
@@ -268,10 +269,11 @@ module video_ega(
   //
   // vga output
   //
-
-  wire [3:0] outR = { palColor[2], palColor[5], palColor[2], palColor[5] };
-  wire [3:0] outG = { palColor[1], palColor[4], palColor[1], palColor[4] };
-  wire [3:0] outB = { palColor[0], palColor[3], palColor[0], palColor[3] };
+  
+  //                                                              A         0                        5         0
+  wire [3:0] outR =                            ( (palIRGB[2] ? 4'b1010 : 4'b0000) | (palIRGB[3] ? 4'b0101 : 4'b0000) );
+  wire [3:0] outG = (palIRGB == 4'd6) ? 4'h5 : ( (palIRGB[1] ? 4'b1010 : 4'b0000) | (palIRGB[3] ? 4'b0101 : 4'b0000) );
+  wire [3:0] outB =                            ( (palIRGB[0] ? 4'b1010 : 4'b0000) | (palIRGB[3] ? 4'b0101 : 4'b0000) );
 
   wire active = !dlyCrtcBl1;
   assign oVgaR  = active ? outR : 4'h0;
