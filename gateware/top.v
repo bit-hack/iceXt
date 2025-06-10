@@ -304,16 +304,23 @@ module top(
   wire       pic_sel;
   wire [7:0] pic_out;
 
-  pic u_pic(
+  pic2 u_pic(
     .iClk   (pll_clk_bus),
     .iRst   (rst),
     .iIrq0  (irq0),          // timer
     .iIrq1  (irq1),          // keyboard
     .iIrq4  (uart_intr),     // com1
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
+
+    .iAddr  (cpu_addr),
+    .iWrData(cpu_data_out),
+    .iWr    (cpu_io_wr),
+    .iRd    (cpu_io_rd),
+
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
-    .oData  (pic_out)
+    .oData  (pic_out),
+    .oDebug (debug)
   );
 
   //
@@ -463,15 +470,16 @@ module top(
   // PMOD
   //
 
+  wire [7:0] debug;
   assign pmod = {
-    /*6*/1'b0,
-    /*4*/1'b0,
-    /*2*/1'b0,
-    /*0*/ps2_kclk,
-    /*7*/1'b0,
-    /*5*/1'b0,
-    /*3*/1'b0,
-    /*1*/ps2_kdat
+    /*6*/debug[6],
+    /*4*/debug[4],
+    /*2*/debug[2],
+    /*0*/debug[0],
+    /*7*/debug[7],
+    /*5*/debug[5],
+    /*3*/debug[3],
+    /*1*/debug[1]
   };
 
 endmodule
