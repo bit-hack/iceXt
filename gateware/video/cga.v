@@ -10,13 +10,14 @@
 
 module video_crtc(
     input              iClk25,
-    input       [ 2:0] iGlyphMaxY, // char height - 1
-    output      [12:0] oAddr,      // character address [000.1FFF] 8x8
-    output      [ 2:0] oRA,        // row address [0..7]
-    output      [ 3:0] oDA,        // dot address [0..15]
-    output reg         oVgaHs,     // horizontal sync
-    output reg         oVgaVs,     // vertical sync
-    output             oVgaBlank   // vga blanking period
+    input       [ 2:0] iGlyphMaxY,  // char height - 1
+    output      [12:0] oAddr,       // character address [000.1FFF] 8x8
+    output      [ 2:0] oRA,         // row address [0..7]
+    output      [ 3:0] oDA,         // dot address [0..15]
+    output reg         oVgaHs,      // horizontal sync
+    output reg         oVgaVs,      // vertical sync
+    output             oVgaBlank,   // vga blanking period
+    output reg         oVgaRetrace  // vertical retrace strobe
 );
 
   // 640x400@70hz
@@ -67,6 +68,7 @@ module video_crtc(
   end
 
   always @(posedge iClk25) begin
+    oVgaRetrace <= 0;
     xcounter <= xcounter + 10'd1;
     oVgaHs <= cmp_xsyncs ? 0 :  // negative pulse
               cmp_xsynce ? 1 :
@@ -85,8 +87,9 @@ module video_crtc(
       xcounter <= 0;
       ycounter <= ycounter + 10'd1;
       if (cmp_ymax) begin
-        yblank   <= 0;
-        ycounter <= 0;
+        yblank      <= 0;
+        ycounter    <= 0;
+        oVgaRetrace <= 1;
       end
     end
   end
@@ -193,6 +196,27 @@ module video_cga(
   wire [3:0] regColor    = reg3D9[3:0];
 
   //
+  // CRTC 6845 registers
+  //
+  reg  [ 4:0] regCRTCIndex = 5'd0;
+  reg  [ 7:0] regCRTCValue[18];
+  wire [ 4:0] cursorStart =   regCRTCValue[10][4:0];
+  wire [ 4:0] cursorEnd   =   regCRTCValue[11][4:0];
+  wire [13:0] cursorAddr  = { regCRTCValue[14][5:0], regCRTCValue[15] };
+  wire [ 1:0] cursorMode  =   2'b11;  // regCRTCValue[10][6:5];
+
+  initial begin
+    regCRTCValue[10] = 8'hf0;  // blink
+  end
+
+  wire cursor = ({ 1'b0, crtcAddr } == cursorAddr ) &&
+                ({ 2'd0, crtcRA   } >= cursorStart) &&
+                ({ 2'd0, crtcRA   } <= cursorEnd  ) &&
+                (cursorMode != 2'b01) &&
+                (cursorMode == 2'b10 ? blink[3] : 1'b1) &&
+                (cursorMode == 2'b11 ? blink[4] : 1'b1);
+
+  //
   // status register
   //
   wire [7:0] reg3DA = {
@@ -210,6 +234,26 @@ module video_cga(
     oRdData <= 12'h0;
     oSel    <= 1'b0;
     case (iAddr[11:0])
+    12'h3B0, 12'h3B2, 12'h3B4, 12'h3B6, 12'h3D0, 12'h3D2, 12'h3D4, 12'h3D6: begin
+      if (iWrIo) begin
+        regCRTCIndex <= iWrData[4:0];
+      end
+      if (iRdIo) begin
+        oRdData <= regCRTCIndex;
+        oSel    <= 1'b1;
+      end
+    end
+    12'h3B1, 12'h3B3, 12'h3B5, 12'h3B7, 12'h3D1, 12'h3D3, 12'h3D5, 12'h3D7: begin
+      if (regCRTCIndex < 5'd18) begin
+        if (iWrIo) begin
+          regCRTCValue[regCRTCIndex] <= iWrData;
+        end
+        if (iRdIo) begin
+          oRdData <= regCRTCValue[regCRTCIndex];
+          oSel    <= 1'b1;
+        end
+      end
+    end
     12'h3D8: begin
       if (iWrIo) reg3D8  <= iWrData;
       if (iRdIo) { oRdData, oSel } <= { reg3D8, 1'b1 };
@@ -234,16 +278,29 @@ module video_cga(
   wire        crtcVS;
   wire        crtcHS;
   wire        crtcBlank;
+  wire        crtcRetrace;
   video_crtc u_video_crtc(
-    .iClk25    (iClk25),
-    .iGlyphMaxY(glyphMaxY),
-    .oAddr     (crtcAddr),
-    .oRA       (crtcRA),
-    .oDA       (crtcDA),
-    .oVgaVs    (crtcVS),
-    .oVgaHs    (crtcHS),
-    .oVgaBlank (crtcBlank)
+    .iClk25     (iClk25),
+    .iGlyphMaxY (glyphMaxY),
+    .oAddr      (crtcAddr),
+    .oRA        (crtcRA),
+    .oDA        (crtcDA),
+    .oVgaVs     (crtcVS),
+    .oVgaHs     (crtcHS),
+    .oVgaBlank  (crtcBlank),
+    .oVgaRetrace(crtcRetrace)
   );
+
+  //
+  // blink
+  //
+
+  reg [4:0] blink = 0;
+  always @(posedge iClk25) begin
+    if (crtcRetrace) begin
+      blink <= blink + 5'd1;
+    end
+  end
 
   //
   // delays
@@ -254,6 +311,8 @@ module video_cga(
   reg [ 3:0] dlyCrtcDA1, dlyCrtcDA2;
   reg [ 2:0] dlyCrtcRA1;
   reg [ 7:0] dlyTxtAttr1, dlyTxtAttr2;
+  reg        dlyCursor1, dlyCursor2;
+
   always @(posedge iClk25) begin
     dlyCrtcVS    <= { dlyCrtcVS   [1:0], crtcVS };
     dlyCrtcHS    <= { dlyCrtcHS   [1:0], crtcHS };
@@ -261,6 +320,7 @@ module video_cga(
     dlyCrtcRA1   <= crtcRA;
     { dlyCrtcDA2,  dlyCrtcDA1  } <= { dlyCrtcDA1,  crtcDA  };
     { dlyTxtAttr2, dlyTxtAttr1 } <= { dlyTxtAttr1, txtAttr };
+    { dlyCursor2,  dlyCursor1  } <= { dlyCursor1,  cursor  };
   end
 
   //
@@ -286,7 +346,8 @@ module video_cga(
   );
 
   wire [7:0] txtChar = ramRdData[15:8];  // ramRdAddr[0]==0
-  wire [7:0] txtAttr = ramRdData[ 7:0];  // ramRdAddr[0]==1
+  wire [7:0] txtAttr = dlyCursor1 ? { ramRdData[3:0], ramRdData[3:0] } :
+                                      ramRdData[7:0];  // ramRdAddr[0]==1
 
   //
   // font ROM lookup
@@ -371,11 +432,13 @@ module video_cga(
     palGfx[15] = 12'hfff;  // 15
   end
 
-  reg [3:0] pixR;
-  reg [3:0] pixG;
-  reg [3:0] pixB;
+  reg  [3:0] pixR;
+  reg  [3:0] pixG;
+  reg  [3:0] pixB;
+  wire [3:0] palIndex = { regPalette, regBrightFg, pixel };
+
   always @(posedge iClk25) begin
-    { pixR, pixG, pixB } <= palGfx[ { regPalette, regBrightFg, pixel }];
+    { pixR, pixG, pixB } <= palGfx[ palIndex ];
   end
 
   //

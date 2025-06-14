@@ -146,12 +146,8 @@ module top(
       disk_rom_sel ? disk_rom_out :
            pic_sel ?      pic_out :
             sd_sel ?       sd_out :
-`ifdef CFG_ENABLE_COM1_MOUSE
           com1_sel ?     com1_out :
-`endif
-`ifdef CFG_ENABLE_COM2_BRIDGE
           com2_sel ?     com2_out :
-`endif
       keyboard_sel ? keyboard_out :
            pit_sel ? pit_data_out :
            cga_sel ?      cga_out :
@@ -463,6 +459,10 @@ module top(
     .oPs2Clk (ps2_kclk_od),
     .oPs2Data(ps2_kdat_od)
   );
+`else
+  wire [7:0] com1_out  = 8'h00;
+  wire       com1_sel  = 1'b0;
+  wire       com1_intr = 1'b0;
 `endif
 
   //
@@ -486,6 +486,10 @@ module top(
     .iRx    (serial_rx),
     .oTx    (serial_tx)
   );
+`else
+  wire [7:0] com2_out  = 8'h00;
+  wire       com2_sel  = 1'b0;
+  wire       com2_intr = 1'b0;
 `endif
 
   //
