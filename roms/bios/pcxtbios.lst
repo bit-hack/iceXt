@@ -1,4 +1,4 @@
-Module: C:\riscv\iceXt\roms\bios\pcxtbios.asm
+Module: D:\iceXt\roms\bios\pcxtbios.asm
 GROUP: 'DGROUP' _TEXT,_DATA
 
 File contains no line numbers.
@@ -30304,7 +30304,7 @@ E362  BE 00 E0				mov		si,offset L$1-0x2000
 E365  E8 50 16				call		title_print
 
 	mov	si, offset str_banner_2
-E368  BE EB EB				mov		si,offset L$1-0x1415
+E368  BE F7 EB				mov		si,offset L$1-0x1409
 
 	call	print
 E36B  E8 6B 01				call		print
@@ -31359,7 +31359,7 @@ E5DF  75 05				jne		L$53
 
 
 	mov	si, offset str_boot_basic	; ROM BASIC present
-E5E1  BE 21 EC				mov		si,offset L$1-0x13df
+E5E1  BE 2D EC				mov		si,offset L$1-0x13d3
 
 	inc	dl
 E5E4  FE C2				inc		dl
@@ -31643,7 +31643,7 @@ E667				L$60:
 E667  59				pop		cx
 
 	mov	dx, offset int_9_end		; Skip the standard Int 9h
-E668  BA A7 E9				mov		dx,offset L$1-0x1659
+E668  BA B3 E9				mov		dx,offset L$1-0x164d
 
 	push	dx
 E66B  52				push		dx
@@ -31754,7 +31754,7 @@ E6AD  E8 60 08				call		check_ctrl_alt_del
 
 
 	call	set_insert_flags		; Check for gray INS key down and set insert flags
-E6B0  E8 EE 04				call		set_insert_flags
+E6B0  E8 FA 04				call		set_insert_flags
 
 	jc	@@done				; Process key up codes normally
 E6B3  72 07				jb		L$64
@@ -31770,7 +31770,7 @@ E6B7				L$63:
 E6B7  59				pop		cx
 
 	mov	dx, offset int_9_stuff		; Skip processing and put keystroke in buffer
-E6B8  BA 90 EB				mov		dx,offset L$1-0x1470
+E6B8  BA 9C EB				mov		dx,offset L$1-0x1464
 
 	push	dx
 E6BB  52				push		dx
@@ -32370,7 +32370,7 @@ E821				L$85:
 E821  8B C1				mov		ax,cx
 
 	call	stuff_keyboard_buffer
-E823  E8 A3 03				call		stuff_keyboard_buffer
+E823  E8 AF 03				call		stuff_keyboard_buffer
 
 	mov	al, 0				; al=0 if buffer ok (must be MOV; XOR modifies cf!)
 E826  B0 00				mov		al,0x00
@@ -32675,558 +32675,574 @@ E993  8E D8				mov		ds,ax
 	in	al, 60h 			; Read the scan code data
 E995  E4 60				in		al,0x60
 
-	;push	ax				;   save it
-	;in	al, 61h 			; Get control port status
-	;push	ax				;   save it
-	;or	al, 10000000b			; Set "latch" bit to
-	;out	61h, al 			;   acknowledge data
-	;pop	ax				; Restore control status
-	;out	61h, al 			;   to enable keyboard
-	;pop	ax				;   restore scan code
+	push	ax				;   save it
+E997  50				push		ax
+
+	in	al, 61h 			; Get control port status
+E998  E4 61				in		al,0x61
+
+	push	ax				;   save it
+E99A  50				push		ax
+
+	or	al, 10000000b			; Set "latch" bit to
+E99B  0C 80				or		al,0x80
+
+	out	61h, al 			;   acknowledge data
+E99D  E6 61				out		0x61,al
+
+	pop	ax				; Restore control status
+E99F  58				pop		ax
+
+	out	61h, al 			;   to enable keyboard
+E9A0  E6 61				out		0x61,al
+
+	pop	ax				;   restore scan code
+E9A2  58				pop		ax
+
 
 	mov	ah, al				; Save copy of scan code
-E997  8A E0				mov		ah,al
+E9A3  8A E0				mov		ah,al
 
 
 ifdef	ENHANCED_KEYB
 	mov	bx, [ds:96h]			; Get enhanced keyboard status flag
-E999  8B 1E 96 00			mov		bx,word ptr ds:[0x96]
+E9A5  8B 1E 96 00			mov		bx,word ptr ds:[0x96]
 
 	call	int_9_enhanced			; Process escaped scan codes first
-E99D  E8 C0 FC				call		int_9_enhanced
+E9A9  E8 B4 FC				call		int_9_enhanced
 
 endif
 
 	cmp	al, 11111111b			;   check for overrun
-E9A0  3C FF				cmp		al,0xff
+E9AC  3C FF				cmp		al,0xff
 
 	jnz	@@process			;   no, OK
-E9A2  75 0F				jne		L$92
+E9AE  75 0F				jne		L$92
 
 
 	jmp	near @@beep			; Else beep bell on overrun
-E9A4  E9 EE 01				jmp		L$128
+E9B0  E9 EE 01				jmp		L$128
 
 
 int_9_end:
 @@end:
 	mov	al, 20h 			; Send end_of_interrupt code
-E9A7				L$90:
-E9A7  B0 20				mov		al,0x20
+E9B3				L$90:
+E9B3  B0 20				mov		al,0x20
 
 	out	20h, al 			;   to 8259 interrupt chip
-E9A9  E6 20				out		0x20,al
+E9B5  E6 20				out		0x20,al
 
 
 @@exit:
 	pop	ds				; Exit the interrupt
-E9AB				L$91:
-E9AB  1F				pop		ds
+E9B7				L$91:
+E9B7  1F				pop		ds
 
 	pop	di
-E9AC  5F				pop		di
+E9B8  5F				pop		di
 
 	pop	si
-E9AD  5E				pop		si
+E9B9  5E				pop		si
 
 	pop	dx
-E9AE  5A				pop		dx
+E9BA  5A				pop		dx
 
 	pop	cx
-E9AF  59				pop		cx
+E9BB  59				pop		cx
 
 	pop	bx
-E9B0  5B				pop		bx
+E9BC  5B				pop		bx
 
 	pop	ax
-E9B1  58				pop		ax
+E9BD  58				pop		ax
 
 	iret
-E9B2  CF				iret		
+E9BE  CF				iret		
 
 
 @@process:
 	and	al, 01111111b			; Valid scan code, no break
-E9B3				L$92:
-E9B3  24 7F				and		al,0x7f
+E9BF				L$92:
+E9BF  24 7F				and		al,0x7f
 
 	cmp	al, 46h
-E9B5  3C 46				cmp		al,0x46
+E9C1  3C 46				cmp		al,0x46
 
 	jbe	@@standard			; Standard key
-E9B7  76 03				jbe		L$93
+E9C3  76 03				jbe		L$93
 
 	jmp	near @@pad			; Numeric keypad key
-E9B9  E9 22 01				jmp		L$113
+E9C5  E9 22 01				jmp		L$113
 
 
 @@standard:
 	mov	bx, offset ascii		; Table for ESC thru Scroll Lck
-E9BC				L$93:
-E9BC  BB 85 E8				mov		bx,offset L$1-0x177b
+E9C8				L$93:
+E9C8  BB 85 E8				mov		bx,offset L$1-0x177b
 
 	xlat	[cs:bx] 			;   translate to Ascii
-E9BF  2E D7				xlat		word ptr cs:[bx]
+E9CB  2E D7				xlat		word ptr cs:[bx]
 
 	or	al, al				; Sign flags "Shift" type key
-E9C1  0A C0				or		al,al
+E9CD  0A C0				or		al,al
 
 	js	@@flag				;   shift, caps, num, scroll etc
-E9C3  78 06				js		L$94
+E9CF  78 06				js		L$94
 
 	or	ah, ah				; Invalid scan code?
-E9C5  0A E4				or		ah,ah
+E9D1  0A E4				or		ah,ah
 
 	js	@@end				;   exit if so
-E9C7  78 DE				js		L$90
+E9D3  78 DE				js		L$90
 
 	jmp	short @@ascii			; Else normal character
-E9C9  EB 4D				jmp		L$98
+E9D5  EB 4D				jmp		L$98
 
 
 @@flag: and	al, 01111111b			; Remove sign flag bit
-E9CB				L$94:
-E9CB  24 7F				and		al,0x7f
+E9D7				L$94:
+E9D7  24 7F				and		al,0x7f
 
 	or	ah, ah				;   check scan code
-E9CD  0A E4				or		ah,ah
+E9D9  0A E4				or		ah,ah
 
 	js	@@shift_up			;   negative, key released
-E9CF  78 21				js		L$96
+E9DB  78 21				js		L$96
 
 	cmp	al, 10h 			; Is it a "toggle" type key?
-E9D1  3C 10				cmp		al,0x10
+E9DD  3C 10				cmp		al,0x10
 
 	jnb	@@toggle			;   yes
-E9D3  73 06				jae		L$95
+E9DF  73 06				jae		L$95
 
 	or	[ds:17h], al			; Else set bit in "flag" byte
-E9D5  08 06 17 00			or		byte ptr ds:[0x17],al
+E9E1  08 06 17 00			or		byte ptr ds:[0x17],al
 
 	jmp	@@end				;   and exit
-E9D9  EB CC				jmp		L$90
+E9E5  EB CC				jmp		L$90
 
 
 @@toggle:
 	test	[byte ds:17h], 00000100b	; Control key pressed?
-E9DB				L$95:
-E9DB  F6 06 17 00 04			test		byte ptr ds:[0x17],0x04
+E9E7				L$95:
+E9E7  F6 06 17 00 04			test		byte ptr ds:[0x17],0x04
 
 	jnz	@@ascii				;   yes, skip
-E9E0  75 36				jne		L$98
+E9EC  75 36				jne		L$98
 
 	test	[ds:18h], al			; Else check "CAPS, NUM, SCRL"
-E9E2  84 06 18 00			test		byte ptr ds:[0x18],al
+E9EE  84 06 18 00			test		byte ptr ds:[0x18],al
 
 	jnz	@@end				;   set, invalid, exit
-E9E6  75 BF				jne		L$90
+E9F2  75 BF				jne		L$90
 
 	or	[ds:18h], al			; Show set in "flag_1" byte
-E9E8  08 06 18 00			or		byte ptr ds:[0x18],al
+E9F4  08 06 18 00			or		byte ptr ds:[0x18],al
 
 	xor	[ds:17h], al			;   flip bits in "flag" byte
-E9EC  30 06 17 00			xor		byte ptr ds:[0x17],al
+E9F8  30 06 17 00			xor		byte ptr ds:[0x17],al
 
 	jmp	@@end
-E9F0  EB B5				jmp		L$90
+E9FC  EB B5				jmp		L$90
 
 
 @@shift_up:
 	cmp	al, 10h 			; Released - is it "toggle" key
-E9F2				L$96:
-E9F2  3C 10				cmp		al,0x10
+E9FE				L$96:
+E9FE  3C 10				cmp		al,0x10
 
 	jnb	@@toggle_up			;   skip if so
-E9F4  73 1A				jae		L$97
+EA00  73 1A				jae		L$97
 
 	not	al				; Else form two's complement
-E9F6  F6 D0				not		al
+EA02  F6 D0				not		al
 
 	and	[ds:17h], al			;   to do BIT_CLEAR "flags"
-E9F8  20 06 17 00			and		byte ptr ds:[0x17],al
+EA04  20 06 17 00			and		byte ptr ds:[0x17],al
 
 	cmp	al, 11110111b			; ALT key release special case
-E9FC  3C F7				cmp		al,0xf7
+EA08  3C F7				cmp		al,0xf7
 
 	jnz	@@end				;   no, exit
-E9FE  75 A7				jne		L$90
+EA0A  75 A7				jne		L$90
 
 	mov	al, [ds:19h]			; Else get ALT-keypad character
-EA00  A0 19 00				mov		al,byte ptr ds:[0x19]
+EA0C  A0 19 00				mov		al,byte ptr ds:[0x19]
 
 	mov	ah, 0				;   pretend null scan code
-EA03  B4 00				mov		ah,0x00
+EA0F  B4 00				mov		ah,0x00
 
 	mov	[ds:19h], ah			;   zero ALT-keypad character
-EA05  88 26 19 00			mov		byte ptr ds:[0x19],ah
+EA11  88 26 19 00			mov		byte ptr ds:[0x19],ah
 
 	cmp	al, ah				; Was there a valid ALT-keypad?
-EA09  3A C4				cmp		al,ah
+EA15  3A C4				cmp		al,ah
 
 	jz	@@end				;   no, ignore, exit
-EA0B  74 9A				je		L$90
+EA17  74 9A				je		L$90
 
 	jmp	near @@null			; Else stuff it in ASCII buffer
-EA0D  E9 8D 01				jmp		L$130
+EA19  E9 8D 01				jmp		L$130
 
 
 @@toggle_up:
 	not	al				; Form complement of toggle key
-EA10				L$97:
-EA10  F6 D0				not		al
+EA1C				L$97:
+EA1C  F6 D0				not		al
 
 	and	[ds:18h], al			;   to do BIT_CLEAR "flag_1"
-EA12  20 06 18 00			and		byte ptr ds:[0x18],al
+EA1E  20 06 18 00			and		byte ptr ds:[0x18],al
 
 	jmp	@@end
-EA16  EB 8F				jmp		L$90
+EA22  EB 8F				jmp		L$90
 
 
 @@ascii:
 	test	[byte ds:18h], 00001000b	; Scroll lock pressed?
-EA18				L$98:
-EA18  F6 06 18 00 08			test		byte ptr ds:[0x18],0x08
+EA24				L$98:
+EA24  F6 06 18 00 08			test		byte ptr ds:[0x18],0x08
 
 	jz	@@no_lock			;   no
-EA1D  74 0D				je		L$100
+EA29  74 0D				je		L$100
 
 	cmp	ah, 45h 			; Is this a NUM LOCK character?
-EA1F  80 FC 45				cmp		ah,0x45
+EA2B  80 FC 45				cmp		ah,0x45
 
 	jz	@@done				;   no
-EA22  74 05				je		L$99
+EA2E  74 05				je		L$99
 
 	and	[byte ds:18h], 11110111b	; Else clear bits in "flag_1"
-EA24  80 26 18 00 F7			and		byte ptr ds:[0x18],0xf7
+EA30  80 26 18 00 F7			and		byte ptr ds:[0x18],0xf7
 
 
 @@done:	jmp	@@end				;   and exit
-EA29				L$99:
-EA29  E9 7B FF				jmp		L$90
+EA35				L$99:
+EA35  E9 7B FF				jmp		L$90
 
 
 @@no_lock:
 	mov	dl, [ds:17h]
-EA2C				L$100:
-EA2C  8A 16 17 00			mov		dl,byte ptr ds:[0x17]
+EA38				L$100:
+EA38  8A 16 17 00			mov		dl,byte ptr ds:[0x17]
 
 	test	dl, 00001000b			; ALT key pressed?
-EA30  F6 C2 08				test		dl,0x08
+EA3C  F6 C2 08				test		dl,0x08
 
 	jnz	@@alt				;   yes
-EA33  75 1D				jne		L$102
+EA3F  75 1D				jne		L$102
 
 	test	dl, 00000100b			; CTRL key pressed?
-EA35  F6 C2 04				test		dl,0x04
+EA41  F6 C2 04				test		dl,0x04
 
 	jnz	@@ctrl				;   yes
-EA38  75 2B				jne		L$104
+EA44  75 2B				jne		L$104
 
 	test	dl, 00000011b			; Either shift key pressed?
-EA3A  F6 C2 03				test		dl,0x03
+EA46  F6 C2 03				test		dl,0x03
 
 	jnz	@@shift				;   yes
-EA3D  75 7E				jne		L$110
+EA49  75 7E				jne		L$110
 
 
 @@lower_case:
 	cmp	al, 1Ah 			; Alphabetic character?
-EA3F  3C 1A				cmp		al,0x1a
+EA4B  3C 1A				cmp		al,0x1a
 
 	ja	@@non_alpha			;   no
-EA41  77 05				ja		L$101
+EA4D  77 05				ja		L$101
 
 	add	al, 'a'-1			; Else add lower case base
-EA43  04 60				add		al,0x60
+EA4F  04 60				add		al,0x60
 
 	jmp	near @@common
-EA45  E9 0E 01				jmp		L$122
+EA51  E9 0E 01				jmp		L$122
 
 
 @@non_alpha:
 	mov	bx, offset non_alpha		; Non-alphabetic character
-EA48				L$101:
-EA48  BB CC E8				mov		bx,offset L$1-0x1734
+EA54				L$101:
+EA54  BB CC E8				mov		bx,offset L$1-0x1734
 
 	sub	al, 20h
-EA4B  2C 20				sub		al,0x20
+EA57  2C 20				sub		al,0x20
 
 	xlat	[cs:bx] 			;   do the xlate
-EA4D  2E D7				xlat		word ptr cs:[bx]
+EA59  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	near @@common
-EA4F  E9 04 01				jmp		L$122
+EA5B  E9 04 01				jmp		L$122
 
 
 @@alt:	cmp	al, 1Ah 			; Control key pressed?
-EA52				L$102:
-EA52  3C 1A				cmp		al,0x1a
+EA5E				L$102:
+EA5E  3C 1A				cmp		al,0x1a
 
 	ja	@@no_ctrl			;   no, skip
-EA54  77 05				ja		L$103
+EA60  77 05				ja		L$103
 
 	mov	al, 0				; Else illegal key press
-EA56  B0 00				mov		al,0x00
+EA62  B0 00				mov		al,0x00
 
 	jmp	near @@buffer
-EA58  E9 35 01				jmp		L$127
+EA64  E9 35 01				jmp		L$127
 
 
 @@no_ctrl:
 	mov	bx, offset alt_key		; Load ALT key translation
-EA5B				L$103:
-EA5B  BB 3B E9				mov		bx,offset L$1-0x16c5
+EA67				L$103:
+EA67  BB 3B E9				mov		bx,offset L$1-0x16c5
 
 	sub	al, 20h 			;   bias to printing char
-EA5E  2C 20				sub		al,0x20
+EA6A  2C 20				sub		al,0x20
 
 	xlat	[cs:bx] 			;   do the translation
-EA60  2E D7				xlat		word ptr cs:[bx]
+EA6C  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	near @@common
-EA62  E9 F1 00				jmp		L$122
+EA6E  E9 F1 00				jmp		L$122
 
 
 @@ctrl: cmp	ah, 46h 			; Scroll lock key?
-EA65				L$104:
-EA65  80 FC 46				cmp		ah,0x46
+EA71				L$104:
+EA71  80 FC 46				cmp		ah,0x46
 
 	jnz	@@ctrl_1			;   no, skip
-EA68  75 15				jne		L$105
+EA74  75 15				jne		L$105
 
 	mov	[byte ds:71h], 10000000b	; Else CTRL-"Scroll" = break
-EA6A  C6 06 71 00 80			mov		byte ptr ds:[0x71],0x80
+EA76  C6 06 71 00 80			mov		byte ptr ds:[0x71],0x80
 
 	mov	ax, [ds:80h]			;   get key buffer start
-EA6F  A1 80 00				mov		ax,word ptr ds:[0x80]
+EA7B  A1 80 00				mov		ax,word ptr ds:[0x80]
 
 	mov	[ds:1Ch], ax			;   get key tail to start
-EA72  A3 1C 00				mov		word ptr ds:[0x1c],ax
+EA7E  A3 1C 00				mov		word ptr ds:[0x1c],ax
 
 	mov	[ds:1Ah], ax			;   get key head to start
-EA75  A3 1A 00				mov		word ptr ds:[0x1a],ax
+EA81  A3 1A 00				mov		word ptr ds:[0x1a],ax
 
 	int	1Bh				; Issue a "Break" interrupt
-EA78  CD 1B				int		0x1b
+EA84  CD 1B				int		0x1b
 
 	sub	ax, ax
-EA7A  2B C0				sub		ax,ax
+EA86  2B C0				sub		ax,ax
 
 	jmp	near @@common_2
-EA7C  E9 E9 00				jmp		L$124
+EA88  E9 E9 00				jmp		L$124
 
 
 @@ctrl_1:
 	cmp	ah, 45h 			; Num lock key?
-EA7F				L$105:
-EA7F  80 FC 45				cmp		ah,0x45
+EA8B				L$105:
+EA8B  80 FC 45				cmp		ah,0x45
 
 	jnz	@@ctrl_2			;   no, skip
-EA82  75 21				jne		L$107
+EA8E  75 21				jne		L$107
 
 	or	[byte ds:18h], 00001000b	; Else show scroll lock
-EA84  80 0E 18 00 08			or		byte ptr ds:[0x18],0x08
+EA90  80 0E 18 00 08			or		byte ptr ds:[0x18],0x08
 
 	mov	al, 20h 			;   send end_of_interrupt
-EA89  B0 20				mov		al,0x20
+EA95  B0 20				mov		al,0x20
 
 	out	20h, al 			;   to 8259 int controller
-EA8B  E6 20				out		0x20,al
+EA97  E6 20				out		0x20,al
 
 	cmp	[byte ds:49h], 7		; Monochrome monitor?
-EA8D  80 3E 49 00 07			cmp		byte ptr ds:[0x49],0x07
+EA99  80 3E 49 00 07			cmp		byte ptr ds:[0x49],0x07
 
 	jz	@@poll				;   yes, skip
-EA92  74 07				je		L$106
+EA9E  74 07				je		L$106
 
 	mov	dx, 3D8h			; Else reset mode
-EA94  BA D8 03				mov		dx,0x03d8
+EAA0  BA D8 03				mov		dx,0x03d8
 
 	mov	al, [ds:65h]			;   for the
-EA97  A0 65 00				mov		al,byte ptr ds:[0x65]
+EAA3  A0 65 00				mov		al,byte ptr ds:[0x65]
 
 	out	dx, al				;   CGA color card
-EA9A  EE				out		dx,al
+EAA6  EE				out		dx,al
 
 
 @@poll: test	[byte ds:18h], 00001000b	; Wait for him to type
-EA9B				L$106:
-EA9B  F6 06 18 00 08			test		byte ptr ds:[0x18],0x08
+EAA7				L$106:
+EAA7  F6 06 18 00 08			test		byte ptr ds:[0x18],0x08
 
 	jnz	@@poll				;   not yet
-EAA0  75 F9				jne		L$106
+EAAC  75 F9				jne		L$106
 
 	jmp	@@exit
-EAA2  E9 06 FF				jmp		L$91
+EAAE  E9 06 FF				jmp		L$91
 
 
 @@ctrl_2:
 	cmp	ah, 3				; Is it a Control @ (null) ?
-EAA5				L$107:
-EAA5  80 FC 03				cmp		ah,0x03
+EAB1				L$107:
+EAB1  80 FC 03				cmp		ah,0x03
 
 	jnz	@@ctrl_3			;   no
-EAA8  75 05				jne		L$109
+EAB4  75 05				jne		L$109
 
 	mov	al, 0				; Else force a null
-EAAA  B0 00				mov		al,0x00
+EAB6  B0 00				mov		al,0x00
 
 
 @@ctrl_4:
 	jmp	near @@buffer			;   save in buffer
-EAAC				L$108:
-EAAC  E9 E1 00				jmp		L$127
+EAB8				L$108:
+EAB8  E9 E1 00				jmp		L$127
 
 
 @@ctrl_3:
 	cmp	al, 1Ah 			; Is it a control character?
-EAAF				L$109:
-EAAF  3C 1A				cmp		al,0x1a
+EABB				L$109:
+EABB  3C 1A				cmp		al,0x1a
 
 	jbe	@@ctrl_4			;   yes
-EAB1  76 F9				jbe		L$108
+EABD  76 F9				jbe		L$108
 
 	mov	bx, offset ctrl_lower		; Else non-ascii control
-EAB3  BB 16 E9				mov		bx,offset L$1-0x16ea
+EABF  BB 16 E9				mov		bx,offset L$1-0x16ea
 
 	sub	al, 20h 			;   lower case
-EAB6  2C 20				sub		al,0x20
+EAC2  2C 20				sub		al,0x20
 
 	xlat	[cs:bx] 			;   translation
-EAB8  2E D7				xlat		word ptr cs:[bx]
+EAC4  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	near @@common
-EABA  E9 99 00				jmp		L$122
+EAC6  E9 99 00				jmp		L$122
 
 
 @@shift:
 	cmp	ah, 37h 			; Print_Screen pressed?
-EABD				L$110:
-EABD  80 FC 37				cmp		ah,0x37
+EAC9				L$110:
+EAC9  80 FC 37				cmp		ah,0x37
 
 	jnz	@@shift_2
-EAC0  75 09				jne		L$111
+EACC  75 09				jne		L$111
 
 	mov	al, 20h 			; Yes, send end_of_interrupt
-EAC2  B0 20				mov		al,0x20
+EACE  B0 20				mov		al,0x20
 
 	out	20h, al 			;   to 8259 interrupt chip
-EAC4  E6 20				out		0x20,al
+EAD0  E6 20				out		0x20,al
 
 	int	5				; Request print_screen service
-EAC6  CD 05				int		0x05
+EAD2  CD 05				int		0x05
 
 	jmp	@@exit				;   and exit key service
-EAC8  E9 E0 FE				jmp		L$91
+EAD4  E9 E0 FE				jmp		L$91
 
 
 @@shift_2:
 	cmp	al, 1Ah 			; Alphabetic char?
-EACB				L$111:
-EACB  3C 1A				cmp		al,0x1a
+EAD7				L$111:
+EAD7  3C 1A				cmp		al,0x1a
 
 	ja	@@shift_3			;   no
-EACD  77 05				ja		L$112
+EAD9  77 05				ja		L$112
 
 	add	al, 'A'-1			; Yes, add base for alphabet
-EACF  04 40				add		al,0x40
+EADB  04 40				add		al,0x40
 
 	jmp	near @@common
-EAD1  E9 82 00				jmp		L$122
+EADD  E9 82 00				jmp		L$122
 
 
 @@shift_3:
 	mov	bx, offset ctrl_upper		; Non-ascii control
-EAD4				L$112:
-EAD4  BB F1 E8				mov		bx,offset L$1-0x170f
+EAE0				L$112:
+EAE0  BB F1 E8				mov		bx,offset L$1-0x170f
 
 	sub	al, 20h 			;   upper case
-EAD7  2C 20				sub		al,0x20
+EAE3  2C 20				sub		al,0x20
 
 	xlat	[cs:bx] 			;   translation
-EAD9  2E D7				xlat		word ptr cs:[bx]
+EAE5  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	near @@common
-EADB  E9 78 00				jmp		L$122
+EAE7  E9 78 00				jmp		L$122
 
 
 @@pad:
 	sub	al, 47h 			; Keypad key, convert origin
-EADE				L$113:
-EADE  2C 47				sub		al,0x47
+EAEA				L$113:
+EAEA  2C 47				sub		al,0x47
 
 	mov	bl, [ds:17h]			;   get "flag" byte
-EAE0  8A 1E 17 00			mov		bl,byte ptr ds:[0x17]
+EAEC  8A 1E 17 00			mov		bl,byte ptr ds:[0x17]
 
 	test	bl, 00001000b			; Look for ALT keypad entry
-EAE4  F6 C3 08				test		bl,0x08
+EAF0  F6 C3 08				test		bl,0x08
 
 	jnz	@@alt_num			;   do special entry thing
-EAE7  75 18				jne		L$115
+EAF3  75 18				jne		L$115
 
 	test	bl, 00000100b			; CTRL key pressed?
-EAE9  F6 C3 04				test		bl,0x04
+EAF5  F6 C3 04				test		bl,0x04
 
 	jnz	@@released			;   skip if so
-EAEC  75 48				jne		L$119
+EAF8  75 48				jne		L$119
 
 	test	bl, 00100000b			; Toggle "Num Lock" ?
-EAEE  F6 C3 20				test		bl,0x20
+EAFA  F6 C3 20				test		bl,0x20
 
 	jz	@@pad_1				;   no, continue
-EAF1  74 07				je		L$114
+EAFD  74 07				je		L$114
 
 	test	bl, 00000011b			; Shift keys hit?
-EAF3  F6 C3 03				test		bl,0x03
+EAFF  F6 C3 03				test		bl,0x03
 
 	jnz	@@pad_2				;   no, check "INS"
-EAF6  75 49				jne		L$120
+EB02  75 49				jne		L$120
 
 	jmp	short @@pad_5			; Else xlat keypad char.
-EAF8  EB 53				jmp		L$121
+EB04  EB 53				jmp		L$121
 
 
 @@pad_1:
 	test	bl, 00000011b			; Shift keys hit?
-EAFA				L$114:
-EAFA  F6 C3 03				test		bl,0x03
+EB06				L$114:
+EB06  F6 C3 03				test		bl,0x03
 
 	jz	@@pad_2				;   no, check "INS" key
-EAFD  74 42				je		L$120
+EB09  74 42				je		L$120
 
 	jmp	short @@pad_5			; Else xlat keypad char.
-EAFF  EB 4C				jmp		L$121
+EB0B  EB 4C				jmp		L$121
 
 
 @@alt_num:
 	or	ah, ah				; ALT-keypad entry, scan code
-EB01				L$115:
-EB01  0A E4				or		ah,ah
+EB0D				L$115:
+EB0D  0A E4				or		ah,ah
 
 	js	@@done_2			;   out of range
-EB03  78 2E				js		L$118
+EB0F  78 2E				js		L$118
 
 	test	[byte ds:17h], 00000100b	; Else check CTRL state
-EB05  F6 06 17 00 04			test		byte ptr ds:[0x17],0x04
+EB11  F6 06 17 00 04			test		byte ptr ds:[0x17],0x04
 
 	jz	@@alt_num_2			;   not pressed, ALT keypad
-EB0A  74 0E				je		L$117
+EB16  74 0E				je		L$117
 
 
 @@turbo_patch:
 	cmp	ah, 53h 			; Patch for CTRL ALT - toggle
-EB0C  80 FC 53				cmp		ah,0x53
+EB18  80 FC 53				cmp		ah,0x53
 
 	jnz	@@turbo_check			;   not a DEL (reset)
-EB0F  75 09				jne		L$117
+EB1B  75 09				jne		L$117
 
 reboot:
 	mov	[word ds:72h], 1234h		; Ctrl-Alt-Del,	set init flag
-EB11				L$116:
-EB11  C7 06 72 00 34 12			mov		word ptr ds:[0x72],0x1234
+EB1D				L$116:
+EB1D  C7 06 72 00 34 12			mov		word ptr ds:[0x72],0x1234
 
 	jmp	warm_boot			;   do a warm reboot
-EB17  E9 41 F5				jmp		post
+EB23  E9 35 F5				jmp		post
 
 
 @@turbo_check:
@@ -33240,224 +33256,224 @@ endif
 
 @@alt_num_2:
 	mov	bx, offset num_pad		; Get keypad translation table
-EB1A				L$117:
-EB1A  BB 60 E9				mov		bx,offset L$1-0x16a0
+EB26				L$117:
+EB26  BB 60 E9				mov		bx,offset L$1-0x16a0
 
 	xlat	[cs:bx] 			;   convert to number
-EB1D  2E D7				xlat		word ptr cs:[bx]
+EB29  2E D7				xlat		word ptr cs:[bx]
 
 	cmp	al, '0' 			; Is it a valid ASCII digit?
-EB1F  3C 30				cmp		al,0x30
+EB2B  3C 30				cmp		al,0x30
 
 	jb	@@done_2			;   no, ignore it
-EB21  72 10				jb		L$118
+EB2D  72 10				jb		L$118
 
 	sub	al, 30h 			; Else convert to number
-EB23  2C 30				sub		al,0x30
+EB2F  2C 30				sub		al,0x30
 
 	mov	bl, al				;   save a copy
-EB25  8A D8				mov		bl,al
+EB31  8A D8				mov		bl,al
 
 	mov	al, [ds:19h]			; Get partial ALT-keypad sum
-EB27  A0 19 00				mov		al,byte ptr ds:[0x19]
+EB33  A0 19 00				mov		al,byte ptr ds:[0x19]
 
 	mov	ah, 0Ah 			;   times 10 (decimal)
-EB2A  B4 0A				mov		ah,0x0a
+EB36  B4 0A				mov		ah,0x0a
 
 	mul	ah
-EB2C  F6 E4				mul		ah
+EB38  F6 E4				mul		ah
 
 	add	al, bl				; Add in new digit to sum
-EB2E  02 C3				add		al,bl
+EB3A  02 C3				add		al,bl
 
 	mov	[ds:19h], al			;   save as new ALT entry
-EB30  A2 19 00				mov		byte ptr ds:[0x19],al
+EB3C  A2 19 00				mov		byte ptr ds:[0x19],al
 
 
 @@done_2:
 	jmp	@@end				; End_of_interrupt, exit
-EB33				L$118:
-EB33  E9 71 FE				jmp		L$90
+EB3F				L$118:
+EB3F  E9 71 FE				jmp		L$90
 
 
 @@released:
 	or	ah, ah				; Key released?
-EB36				L$119:
-EB36  0A E4				or		ah,ah
+EB42				L$119:
+EB42  0A E4				or		ah,ah
 
 	js	@@done_2			;   ignore if so
-EB38  78 F9				js		L$118
+EB44  78 F9				js		L$118
 
 	mov	bx, offset num_ctrl		; Else Numeric Keypad Control
-EB3A  BB 6D E9				mov		bx,offset L$1-0x1693
+EB46  BB 6D E9				mov		bx,offset L$1-0x1693
 
 	xlat	[cs:bx] 			;   secondary translate
-EB3D  2E D7				xlat		word ptr cs:[bx]
+EB49  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	short @@common			;   and save it
-EB3F  EB 15				jmp		L$122
+EB4B  EB 15				jmp		L$122
 
 
 @@pad_2:
 	call	set_insert_flags		; Check for INS press and set
-EB41				L$120:
-EB41  E8 5D 00				call		set_insert_flags
+EB4D				L$120:
+EB4D  E8 5D 00				call		set_insert_flags
 
 	jc	@@done_2			;   flags accordingly
-EB44  72 ED				jb		L$118
+EB50  72 ED				jb		L$118
 
 
 @@pad_4:
 	mov	bx, offset num_upper		; Numeric Keypad Upper Case
-EB46  BB 7A E9				mov		bx,offset L$1-0x1686
+EB52  BB 7A E9				mov		bx,offset L$1-0x1686
 
 	xlat	[cs:bx] 			;   secondary translation
-EB49  2E D7				xlat		word ptr cs:[bx]
+EB55  2E D7				xlat		word ptr cs:[bx]
 
 	jmp	short @@common
-EB4B  EB 09				jmp		L$122
+EB57  EB 09				jmp		L$122
 
 
 @@pad_5:
 	or	ah, ah				; Was the key released?
-EB4D				L$121:
-EB4D  0A E4				or		ah,ah
+EB59				L$121:
+EB59  0A E4				or		ah,ah
 
 	js	@@done_2			;   yes, ignore
-EB4F  78 E2				js		L$118
+EB5B  78 E2				js		L$118
 
 	mov	bx, offset num_pad		; Load translation table
-EB51  BB 60 E9				mov		bx,offset L$1-0x16a0
+EB5D  BB 60 E9				mov		bx,offset L$1-0x16a0
 
 	xlat	[cs:bx] 			;   do translate
-EB54  2E D7				xlat		word ptr cs:[bx]
+EB60  2E D7				xlat		word ptr cs:[bx]
 
 
 @@common:
 	cmp	al, 5				; Common entry, char in al
-EB56				L$122:
-EB56  3C 05				cmp		al,0x05
+EB62				L$122:
+EB62  3C 05				cmp		al,0x05
 
 	jz	@@done_3			;   Control E, ignore
-EB58  74 40				je		L$129
+EB64  74 40				je		L$129
 
 	cmp	al, 4
-EB5A  3C 04				cmp		al,0x04
+EB66  3C 04				cmp		al,0x04
 
 	ja	@@common_1			; Above Control D
-EB5C  77 04				ja		L$123
+EB68  77 04				ja		L$123
 
 
 	or	al, 10000000b			; Else set sign flag
-EB5E  0C 80				or		al,0x80
+EB6A  0C 80				or		al,0x80
 
 	jmp	short @@common_2
-EB60  EB 06				jmp		L$124
+EB6C  EB 06				jmp		L$124
 
 
 @@common_1:
 	test	al, 10000000b			; Is sign bit set?
-EB62				L$123:
-EB62  A8 80				test		al,0x80
+EB6E				L$123:
+EB6E  A8 80				test		al,0x80
 
 	jz	@@common_3			;   skip if so
-EB64  74 06				je		L$125
+EB70  74 06				je		L$125
 
 	and	al, 01111111b			; Else mask sign off
-EB66  24 7F				and		al,0x7f
+EB72  24 7F				and		al,0x7f
 
 
 @@common_2:
 	mov	ah, al				; Save in high order byte
-EB68				L$124:
-EB68  8A E0				mov		ah,al
+EB74				L$124:
+EB74  8A E0				mov		ah,al
 
 	mov	al, 0				;   set scan code to zero
-EB6A  B0 00				mov		al,0x00
+EB76  B0 00				mov		al,0x00
 
 
 @@common_3:
 	test	[byte ds:17h], 01000000b	; Test for "CAPS LOCK" state
-EB6C				L$125:
-EB6C  F6 06 17 00 40			test		byte ptr ds:[0x17],0x40
+EB78				L$125:
+EB78  F6 06 17 00 40			test		byte ptr ds:[0x17],0x40
 
 	jz	@@buffer			;   no, skip
-EB71  74 1D				je		L$127
+EB7D  74 1D				je		L$127
 
 	test	[byte ds:17h], 00000011b	; Test for SHIFT key
-EB73  F6 06 17 00 03			test		byte ptr ds:[0x17],0x03
+EB7F  F6 06 17 00 03			test		byte ptr ds:[0x17],0x03
 
 	jz	@@common_4			;   skip if no shift
-EB78  74 0C				je		L$126
+EB84  74 0C				je		L$126
 
 	cmp	al, 'A' 			; Check for alphabetic key
-EB7A  3C 41				cmp		al,0x41
+EB86  3C 41				cmp		al,0x41
 
 	jb	@@buffer			;   not SHIFT_able
-EB7C  72 12				jb		L$127
+EB88  72 12				jb		L$127
 
 	cmp	al, 'Z' 			; Check for alphabetic key
-EB7E  3C 5A				cmp		al,0x5a
+EB8A  3C 5A				cmp		al,0x5a
 
 	ja	@@buffer			;   not SHIFT_able
-EB80  77 0E				ja		L$127
+EB8C  77 0E				ja		L$127
 
 	add	al, 20h 			; Else do the shift
-EB82  04 20				add		al,0x20
+EB8E  04 20				add		al,0x20
 
 	jmp	short @@buffer
-EB84  EB 0A				jmp		L$127
+EB90  EB 0A				jmp		L$127
 
 
 @@common_4:
 	cmp	al, 'a' 			; Check for alphabetic key
-EB86				L$126:
-EB86  3C 61				cmp		al,0x61
+EB92				L$126:
+EB92  3C 61				cmp		al,0x61
 
 	jb	@@buffer			;   not SHIFT_able
-EB88  72 06				jb		L$127
+EB94  72 06				jb		L$127
 
 	cmp	al, 'z' 			; Check for Alphabetic key
-EB8A  3C 7A				cmp		al,0x7a
+EB96  3C 7A				cmp		al,0x7a
 
 	ja	@@buffer			;   not SHIFT_able
-EB8C  77 02				ja		L$127
+EB98  77 02				ja		L$127
 
 	sub	al, 20h 			; Else do the shift
-EB8E  2C 20				sub		al,0x20
+EB9A  2C 20				sub		al,0x20
 
 
 int_9_stuff:
 @@buffer:
 	call	stuff_keyboard_buffer		; Put keystroke in buffer
-EB90				L$127:
-EB90  E8 36 00				call		stuff_keyboard_buffer
+EB9C				L$127:
+EB9C  E8 36 00				call		stuff_keyboard_buffer
 
 	jnc	@@done_3
-EB93  73 05				jae		L$129
+EB9F  73 05				jae		L$129
 
 
 @@beep:
 	mov	bl, 1				; Do a
-EB95				L$128:
-EB95  B3 01				mov		bl,0x01
+EBA1				L$128:
+EBA1  B3 01				mov		bl,0x01
 
 	call	beep				;   short beep
-EB97  E8 09 0C				call		beep
+EBA3  E8 FD 0B				call		beep
 
 
 @@done_3:
 	jmp	@@end
-EB9A				L$129:
-EB9A  E9 0A FE				jmp		L$90
+EBA6				L$129:
+EBA6  E9 0A FE				jmp		L$90
 
 
 @@null: mov	ah, 38h 			; ALT key pressed, released
-EB9D				L$130:
-EB9D  B4 38				mov		ah,0x38
+EBA9				L$130:
+EBA9  B4 38				mov		ah,0x38
 
 	jmp	@@buffer			;   for no logical reason
-EB9F  EB EF				jmp		L$127
+EBAB  EB EF				jmp		L$127
 
 
 endp	int_9
@@ -33469,60 +33485,60 @@ endp	int_9
 proc	set_insert_flags	near
 
 	cmp	ah, 0D2h			; Was "INS" key released?
-EBA1				set_insert_flags:
-EBA1  80 FC D2				cmp		ah,0xd2
+EBAD				set_insert_flags:
+EBAD  80 FC D2				cmp		ah,0xd2
 
 	jnz	@@pad_3
-EBA4  75 07				jne		L$132
+EBB0  75 07				jne		L$132
 
 	and	[byte ds:18h], 01111111b	; Yes, clear "INS" in "FLAG_1"
-EBA6  80 26 18 00 7F			and		byte ptr ds:[0x18],0x7f
+EBB2  80 26 18 00 7F			and		byte ptr ds:[0x18],0x7f
 
 
 @@done_2:
 	stc
-EBAB				L$131:
-EBAB  F9				stc		
+EBB7				L$131:
+EBB7  F9				stc		
 
 	ret
-EBAC  C3				ret		
+EBB8  C3				ret		
 
 
 @@pad_3:
 	or	ah, ah				; Key released?
-EBAD				L$132:
-EBAD  0A E4				or		ah,ah
+EBB9				L$132:
+EBB9  0A E4				or		ah,ah
 
 	js	@@done_2			;   ignore if so
-EBAF  78 FA				js		L$131
+EBBB  78 FA				js		L$131
 
 
 	cmp	ah, 52h 			; Else check for "INS" press
-EBB1  80 FC 52				cmp		ah,0x52
+EBBD  80 FC 52				cmp		ah,0x52
 
 	jnz	@@done				;   not "INS" press
-EBB4  75 11				jne		L$133
+EBC0  75 11				jne		L$133
 
 	test	[byte ds:18h], 10000000b	; Was INS key in effect?
-EBB6  F6 06 18 00 80			test		byte ptr ds:[0x18],0x80
+EBC2  F6 06 18 00 80			test		byte ptr ds:[0x18],0x80
 
 	jnz	@@done				;   yes, ignore
-EBBB  75 0A				jne		L$133
+EBC7  75 0A				jne		L$133
 
 	xor	[byte ds:17h], 10000000b	; Else tog "INS" in "FLAG" byte
-EBBD  80 36 17 00 80			xor		byte ptr ds:[0x17],0x80
+EBC9  80 36 17 00 80			xor		byte ptr ds:[0x17],0x80
 
 	or	[byte ds:18h], 10000000b	;   set "INS" in "FLAG_1" byte
-EBC2  80 0E 18 00 80			or		byte ptr ds:[0x18],0x80
+EBCE  80 0E 18 00 80			or		byte ptr ds:[0x18],0x80
 
 
 @@done:
 	clc
-EBC7				L$133:
-EBC7  F8				clc		
+EBD3				L$133:
+EBD3  F8				clc		
 
 	ret
-EBC8  C3				ret		
+EBD4  C3				ret		
 
 
 endp	set_insert_flags
@@ -33534,63 +33550,63 @@ endp	set_insert_flags
 proc	stuff_keyboard_buffer	near
 
 	mov	bx, [ds:1Ch]			; bx = tail of buffer
-EBC9				stuff_keyboard_buffer:
-EBC9  8B 1E 1C 00			mov		bx,word ptr ds:[0x1c]
+EBD5				stuff_keyboard_buffer:
+EBD5  8B 1E 1C 00			mov		bx,word ptr ds:[0x1c]
 
 	mov	di, bx				;   save it
-EBCD  8B FB				mov		di,bx
+EBD9  8B FB				mov		di,bx
 
 	inc	bx				;   advance
-EBCF  43				inc		bx
+EBDB  43				inc		bx
 
 	inc	bx				;   by word
-EBD0  43				inc		bx
+EBDC  43				inc		bx
 
 	cmp	bx, [ds:82h]			; End of buffer reached?
-EBD1  3B 1E 82 00			cmp		bx,word ptr ds:[0x82]
+EBDD  3B 1E 82 00			cmp		bx,word ptr ds:[0x82]
 
 	jnz	@@check				;   no, skip
-EBD5  75 04				jne		L$134
+EBE1  75 04				jne		L$134
 
 	mov	bx, [ds:80h]			; Else bx = beginning of buffer
-EBD7  8B 1E 80 00			mov		bx,word ptr ds:[0x80]
+EBE3  8B 1E 80 00			mov		bx,word ptr ds:[0x80]
 
 
 @@check:
 	cmp	bx, [ds:1Ah]			; bx = Buffer Head ?
-EBDB				L$134:
-EBDB  3B 1E 1A 00			cmp		bx,word ptr ds:[0x1a]
+EBE7				L$134:
+EBE7  3B 1E 1A 00			cmp		bx,word ptr ds:[0x1a]
 
 	jnz	@@stuff				;   no, OK
-EBDF  75 02				jne		L$135
+EBEB  75 02				jne		L$135
 
 	stc					; cf=1, buffer full
-EBE1  F9				stc		
+EBED  F9				stc		
 
 	ret
-EBE2  C3				ret		
+EBEE  C3				ret		
 
 
 @@stuff:
 	mov	[ds:di], ax			; Stuff scan code, char in buffer
-EBE3				L$135:
-EBE3  89 05				mov		word ptr [di],ax
+EBEF				L$135:
+EBEF  89 05				mov		word ptr [di],ax
 
 	mov	[ds:1Ch], bx			;   and update buffer tail
-EBE5  89 1E 1C 00			mov		word ptr ds:[0x1c],bx
+EBF1  89 1E 1C 00			mov		word ptr ds:[0x1c],bx
 
 	clc					; cf=0, no errors
-EBE9  F8				clc		
+EBF5  F8				clc		
 
 	ret
-EBEA  C3				ret		
-EBEB  0D 0A 55 70 67 72 61 64 65 73 20 62 79 20 59 61 ..Upgrades by Ya
-EBFB  60 61 6B 6F 76 20 4D 69 6C 65 73 20 26 20 4A 6F `akov Miles & Jo
-EC0B  6E 20 50 65 74 72 6F 73 6B 79 00 38 30 38 38 20 n Petrosky.8088 
-EC1B  43 50 55 20 28 00 50 72 65 73 73 20 53 50 41 43 CPU (.Press SPAC
-EC2B  45 20 74 6F 20 6C 6F 61 64 20 52 4F 4D 20 66 72 E to load ROM fr
-EC3B  6F 6D 20 46 39 31 30 00 90 90 90 90 90 90 90 90 om F910.........
-EC4B  90 90 90 90 90 90 90 90 90 90 90 90 90 90       ..............
+EBF6  C3				ret		
+EBF7  0D 0A 55 70 67 72 61 64 65 73 20 62 79 20 59 61 ..Upgrades by Ya
+EC07  60 61 6B 6F 76 20 4D 69 6C 65 73 20 26 20 4A 6F `akov Miles & Jo
+EC17  6E 20 50 65 74 72 6F 73 6B 79 00 38 30 38 38 20 n Petrosky.8088 
+EC27  43 50 55 20 28 00 50 72 65 73 73 20 53 50 41 43 CPU (.Press SPAC
+EC37  45 20 74 6F 20 6C 6F 61 64 20 52 4F 4D 20 66 72 E to load ROM fr
+EC47  6F 6D 20 46 39 31 30 00 90 90 90 90 90 90 90 90 om F910.........
+EC57  90 90                                           ..
 
 
 endp	stuff_keyboard_buffer
@@ -34689,7 +34705,7 @@ EF1D  F6 C1 08				test		cl,0x08
 EF20  74 03				je		L$174
 
 	jmp	reboot				; CTRL+ALT+DEL is pressed, so reboot
-EF22  E9 EC FB				jmp		L$116
+EF22  E9 F8 FB				jmp		L$116
 
 @@done:
 	ret
@@ -38732,7 +38748,7 @@ F91F  F6 E0				mul		al
 F921  74 04				je		L$289
 
 	mov	si, offset str_8088		;   No, so we have an 8088 CPU
-F923  BE 16 EC				mov		si,offset L$1-0x13ea
+F923  BE 22 EC				mov		si,offset L$1-0x13de
 
 	ret
 F926  C3				ret		

@@ -2040,14 +2040,14 @@ proc	int_9	far
 	mov	ds, ax
 
 	in	al, 60h 			; Read the scan code data
-	;push	ax				;   save it
-	;in	al, 61h 			; Get control port status
-	;push	ax				;   save it
-	;or	al, 10000000b			; Set "latch" bit to
-	;out	61h, al 			;   acknowledge data
-	;pop	ax				; Restore control status
-	;out	61h, al 			;   to enable keyboard
-	;pop	ax				;   restore scan code
+	push	ax				;   save it
+	in	al, 61h 			; Get control port status
+	push	ax				;   save it
+	or	al, 10000000b			; Set "latch" bit to
+	out	61h, al 			;   acknowledge data
+	pop	ax				; Restore control status
+	out	61h, al 			;   to enable keyboard
+	pop	ax				;   restore scan code
 
 	mov	ah, al				; Save copy of scan code
 

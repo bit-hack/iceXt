@@ -304,7 +304,7 @@ module top(
   wire       pic_sel;
   wire [7:0] pic_out;
 
-  pic2 u_pic(
+  pic u_pic(
     .iClk   (pll_clk_bus),
     .iRst   (rst),
     .iIrq0  (irq0),          // timer
@@ -319,8 +319,7 @@ module top(
 
     .oInt   (ex_cpu_intr),   // cpu<-pic int req
     .oSel   (pic_sel),
-    .oData  (pic_out),
-    .oDebug (debug)
+    .oData  (pic_out)
   );
 
   //
@@ -470,7 +469,7 @@ module top(
   // PMOD
   //
 
-  wire [7:0] debug;
+  wire [7:0] debug = 8'h00;
   assign pmod = {
     /*6*/debug[6],
     /*4*/debug[4],
