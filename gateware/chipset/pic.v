@@ -13,6 +13,7 @@ module pic(
   input            iRst,
   input            iIrq0,     // timer
   input            iIrq1,     // keyboard
+  input            iIrq3,     // com2
   input            iIrq4,     // com1
   input            iIntAck,   // cpu->pic int ack
   input  [19:0]    iAddr,
@@ -38,23 +39,26 @@ module pic(
   //            76543210
     irr[0] ? 8'b00000001  : // timer
     irr[1] ? 8'b00000010  : // keyboard
-    irr[4] ? 8'b00010000  : // uart
+    irr[3] ? 6'b00001000  : // COM2
+    irr[4] ? 8'b00010000  : // COM1
              8'b00000000;
 
   wire [7:0] isr_top =     // intr to code
   //            76543210
     isr[0] ? 8'b00000001  : // timer
     isr[1] ? 8'b00000010  : // keyboard
-    isr[4] ? 8'b00010000  : // uart
+    isr[3] ? 8'b00001000  : // COM2
+    isr[4] ? 8'b00010000  : // COM1
              8'b00000000;
 
   wire [7:0] irr_code =
     irr[0] ? 8'd0  :        // timer
     irr[1] ? 8'd1  :        // keyboard
-    irr[4] ? 8'd4  :        // uart
+    irr[3] ? 8'd3  :        // COM2
+    irr[4] ? 8'd4  :        // COM1
              8'd0;
 
-  wire [7:0] irq  = { 3'b000, iIrq4, 2'b00, iIrq1, iIrq0 };
+  wire [7:0] irq  = { 3'b000, iIrq4, iIrq3, 1'b0, iIrq1, iIrq0 };
   wire [7:0] irqe   = (irq ^ irqd) & irq;   // IRQ positive edges
   reg  [7:0] irqd   = 0;                    // IRQ delay (for edge detection)
   reg        ack_ff = 0;
@@ -72,6 +76,7 @@ module pic(
     // assert intr if highest pending not masked by any higher being serviced
     intr <= irr_top[0] ? !|isr_top[  0] :
             irr_top[1] ? !|isr_top[1:0] :
+            irr_top[3] ? !|isr_top[3:0] :
             irr_top[4] ? !|isr_top[4:0] :
             1'b0;
 

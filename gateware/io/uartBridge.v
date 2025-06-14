@@ -49,29 +49,16 @@ module uartBridge(
     .oRdData (oRdData),
     .oSel    (oSel),
     .oIntr   (oIntr),
-    .iRxData (mouseReset ? 8'h4D : rxData),
-    .iRx     (mouseReset         | rxValid),
+    .iRxData (rxData),
+    .iRx     (rxValid),
     .oRxReady(),
     .oRxTaken(rxTaken),
     .iTxReady(txReady),
     .oTxData (txData),
     .oTx     (txValid),
     .oDTR    (),
-    .oRTS    (rts)
+    .oRTS    ()
   );
-
-  wire rts;
-  reg  dlyRts = 0;
-  reg  mouseReset = 0;
-  always @(posedge iClk) begin
-    dlyRts <= rts;
-    if ((!dlyRts) & rts) begin
-      mouseReset <= 1;
-    end
-    if (rxTaken) begin
-      mouseReset <= 0;
-    end
-  end
 
   wire       txReady;
   wire       txValid;

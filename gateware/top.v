@@ -146,7 +146,12 @@ module top(
       disk_rom_sel ? disk_rom_out :
            pic_sel ?      pic_out :
             sd_sel ?       sd_out :
-          uart_sel ?     uart_out :
+`ifdef CFG_ENABLE_COM1_MOUSE
+          com1_sel ?     com1_out :
+`endif
+`ifdef CFG_ENABLE_COM2_BRIDGE
+          com2_sel ?     com2_out :
+`endif
       keyboard_sel ? keyboard_out :
            pit_sel ? pit_data_out :
            cga_sel ?      cga_out :
@@ -309,7 +314,8 @@ module top(
     .iRst   (rst),
     .iIrq0  (irq0),          // timer
     .iIrq1  (irq1),          // keyboard
-    .iIrq4  (uart_intr),     // com1
+    .iIrq3  (com2_intr),     // com3
+    .iIrq4  (com1_intr),     // com1
     .iIntAck(cpu_int_ack),   // cpu->pic int ack
 
     .iAddr  (cpu_addr),
@@ -428,42 +434,59 @@ module top(
   );
 `endif
 
-  wire [7:0] uart_out;
-  wire       uart_sel;
-  wire       uart_intr;
-  //uartBridge u_uart_bridge(
-  //  .iClk   (pll_clk_bus),
-  //  .iAddr  (cpu_addr),
-  //  .iWr    (cpu_io_wr),
-  //  .iWrData(cpu_data_out),
-  //  .iRd    (cpu_io_rd),
-  //  .oRdData(uart_out),
-  //  .oSel   (uart_sel),
-  //  .oIntr  (uart_intr),
-  //  .iRx    (serial_rx),
-  //  .oTx    (serial_tx)
-  //);
+  //
+  // COM1 UART -> PS/2 mouse bridge
+  //
 
+`ifdef CFG_ENABLE_COM1_MOUSE
   wire       ps2_kclk_od;
   wire       ps2_kdat_od;
   assign     ps2_kclk = ps2_kclk_od ? 1'bz : 1'b0;
   assign     ps2_kdat = ps2_kdat_od ? 1'bz : 1'b0;
 
-  uartMouse u_uart_mouse(
+  wire [7:0] com1_out;
+  wire       com1_sel;
+  wire       com1_intr;
+
+  uartMouse #(.BASE(12'h3f8)) u_uart_mouse(
     .iClk    (pll_clk_bus),
     .iRst    (rst),
     .iAddr   (cpu_addr),
     .iWr     (cpu_io_wr),
     .iWrData (cpu_data_out),
     .iRd     (cpu_io_rd),
-    .oRdData (uart_out),
-    .oSel    (uart_sel),
-    .oIntr   (uart_intr),
+    .oRdData (com1_out),
+    .oSel    (com1_sel),
+    .oIntr   (com1_intr),
     .iPs2Clk (ps2_kclk),
     .iPs2Data(ps2_kdat),
     .oPs2Clk (ps2_kclk_od),
     .oPs2Data(ps2_kdat_od)
   );
+`endif
+
+  //
+  // COM2 UART -> PC bridge
+  //
+
+`ifdef CFG_ENABLE_COM2_BRIDGE
+  wire [7:0] com2_out;
+  wire       com2_sel;
+  wire       com2_intr;
+
+  uartBridge #(.BASE(12'h2f8)) u_uart_bridge(
+    .iClk   (pll_clk_bus),
+    .iAddr  (cpu_addr),
+    .iWr    (cpu_io_wr),
+    .iWrData(cpu_data_out),
+    .iRd    (cpu_io_rd),
+    .oRdData(com2_out),
+    .oSel   (com2_sel),
+    .oIntr  (com2_intr),
+    .iRx    (serial_rx),
+    .oTx    (serial_tx)
+  );
+`endif
 
   //
   // PMOD
