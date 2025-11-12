@@ -2,26 +2,6 @@
 
 iceXt is a hybrid hardware and FPGA based IBM PC XT recreation.
 
-## TODO
-
-- SD Card
-  - Last error handling
-
-- Video
-  - CGA CRTC
-    - scrolling
-    - cursor
-    - selectable background colour
-    - crtc registers
-  - Merge CGA and EGA adapters
-
-- Chipset
-  - PS2 keyboard/mouse controller
-
-- BIOS
-  - Proper equipment detection / selection
-
-
 ## Port list
 
 | port | description
